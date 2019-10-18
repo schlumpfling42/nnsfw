@@ -1,0 +1,29 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '2.0.2'
+}
+
+apply plugin: 'java'
+apply plugin: 'application'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+version = '1.0'
+
+def undertowVersion = '2.0.1.Final'
+
+mainClassName = 'net.rka.server.fw.Application'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile "io.undertow:undertow-core:$undertowVersion",
+            "io.undertow:undertow-servlet:$undertowVersion"
+}
+jar {
+    manifest {
+        attributes 'Main-Class': 'net.rka.server.fw.Application'
+    }
+}
