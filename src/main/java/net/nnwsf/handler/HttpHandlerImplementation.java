@@ -1,8 +1,9 @@
 package net.nnwsf.handler;
 
+import java.io.InputStreamReader;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Method;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -23,6 +24,8 @@ import io.undertow.util.HttpString;
 import net.nnwsf.controller.Controller;
 import net.nnwsf.controller.Get;
 import net.nnwsf.controller.PathVariable;
+import net.nnwsf.controller.Post;
+import net.nnwsf.controller.RequestBody;
 import net.nnwsf.controller.RequestParameter;
 import net.nnwsf.util.Reflection;
 
@@ -153,6 +156,10 @@ public class HttpHandlerImplementation implements HttpHandler {
 
 	@Override
 	public void handleRequest(final HttpServerExchange exchange) throws Exception {
+		if (exchange.isInIoThread()) {
+     		exchange.dispatch(this);
+      		return;
+    	}
 		log.log(Level.INFO, "HttpRequest: start");
 		HttpString method = exchange.getRequestMethod();
 		Map<String, Deque<String>> queryParameters = exchange.getQueryParameters();
@@ -173,6 +180,17 @@ public class HttpHandlerImplementation implements HttpHandler {
 					} else if(methodParameter.annotation.annotationType().isAssignableFrom(PathVariable.class)) {
 						int index = proxy.pathElements.indexOf("{"+methodParameter.name+"}");
 						parameters[i] = requestUrlMatcher.pathElements[index];
+					} else if(methodParameter.annotation.annotationType().isAssignableFrom(RequestBody.class)) {
+						StringBuilder body = new StringBuilder();
+						exchange.startBlocking();
+						try (InputStreamReader reader = new InputStreamReader(exchange.getInputStream(), Charset.defaultCharset())) {
+							char[] buffer = new char[256];
+							int read;
+							while ((read = reader.read(buffer)) != -1) {
+								body.append(buffer, 0, read);
+							}
+						}
+						parameters[i] = body.toString();
 					}
 				}
 			}
@@ -191,10 +209,11 @@ public class HttpHandlerImplementation implements HttpHandler {
 			return proxy;
 		}
 
-		for(Class aClass : controllerClasses) {
+		for(Class<?> aClass : controllerClasses) {
 			Controller controllerAnnotation = Reflection.getInstance().findAnnotation(aClass, Controller.class);
 			Map<Get, Collection<Method>> annotatedGetMethods = Reflection.getInstance().findAnnotationMethods(aClass, Get.class);
-			Object object = aClass.newInstance();
+			Map<Post, Collection<Method>> annotatedPostMethods = Reflection.getInstance().findAnnotationMethods(aClass, Post.class);
+			Object object = aClass.getDeclaredConstructor().newInstance();
 			if(annotatedGetMethods == null) {
 				throw new RuntimeException("Invalid controller");
 			}
@@ -203,19 +222,7 @@ public class HttpHandlerImplementation implements HttpHandler {
 					if(annotatedMethod == null) {
 						throw new RuntimeException("Invalid controller");
 					}
-					Annotation[][] parameterAnnotations = annotatedMethod.getParameterAnnotations();
-					MethodParameter[] methodParameters = new MethodParameter[parameterAnnotations.length];
-					for(int i = 0; i< parameterAnnotations.length; i++) {
-						if(parameterAnnotations[i] != null ) {
-							for(Annotation aParameterAnnotation : parameterAnnotations[i]) {
-								if(aParameterAnnotation.annotationType().isAssignableFrom(RequestParameter.class)) {
-									methodParameters[i] = new MethodParameter(aParameterAnnotation, ((RequestParameter)aParameterAnnotation).value());
-								} else if(aParameterAnnotation.annotationType().isAssignableFrom(PathVariable.class)) {
-									methodParameters[i] = new MethodParameter(aParameterAnnotation, ((PathVariable)aParameterAnnotation).value());
-								}
-							}
-						}
-					}
+					MethodParameter[] methodParameters = getMethodParameters(annotatedMethod);
 					URLMatcher proxyUrlMatcher = new URLMatcher(
 						"Get", 
 						(controllerAnnotation.value() + "/" + methodAnnotation.value()).replace("/+", "/"), 
@@ -230,9 +237,50 @@ public class HttpHandlerImplementation implements HttpHandler {
 					proxies.put(proxyUrlMatcher, new ControllerProxy(object, annotatedMethod, methodParameters, Arrays.asList(proxyUrlMatcher.pathElements)));
 				}
 			}
+
+			for(Post methodAnnotation : annotatedPostMethods.keySet()) {
+				for(Method annotatedMethod : annotatedPostMethods.get(methodAnnotation)) {
+					if(annotatedMethod == null) {
+						throw new RuntimeException("Invalid controller");
+					}
+					MethodParameter[] methodParameters = getMethodParameters(annotatedMethod);
+					URLMatcher proxyUrlMatcher = new URLMatcher(
+						"Post", 
+						(controllerAnnotation.value() + "/" + methodAnnotation.value()).replace("/+", "/"), 
+						Arrays.asList(methodParameters)
+							.stream()
+							.filter( s -> s != null && s.annotation.annotationType().isAssignableFrom(RequestParameter.class))
+							.map(m -> m.name)
+							.filter( s -> s != null).collect(Collectors.toList()));
+					if(proxies.containsKey(proxyUrlMatcher)) {
+						log.log(Level.SEVERE, "Controller already exists for " + proxyUrlMatcher);
+					}
+					proxies.put(proxyUrlMatcher, new ControllerProxy(object, annotatedMethod, methodParameters, Arrays.asList(proxyUrlMatcher.pathElements)));
+				}
+			}
+
 			controllerClasses.remove(aClass);
 
 		}
 		return proxies.get(requestUrlMatcher);
+	}
+
+	private MethodParameter[] getMethodParameters(Method annotatedMethod) {
+		Annotation[][] parameterAnnotations = annotatedMethod.getParameterAnnotations();
+		MethodParameter[] methodParameters = new MethodParameter[parameterAnnotations.length];
+		for(int i = 0; i< parameterAnnotations.length; i++) {
+			if(parameterAnnotations[i] != null ) {
+				for(Annotation aParameterAnnotation : parameterAnnotations[i]) {
+					if(aParameterAnnotation.annotationType().isAssignableFrom(RequestParameter.class)) {
+						methodParameters[i] = new MethodParameter(aParameterAnnotation, ((RequestParameter)aParameterAnnotation).value());
+					} else if(aParameterAnnotation.annotationType().isAssignableFrom(PathVariable.class)) {
+						methodParameters[i] = new MethodParameter(aParameterAnnotation, ((PathVariable)aParameterAnnotation).value());
+					} else if(aParameterAnnotation.annotationType().isAssignableFrom(RequestBody.class)) {
+						methodParameters[i] = new MethodParameter(aParameterAnnotation, "body");
+					}
+				}
+			}
+		}
+		return methodParameters;
 	}
 }
