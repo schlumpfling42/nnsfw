@@ -1,4 +1,4 @@
-package net.rka.server.fw.configuration;
+package net.nnwsf.configuration;
 
 import java.lang.annotation.*;
 

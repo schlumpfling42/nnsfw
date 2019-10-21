@@ -12,7 +12,7 @@ version = '1.0'
 
 def undertowVersion = '2.0.1.Final'
 
-mainClassName = 'net.rka.server.fw.Application'
+mainClassName = 'net.nnwsf.Application'
 
 repositories {
     mavenCentral()
@@ -24,6 +24,6 @@ dependencies {
 }
 jar {
     manifest {
-        attributes 'Main-Class': 'net.rka.server.fw.Application'
+        attributes 'Main-Class': 'net.nnwsf.Application'
     }
 }

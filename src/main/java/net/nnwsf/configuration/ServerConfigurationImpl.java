@@ -1,4 +1,4 @@
-package net.rka.server.fw.configuration;
+package net.nnwsf.configuration;
 
 import java.util.Collection;
 import java.util.HashSet;

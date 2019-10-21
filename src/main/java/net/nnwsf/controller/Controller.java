@@ -1,4 +1,4 @@
-package net.rka.server.fw.configuration;
+package net.nnwsf.controller;
 
 import java.lang.annotation.*;
 
@@ -6,6 +6,6 @@ import java.lang.annotation.*;
 @Target(ElementType.TYPE)
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
-public @interface AnnotationConfiguration {
-    String value();
+public @interface Controller {
+    String value() default "/";
 }

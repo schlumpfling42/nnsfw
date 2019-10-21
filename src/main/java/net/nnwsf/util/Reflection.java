@@ -1,4 +1,4 @@
-package net.rka.server.fw.util;
+package net.nnwsf.util;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,8 +16,8 @@ import java.util.jar.JarFile;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import net.rka.server.fw.configuration.ServerConfiguration;
-import net.rka.server.fw.configuration.ServerConfigurationImpl;
+import net.nnwsf.configuration.ServerConfiguration;
+import net.nnwsf.configuration.ServerConfigurationImpl;
 
 public class Reflection {
 

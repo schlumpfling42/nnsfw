@@ -1,4 +1,9 @@
-package net.rka.server.fw.controller;
+package net.example;
+
+import net.nnwsf.controller.Controller;
+import net.nnwsf.controller.Get;
+import net.nnwsf.controller.PathVariable;
+import net.nnwsf.controller.RequestParameter;
 
 @Controller("/")
 public class ExampleController {

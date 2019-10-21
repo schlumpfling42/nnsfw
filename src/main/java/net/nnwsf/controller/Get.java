@@ -1,11 +1,11 @@
-package net.rka.server.fw.controller;
+package net.nnwsf.controller;
 
 import java.lang.annotation.*;
 
 @Documented
-@Target(ElementType.TYPE)
+@Target(ElementType.METHOD)
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Controller {
+public @interface Get {
     String value() default "/";
 }

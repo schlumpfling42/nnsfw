@@ -1,27 +1,25 @@
-package net.rka.server.fw;
+package net.nnwsf;
 
 import java.lang.annotation.Annotation;
-import java.net.URI;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import javax.management.relation.Relation;
-
 import io.undertow.Undertow;
-import net.rka.server.fw.handler.HttpHandlerImplementation;
-import net.rka.server.fw.configuration.AnnotationConfiguration;
-import net.rka.server.fw.configuration.ServerConfigurationImpl;
-import net.rka.server.fw.controller.Controller;
-import net.rka.server.fw.util.ClassDiscovery;
-import net.rka.server.fw.util.Reflection;
+import net.nnwsf.configuration.AnnotationConfiguration;
+import net.nnwsf.handler.HttpHandlerImplementation;
+import net.nnwsf.configuration.ServerConfigurationImpl;
+import net.nnwsf.controller.Controller;
+import net.nnwsf.util.ClassDiscovery;
+import net.nnwsf.util.Reflection;
 
 public class Server {
+
+    private final static Logger log = Logger.getLogger(Server.class.getName());
 
     private static Server instance;
 
@@ -42,6 +40,7 @@ public class Server {
             throw new RuntimeException("Unable to discover annotated classes", e);
         }
         configuration = Reflection.getInstance().getConfiguration(applicationClass);
+        log.info("Starting server at " + configuration.getHostname() + " port " + configuration.getPort());
         Undertow server = Undertow.builder()
                 .addHttpListener(configuration.getPort(), configuration.getHostname())
                 .setHandler(httpHandler)

@@ -1,12 +1,10 @@
-package net.rka.server.fw.util;
+package net.nnwsf.util;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Enumeration;
-import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -36,8 +34,6 @@ public class ClassDiscovery {
 		if (resource == null) {
 			throw new RuntimeException("Unexpected problem: No resource for " + relPath);
 		}
-		
-		log.log(Level.INFO, "Package: '" + pkgname + "' becomes Resource: '" + resource.toString() + "'");
 
 		//If the resource is a jar get all classes from jar
 		if(resource.toString().startsWith("jar:")) {
@@ -54,11 +50,8 @@ public class ClassDiscovery {
 		
 		//Turn package name to relative path to jar file
 		String relPath = pkgname.replace('.', '/');
-		log.log(Level.INFO, "relative path: "+relPath);
 		String resPath = resource.getPath();
-		log.log(Level.INFO, "resource path: "+resPath);
 		String jarPath = resPath.replaceFirst("[.]jar[!].*", ".jar").replaceFirst("file:", "");
-		// jarPath = jarPath.replace(" ", "\\ ");
 		log.log(Level.INFO, "Reading JAR file: '" + jarPath + "'");
 		
 		try(JarFile jarFile = new JarFile(jarPath)) {
@@ -71,6 +64,7 @@ public class ClassDiscovery {
 					className = entryName.replace('/', '.').replace('\\', '.').replace(".class", "");
 					log.log(Level.INFO, "JarEntry '" + entryName + "'  =>  class '" + className + "'");
 					return loadClass(classLoader, className);
+
 				})
 				.collect(Collectors.toList());
 		} catch (IOException e) {
@@ -92,23 +86,17 @@ public class ClassDiscovery {
 		
 		ArrayList<Class<?>> classes = new ArrayList<Class<?>>();
 		 
-		log.log(Level.INFO, "Reading Directory '" + directory + "'");
-		
-		// Get the list of the files contained in the package
 		String[] files = directory.list();
 		for (int i = 0; i < files.length; i++) {
 			String fileName = files[i];
 			String className = null;
 			
-			// we are only interested in .class files
 			if (fileName.endsWith(".class")) {
-				// removes the .class extension
 				className = pkgname + '.' + fileName.substring(0, fileName.length() - 6);
 			}
 			
-			log.log(Level.INFO, "FileName '" + fileName + "'  =>  class '" + className + "'");
-			
 			if (className != null) {
+				log.log(Level.INFO, "FileName '" + fileName + "'  =>  class '" + className + "'");
 				classes.add(loadClass(classLoader, className));
 			}
 			
