@@ -15,8 +15,8 @@ public class ExampleController {
     }
 
     @Post("/")
-    public String Post(@RequestBody String body) {
-        return body;
+    public String Post(@RequestBody ExampleBean data) {
+        return data.getName();
     }
 
     @Get("/")

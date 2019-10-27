@@ -18,8 +18,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
 import net.nnwsf.controller.Controller;
 import net.nnwsf.controller.Get;
@@ -115,15 +119,18 @@ public class HttpHandlerImplementation implements HttpHandler {
 	private class MethodParameter {
 		private final Annotation annotation;
 		private final String name;
-		MethodParameter(Annotation annotation, String name) {
+		private final Class<?> type;
+		MethodParameter(Annotation annotation, String name, Class<?> type) {
 			this.annotation = annotation;
 			this.name = name;
+			this.type = type;
 		}
 
 		@Override
 		public String toString() {
-			return "MethodParameter [annotation=" + annotation + ", name=" + name + "]";
+			return "MethodParameter [annotation=" + annotation + ", name=" + name + ", type=" + type + "]";
 		}
+
 	}
 
 	private class ControllerProxy {
@@ -148,10 +155,12 @@ public class HttpHandlerImplementation implements HttpHandler {
 
 	private final Map<URLMatcher, ControllerProxy> proxies = new HashMap<>();
 	private final Collection<Class<?>> controllerClasses;
+	private final Gson gson;
 
 
 	public HttpHandlerImplementation(Collection<Class<?>> controllerClasses) {
 		this.controllerClasses = controllerClasses;
+		this.gson = new GsonBuilder().create();
 	}
 
 	@Override
@@ -190,7 +199,11 @@ public class HttpHandlerImplementation implements HttpHandler {
 								body.append(buffer, 0, read);
 							}
 						}
-						parameters[i] = body.toString();
+						if(exchange.getRequestHeaders().get(Headers.CONTENT_TYPE).contains("application/json")) {
+							parameters[i] = gson.fromJson(body.toString(), methodParameter.type);
+						} else if(methodParameter.type.isAssignableFrom(String.class)) {
+							parameters[i] = body.toString();
+						}
 					}
 				}
 			}
@@ -272,11 +285,11 @@ public class HttpHandlerImplementation implements HttpHandler {
 			if(parameterAnnotations[i] != null ) {
 				for(Annotation aParameterAnnotation : parameterAnnotations[i]) {
 					if(aParameterAnnotation.annotationType().isAssignableFrom(RequestParameter.class)) {
-						methodParameters[i] = new MethodParameter(aParameterAnnotation, ((RequestParameter)aParameterAnnotation).value());
+						methodParameters[i] = new MethodParameter(aParameterAnnotation, ((RequestParameter)aParameterAnnotation).value(), annotatedMethod.getParameterTypes()[i]);
 					} else if(aParameterAnnotation.annotationType().isAssignableFrom(PathVariable.class)) {
-						methodParameters[i] = new MethodParameter(aParameterAnnotation, ((PathVariable)aParameterAnnotation).value());
+						methodParameters[i] = new MethodParameter(aParameterAnnotation, ((PathVariable)aParameterAnnotation).value(), annotatedMethod.getParameterTypes()[i]);
 					} else if(aParameterAnnotation.annotationType().isAssignableFrom(RequestBody.class)) {
-						methodParameters[i] = new MethodParameter(aParameterAnnotation, "body");
+						methodParameters[i] = new MethodParameter(aParameterAnnotation, "body", annotatedMethod.getParameterTypes()[i]);
 					}
 				}
 			}

@@ -20,7 +20,8 @@ repositories {
 
 dependencies {
     compile "io.undertow:undertow-core:$undertowVersion",
-            "io.undertow:undertow-servlet:$undertowVersion"
+            "io.undertow:undertow-servlet:$undertowVersion",
+            "com.google.code.gson:gson:2.8.6"
 }
 jar {
     manifest {
