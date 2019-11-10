@@ -1,21 +1,19 @@
 package net.nnwsf;
 
-import java.lang.annotation.Annotation;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-
 import io.undertow.Undertow;
+import io.undertow.server.HttpHandler;
+import net.nnwsf.authentication.AuthenticationMechanism;
 import net.nnwsf.configuration.AnnotationConfiguration;
-import net.nnwsf.handler.HttpHandlerImplementation;
+import net.nnwsf.configuration.ServerConfiguration;
 import net.nnwsf.configuration.ServerConfigurationImpl;
 import net.nnwsf.controller.Controller;
+import net.nnwsf.handler.HttpHandlerImpl;
 import net.nnwsf.util.ClassDiscovery;
 import net.nnwsf.util.Reflection;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.logging.Logger;
 
 public class Server {
 
@@ -32,10 +30,12 @@ public class Server {
 
     private Server(Class<?> applicationClass) {
         AnnotationConfiguration annotationConfiguration = Reflection.getInstance().findAnnotation(applicationClass, AnnotationConfiguration.class);
-        HttpHandlerImplementation httpHandler;
+        ServerConfiguration serverConfiguration = Reflection.getInstance().findAnnotation(applicationClass, ServerConfiguration.class);
+        HttpHandler httpHandler;
         try {
-            Collection<Class<?>> controllerClasses = discoverAnnotatedClasses(applicationClass.getClassLoader(), annotationConfiguration.value(), Controller.class).get(Controller.class);
-            httpHandler = new HttpHandlerImplementation(controllerClasses);
+            Collection<Class<Object>> controllerClasses = ClassDiscovery.getInstance().discoverAnnotatedClasses(applicationClass.getClassLoader(), annotationConfiguration.value(), Object.class, Controller.class).get(Controller.class);
+            Collection<Class<io.undertow.security.api.AuthenticationMechanism>> authenticationMechanimsClasses = ClassDiscovery.getInstance().discoverAnnotatedClasses(applicationClass.getClassLoader(), annotationConfiguration.value(), io.undertow.security.api.AuthenticationMechanism.class, AuthenticationMechanism.class).get(AuthenticationMechanism.class);
+            httpHandler = new HttpHandlerImpl(applicationClass.getClassLoader(), serverConfiguration.resourcePath(), controllerClasses, authenticationMechanimsClasses);
         } catch(Exception e) {
             throw new RuntimeException("Unable to discover annotated classes", e);
         }
@@ -52,27 +52,4 @@ public class Server {
         return configuration;
     }
 
-    private Map<Class<?>, Collection<Class<?>>> discoverAnnotatedClasses(ClassLoader classloader, String rootPackage, Class<?>... annotationClasses) throws Exception {
-        Map<Class<?>, Collection<Class<?>>> allAnnotatedClasses = new HashMap<>();
-        Collection<Package> packagesToScan = Arrays.stream(Package.getPackages()).filter(p -> p.getName().startsWith(rootPackage)).collect(Collectors.toList());
-        for (Package aPackage : packagesToScan) {
-            Collection<Class<?>> classes = ClassDiscovery.getInstance().getClassesForPackage(aPackage, classloader);
-            for (Class<?> aClass : classes) {
-                for (Class<?> annotationClass : annotationClasses) {
-                    Annotation[] classAnnotations = aClass.getAnnotations();
-                    for (Annotation aClassAnnotation : classAnnotations) {
-                        if(aClassAnnotation.annotationType().isAssignableFrom(annotationClass)) {
-                            Collection<Class<?>> classesForAnnotation = allAnnotatedClasses.get(annotationClass);
-                            if(classesForAnnotation == null) {
-                                classesForAnnotation = new HashSet<>();
-                                allAnnotatedClasses.put(annotationClass, classesForAnnotation);
-                            }
-                            classesForAnnotation.add(aClass);
-                        }
-                    }
-                }
-            }
-        }
-        return allAnnotatedClasses;
-    }
 }

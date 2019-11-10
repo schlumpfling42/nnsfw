@@ -8,4 +8,5 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ServerConfiguration {
     Class<? extends ServerConfigurationImpl> value() default ServerConfigurationImpl.class;
+    String resourcePath() default "";
 }

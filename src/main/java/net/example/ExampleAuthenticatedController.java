@@ -1,17 +1,16 @@
 package net.example;
 
-import net.nnwsf.controller.Controller;
-import net.nnwsf.controller.Get;
-import net.nnwsf.controller.PathVariable;
-import net.nnwsf.controller.Post;
-import net.nnwsf.controller.RequestBody;
-import net.nnwsf.controller.RequestParameter;
+import net.nnwsf.authentication.Authenticated;
+import net.nnwsf.controller.*;
 
-@Controller("/test")
-public class ExampleController {
+import java.security.Principal;
+
+@Controller("/auth")
+@Authenticated
+public class ExampleAuthenticatedController {
     @Get("/")
-    public String get() {
-        return "Hello example";
+    public String get(@AuthenticationPrincipal() Principal principal) {
+        return "Hello example. User = " + principal.getName();
     }
 
     @Post("/")

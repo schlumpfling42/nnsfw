@@ -1,23 +1,13 @@
 package net.nnwsf.util;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import net.nnwsf.configuration.ServerConfiguration;
 import net.nnwsf.configuration.ServerConfigurationImpl;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Reflection {
 
@@ -68,5 +58,17 @@ public class Reflection {
             }
         }
         return null;
+    }
+
+    public <T> Collection<T> getInstances(Collection<Class<T>> classes) {
+        Collection<T> instances = new ArrayList<>();
+        for (Class<T> aClass : classes) {
+            try {
+                instances.add(aClass.newInstance());
+            } catch(Exception e) {
+                log.log(Level.SEVERE, "Unable to create instance of " + aClass);
+            }
+        }
+        return instances;
     }
 }
