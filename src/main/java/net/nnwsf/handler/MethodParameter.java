@@ -1,7 +1,5 @@
 package net.nnwsf.handler;
 
-import java.lang.annotation.Annotation;
-
 class MethodParameter {
 
     private final String name;

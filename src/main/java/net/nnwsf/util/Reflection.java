@@ -1,5 +1,6 @@
 package net.nnwsf.util;
 
+import net.nnwsf.configuration.Server;
 import net.nnwsf.configuration.ServerConfiguration;
 import net.nnwsf.configuration.ServerConfigurationImpl;
 
@@ -19,8 +20,8 @@ public class Reflection {
         return instance;
     }
 
-    public ServerConfigurationImpl getConfiguration(Class<?> aClass) {
-        ServerConfiguration annotation = findAnnotation(aClass, ServerConfiguration.class);
+    public ServerConfiguration getConfiguration(Class<?> aClass) {
+        Server annotation = findAnnotation(aClass, Server.class);
         if(annotation == null) {
             throw new RuntimeException("No configuration provided");
         }
@@ -60,13 +61,26 @@ public class Reflection {
         return null;
     }
 
+    public <T extends Annotation> Collection<T> findAnnotations(Class<?> aClass, Class<T> annotationClass) {
+        Collection<T> foundAnnotations = new ArrayList<>();
+        Annotation[] annotations = aClass.getAnnotations();
+        for(Annotation annotation : annotations) {
+            if(annotation.annotationType().isAssignableFrom(annotationClass)) {
+                foundAnnotations.add((T)annotation);
+            }
+        }
+        return foundAnnotations;
+    }
+
     public <T> Collection<T> getInstances(Collection<Class<T>> classes) {
         Collection<T> instances = new ArrayList<>();
-        for (Class<T> aClass : classes) {
-            try {
-                instances.add(aClass.newInstance());
-            } catch(Exception e) {
-                log.log(Level.SEVERE, "Unable to create instance of " + aClass);
+        if(classes != null) {
+            for (Class<T> aClass : classes) {
+                try {
+                    instances.add(aClass.newInstance());
+                } catch(Exception e) {
+                    log.log(Level.SEVERE, "Unable to create instance of " + aClass);
+                }
             }
         }
         return instances;

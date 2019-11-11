@@ -1,7 +1,25 @@
 package net.nnwsf.handler;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import static net.nnwsf.handler.ControllerProxy.CONTROLLER_PROXY_ATTACHMENT_KEY;
+import static net.nnwsf.handler.URLMatcher.URL_MATCHER_ATTACHMENT_KEY;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import io.undertow.security.api.AuthenticationMechanism;
 import io.undertow.security.api.AuthenticationMode;
 import io.undertow.security.handlers.AuthenticationCallHandler;
@@ -14,20 +32,14 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HttpString;
 import net.nnwsf.authentication.Authenticated;
 import net.nnwsf.authentication.IdentityManagerImplementation;
-import net.nnwsf.controller.*;
+import net.nnwsf.controller.AuthenticationPrincipal;
+import net.nnwsf.controller.Controller;
+import net.nnwsf.controller.Get;
+import net.nnwsf.controller.PathVariable;
+import net.nnwsf.controller.Post;
+import net.nnwsf.controller.RequestBody;
+import net.nnwsf.controller.RequestParameter;
 import net.nnwsf.util.Reflection;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-
-import static net.nnwsf.handler.ControllerProxy.CONTROLLER_PROXY_ATTACHMENT_KEY;
-import static net.nnwsf.handler.URLMatcher.URL_MATCHER_ATTACHMENT_KEY;
 
 public class HttpHandlerImpl implements HttpHandler {
 
@@ -36,29 +48,37 @@ public class HttpHandlerImpl implements HttpHandler {
 	private final Map<URLMatcher, Collection<ControllerProxy>> proxies = new HashMap<>();
 	private final Map<URLMatcher, Map<Collection<String>, ControllerProxy>> matchedProxies = new HashMap<>();
 	private final Collection<Class<Object>> controllerClasses;
-	private final Gson gson;
 
-	private final HttpHandler securityHandler;
+	private final HttpHandler controllerSecurityHandler;
 	private final HttpHandler controllerHandler;
+	private final HttpHandler resourceSecurityHandler;
 	private final HttpHandler resourceHandler;
+	private final Collection<String> authenticatedResourcePaths;
 
 
 	public HttpHandlerImpl(
 			ClassLoader applicationClassLoader,
 			String resourcePath,
+			Collection<String> authenticatedResourcePaths,
 			Collection<Class<Object>> controllerClasses,
 			Collection<Class<AuthenticationMechanism>> authenticationMechanisms) {
 		this.controllerClasses = controllerClasses;
-		this.gson = new GsonBuilder().create();
 		IdentityManager identityManager = new IdentityManagerImplementation();
-		controllerHandler = new ControllerHandlerImpl();
-		resourceHandler = new ResourceHandlerImpl(applicationClassLoader, resourcePath);
-		HttpHandler handler = new AuthenticationCallHandler(controllerHandler);
-		handler = new AuthenticationConstraintHandler(handler);
+		this.controllerHandler = new ControllerHandlerImpl();
+		HttpHandler aControllerHandler = new AuthenticationCallHandler(controllerHandler);
+		aControllerHandler = new AuthenticationConstraintHandler(aControllerHandler);
 		List<AuthenticationMechanism> mechanisms = new ArrayList<>(Reflection.getInstance().getInstances(authenticationMechanisms));
-		handler = new AuthenticationMechanismsHandler(handler, mechanisms);
-		securityHandler = new SecurityInitialHandler(
-				AuthenticationMode.CONSTRAINT_DRIVEN, identityManager, handler);
+		aControllerHandler = new AuthenticationMechanismsHandler(aControllerHandler, mechanisms);
+		controllerSecurityHandler = new SecurityInitialHandler(
+				AuthenticationMode.CONSTRAINT_DRIVEN, identityManager, aControllerHandler);
+
+		this.authenticatedResourcePaths = authenticatedResourcePaths;
+		resourceHandler = new ResourceHandlerImpl(applicationClassLoader, resourcePath);
+		HttpHandler aResourceHandler = new AuthenticationCallHandler(resourceHandler);
+		aResourceHandler = new AuthenticationConstraintHandler(aResourceHandler);
+		aResourceHandler = new AuthenticationMechanismsHandler(aResourceHandler, mechanisms);
+		resourceSecurityHandler = new SecurityInitialHandler(
+			AuthenticationMode.CONSTRAINT_DRIVEN, identityManager, aResourceHandler);
 	}
 
 	@Override
@@ -69,7 +89,6 @@ public class HttpHandlerImpl implements HttpHandler {
     	}
 		log.log(Level.INFO, "HttpRequest: start");
 		HttpString method = exchange.getRequestMethod();
-		Map<String, Deque<String>> queryParameters = exchange.getQueryParameters();
 
 		URLMatcher requestUrlMatcher = new URLMatcher(method.toString(), exchange.getRequestPath());
 		exchange.putAttachment(URL_MATCHER_ATTACHMENT_KEY, requestUrlMatcher);
@@ -78,12 +97,24 @@ public class HttpHandlerImpl implements HttpHandler {
 		if(proxy != null) {
 			exchange.putAttachment(CONTROLLER_PROXY_ATTACHMENT_KEY, proxy);
 			if(needsAuthentication(proxy)) {
-				securityHandler.handleRequest(exchange);
+				controllerSecurityHandler.handleRequest(exchange);
 			} else {
 				controllerHandler.handleRequest(exchange);
 			}
 		} else {
-			resourceHandler.handleRequest(exchange);
+			boolean authenticate = false;
+			String requestPath = exchange.getRequestPath();
+			for(String aPath : authenticatedResourcePaths) {
+				if(requestPath.startsWith(aPath)) {
+					authenticate = true;
+					break;
+				}
+			}
+			if(authenticate) {
+				resourceSecurityHandler.handleRequest(exchange);
+			} else {
+				resourceHandler.handleRequest(exchange);
+			}
 		}
 		log.log(Level.INFO, "HttpRequest: end");
 	}
@@ -95,7 +126,7 @@ public class HttpHandlerImpl implements HttpHandler {
 
 			Collection<ControllerProxy> matchingProxies = proxies.get(requestUrlMatcher);
 
-			Collection<Class> processedClasses = new HashSet<>();
+			Collection<Class<?>> processedClasses = new HashSet<>();
 
 			for (Class<?> aClass : controllerClasses) {
 				Controller controllerAnnotation = Reflection.getInstance().findAnnotation(aClass, Controller.class);
@@ -238,7 +269,7 @@ public class HttpHandlerImpl implements HttpHandler {
 				}
 			}
 		}
-		Class[] parameters = annotatedMethod.getParameterTypes();
+		Class<?>[] parameters = annotatedMethod.getParameterTypes();
 		for(int i = 0; i< parameters.length; i++) {
 				if(parameters[i].isAssignableFrom(HttpServerExchange.class)) {
 					annotatedMethodParameters[i] = new MethodParameter("exchange", parameters[i]);
