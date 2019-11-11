@@ -1,12 +1,11 @@
 package net.nnwsf.configuration;
 
-import java.lang.annotation.*;
+public interface ServerConfiguration {
 
-@Documented
-@Target(ElementType.TYPE)
-@Inherited
-@Retention(RetentionPolicy.RUNTIME)
-public @interface ServerConfiguration {
-    Class<? extends ServerConfigurationImpl> value() default ServerConfigurationImpl.class;
-    String resourcePath() default "";
+    int getPort();
+
+    String getHostname();
+
+    String getResourcePath();
+
 }

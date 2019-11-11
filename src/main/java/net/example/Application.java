@@ -1,13 +1,15 @@
 package net.example;
 
-import net.nnwsf.Server;
+import net.nnwsf.ApplicationServer;
 import net.nnwsf.configuration.AnnotationConfiguration;
-import net.nnwsf.configuration.ServerConfiguration;
+import net.nnwsf.configuration.AuthenticatedResourcePath;
+import net.nnwsf.configuration.Server;
 
-@ServerConfiguration(resourcePath = "static")
+@Server()
 @AnnotationConfiguration("net.example")
+@AuthenticatedResourcePath("/secure")
 public class Application {
     public static void main(String[] args) {
-         Server.start(Application.class);
+         ApplicationServer.start(Application.class);
     }
 }

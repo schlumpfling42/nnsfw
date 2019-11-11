@@ -1,19 +1,8 @@
 package net.nnwsf.handler;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import io.undertow.server.HttpHandler;
-import io.undertow.server.HttpServerExchange;
-import io.undertow.servlet.handlers.ServletRequestContext;
-import io.undertow.util.Headers;
-import io.undertow.util.HttpString;
-import net.nnwsf.controller.AuthenticationPrincipal;
-import net.nnwsf.controller.PathVariable;
-import net.nnwsf.controller.RequestBody;
-import net.nnwsf.controller.RequestParameter;
+import static net.nnwsf.handler.ControllerProxy.CONTROLLER_PROXY_ATTACHMENT_KEY;
+import static net.nnwsf.handler.URLMatcher.URL_MATCHER_ATTACHMENT_KEY;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.Deque;
@@ -21,17 +10,24 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static net.nnwsf.handler.ControllerProxy.CONTROLLER_PROXY_ATTACHMENT_KEY;
-import static net.nnwsf.handler.URLMatcher.URL_MATCHER_ATTACHMENT_KEY;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.undertow.server.HttpHandler;
+import io.undertow.server.HttpServerExchange;
+import io.undertow.util.Headers;
+import net.nnwsf.controller.AuthenticationPrincipal;
+import net.nnwsf.controller.PathVariable;
+import net.nnwsf.controller.RequestBody;
+import net.nnwsf.controller.RequestParameter;
 
 public class ControllerHandlerImpl implements HttpHandler {
 
 	private final static Logger log = Logger.getLogger(ControllerHandlerImpl.class.getName());
 
-	private final Gson gson;
+	private final ObjectMapper mapper;
 
 	public ControllerHandlerImpl() {
-		this.gson = new GsonBuilder().create();
+		this.mapper = new ObjectMapper();
 	}
 
 	@Override
@@ -40,7 +36,6 @@ public class ControllerHandlerImpl implements HttpHandler {
 		ControllerProxy controllerProxy = exchange.getAttachment(CONTROLLER_PROXY_ATTACHMENT_KEY);
 		URLMatcher requestUrlMatcher = exchange.getAttachment(URL_MATCHER_ATTACHMENT_KEY);
 
-		HttpString method = exchange.getRequestMethod();
 		Map<String, Deque<String>> queryParameters = exchange.getQueryParameters();
 
 		if(controllerProxy != null) {
@@ -75,7 +70,7 @@ public class ControllerHandlerImpl implements HttpHandler {
 								}
 							}
 							if (exchange.getRequestHeaders().get(Headers.CONTENT_TYPE).contains("application/json")) {
-								parameters[i] = gson.fromJson(body.toString(), specialMethodParameter.getType());
+								parameters[i] = mapper.readValue(body.toString(), specialMethodParameter.getType());
 							} else if (specialMethodParameter.getType().isAssignableFrom(String.class)) {
 								parameters[i] = body.toString();
 							}
@@ -94,7 +89,7 @@ public class ControllerHandlerImpl implements HttpHandler {
 				StringBuilder body = new StringBuilder();
 
 				if (exchange.getRequestHeaders().get(Headers.ACCEPT).contains("application/json")) {
-					body.append(gson.toJson(result));
+					body.append(mapper.writeValueAsString(result));
 				} else if (result != null) {
 					body.append(result.toString());
 				}

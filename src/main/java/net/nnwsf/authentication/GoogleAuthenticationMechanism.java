@@ -49,6 +49,11 @@ public abstract class GoogleAuthenticationMechanism implements AuthenticationMec
                         "Oauth2").build();
                 Userinfoplus userinfo = oauth2.userinfo().get().execute();
                 Account account = new Account() {
+                    /**
+                     *
+                     */
+                    private static final long serialVersionUID = 840979126383464426L;
+
                     @Override
                     public Principal getPrincipal() {
                         return new Principal() {
