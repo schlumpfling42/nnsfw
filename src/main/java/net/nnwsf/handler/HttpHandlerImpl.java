@@ -72,8 +72,15 @@ public class HttpHandlerImpl implements HttpHandler {
 		controllerSecurityHandler = new SecurityInitialHandler(
 				AuthenticationMode.CONSTRAINT_DRIVEN, identityManager, aControllerHandler);
 
+		String cleanedResourcePath = "";
+		if(resourcePath.startsWith("/")) {
+			cleanedResourcePath = resourcePath.substring(1);
+		} else {
+			cleanedResourcePath = resourcePath;
+		}
+
 		this.authenticatedResourcePaths = authenticatedResourcePaths;
-		resourceHandler = new ResourceHandlerImpl(applicationClassLoader, resourcePath);
+		resourceHandler = new ResourceHandlerImpl(applicationClassLoader, cleanedResourcePath);
 		HttpHandler aResourceHandler = new AuthenticationCallHandler(resourceHandler);
 		aResourceHandler = new AuthenticationConstraintHandler(aResourceHandler);
 		aResourceHandler = new AuthenticationMechanismsHandler(aResourceHandler, mechanisms);

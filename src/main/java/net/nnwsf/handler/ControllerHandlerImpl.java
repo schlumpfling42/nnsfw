@@ -9,12 +9,14 @@ import java.util.Deque;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
+import io.undertow.util.HttpString;
 import net.nnwsf.controller.AuthenticationPrincipal;
 import net.nnwsf.controller.PathVariable;
 import net.nnwsf.controller.RequestBody;
@@ -69,7 +71,7 @@ public class ControllerHandlerImpl implements HttpHandler {
 									body.append(buffer, 0, read);
 								}
 							}
-							if (exchange.getRequestHeaders().get(Headers.CONTENT_TYPE).contains("application/json")) {
+							if (shouldProcessJson(exchange, Headers.CONTENT_TYPE)) {
 								parameters[i] = mapper.readValue(body.toString(), specialMethodParameter.getType());
 							} else if (specialMethodParameter.getType().isAssignableFrom(String.class)) {
 								parameters[i] = body.toString();
@@ -88,7 +90,7 @@ public class ControllerHandlerImpl implements HttpHandler {
 			if(!exchange.isComplete()) {
 				StringBuilder body = new StringBuilder();
 
-				if (exchange.getRequestHeaders().get(Headers.ACCEPT).contains("application/json")) {
+				if (shouldProcessJson(exchange, Headers.ACCEPT)) {
 					body.append(mapper.writeValueAsString(result));
 				} else if (result != null) {
 					body.append(result.toString());
@@ -100,6 +102,11 @@ public class ControllerHandlerImpl implements HttpHandler {
 			exchange.setStatusCode(404);
 		}
 		log.log(Level.INFO, "Controller request: end");
+	}
+
+	private boolean shouldProcessJson(HttpServerExchange exchange, HttpString header) {
+		String acceptHeadersCombined = exchange.getRequestHeaders().get(header).stream().collect(Collectors.joining());
+		return acceptHeadersCombined.contains("application/json");
 	}
 
 }
