@@ -5,6 +5,7 @@ import net.nnwsf.configuration.ServerConfiguration;
 import net.nnwsf.configuration.ServerConfigurationImpl;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.logging.Level;
@@ -51,6 +52,21 @@ public class Reflection {
             }
         }
         return annotationMethodMap;
+    }
+
+    public Collection<Field> findAnnotationFields(Class<?> aClass, Class<?> annotationClass) {
+        Collection<Field> annotatedFields = new ArrayList<>();
+        Field[] fields = aClass.getDeclaredFields();
+        for(Field field : fields) {
+            Annotation[] annotations = field.getAnnotations();
+            for(Annotation annotation : annotations) {
+                    if (annotation.annotationType().isAssignableFrom(annotationClass)) {
+                        field.setAccessible(true);
+                        annotatedFields.add(field);
+                    }
+            }
+        }
+        return annotatedFields;
     }
 
     public <T extends Annotation> T findAnnotation(Class<?> aClass, Class<T> annotationClass) {

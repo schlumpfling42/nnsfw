@@ -40,14 +40,15 @@ public class ApplicationServer {
     private ApplicationServer(Class<?> applicationClass) {
         AnnotationConfiguration annotationConfiguration = Reflection.getInstance().findAnnotation(applicationClass, AnnotationConfiguration.class);
         configuration = Reflection.getInstance().getConfiguration(applicationClass);
+        ClassDiscovery.init(applicationClass.getClassLoader(), annotationConfiguration.value());
         Collection<String> authenticatedResourcePaths = Reflection.getInstance()
             .findAnnotations(applicationClass, AuthenticatedResourcePath.class)
             .stream().map(annotation -> annotation.value())
             .collect(Collectors.toList());
         HttpHandler httpHandler;
         try {
-            Collection<Class<Object>> controllerClasses = ClassDiscovery.getInstance().discoverAnnotatedClasses(applicationClass.getClassLoader(), annotationConfiguration.value(), Object.class, Controller.class).get(Controller.class);
-            Collection<Class<io.undertow.security.api.AuthenticationMechanism>> authenticationMechanimsClasses = ClassDiscovery.getInstance().discoverAnnotatedClasses(applicationClass.getClassLoader(), annotationConfiguration.value(), io.undertow.security.api.AuthenticationMechanism.class, AuthenticationMechanism.class).get(AuthenticationMechanism.class);
+            Collection<Class<Object>> controllerClasses = ClassDiscovery.getInstance().discoverAnnotatedClasses(Object.class, Controller.class);
+            Collection<Class<io.undertow.security.api.AuthenticationMechanism>> authenticationMechanimsClasses = ClassDiscovery.getInstance().discoverAnnotatedClasses(io.undertow.security.api.AuthenticationMechanism.class, AuthenticationMechanism.class);
             httpHandler = new HttpHandlerImpl(applicationClass.getClassLoader(), configuration.getResourcePath(), authenticatedResourcePaths, controllerClasses, authenticationMechanimsClasses);
         } catch(Exception e) {
             throw new RuntimeException("Unable to discover annotated classes", e);
