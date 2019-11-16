@@ -7,8 +7,14 @@ import net.nnwsf.controller.Post;
 import net.nnwsf.controller.RequestBody;
 import net.nnwsf.controller.RequestParameter;
 
+import javax.inject.Inject;
+
 @Controller("/test")
 public class ExampleController {
+
+    @Inject
+    private ExampleService service;
+
     @Get("/")
     public String get() {
         return "Hello example";
@@ -22,11 +28,11 @@ public class ExampleController {
 
     @Get("/")
     public String getQuery(@RequestParameter("echo") String echo, String ignore) {
-        return echo;
+        return service.echo(echo);
     }
 
     @Get("/{echo}")
     public String getRequest(@PathVariable("echo") String echo, String ignore) {
-        return echo;
+        return service.echo(echo);
     }
 }

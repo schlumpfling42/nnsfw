@@ -14,71 +14,86 @@ public class ClassDiscovery {
 
     private static Logger log = Logger.getLogger(ClassDiscovery.class.getName());
 
-    private static ClassDiscovery instance = new ClassDiscovery();
+    private static ClassDiscovery instance;
+
+    public static void init(ClassLoader applicationClassLoader, String rootPackage) {
+    	 instance = new ClassDiscovery(applicationClassLoader, rootPackage);
+	}
+
+	private final ClassLoader applicationClassLoader;
+
+	private final Collection<Class<?>> discoveredClasses;
+	private final Map<Class<?>, Class<?>> implementations;
+
+	private ClassDiscovery(ClassLoader applicationClassLoader, String rootPackage) {
+		this.applicationClassLoader = applicationClassLoader;
+		Collection<Package> packagesToScan = Arrays.stream(Package.getPackages()).filter(p -> p.getName().startsWith(rootPackage)).collect(Collectors.toList());
+		this.discoveredClasses = Collections.synchronizedCollection(getClassesForPackages(packagesToScan));
+		this.implementations = Collections.synchronizedMap(new HashMap<>());
+	}
 
     public static ClassDiscovery getInstance() {
         return instance;
     }
 
-    private final Map<Package, Collection<Class<?>>> discoveredClasses = Collections.synchronizedMap(new HashMap<>());
+	private synchronized Collection<Class<?>> getClassesForPackages(Collection<Package> packagesToScan) {
+		Collection<Class<?>> classes = new HashSet<>();
+		for(Package pkg : packagesToScan) {
+			//Get name of package and turn it to a relative path
+			String pkgname = pkg.getName();
+			String relPath = pkgname.replace('.', '/');
 
-	private Collection<Class<?>> getClassesForPackage(Package pkg, ClassLoader classLoader) {
+			// Get a File object for the package
+			URL resource = ClassLoader.getSystemClassLoader().getResource(relPath);
 
-		synchronized (pkg) {
-			Collection<Class<?>> classes = discoveredClasses.get(pkg);
-			if (classes == null) {
-				classes = new HashSet<>();
-				discoveredClasses.put(pkg, classes);
-
-				//Get name of package and turn it to a relative path
-				String pkgname = pkg.getName();
-				String relPath = pkgname.replace('.', '/');
-
-				// Get a File object for the package
-				URL resource = ClassLoader.getSystemClassLoader().getResource(relPath);
-
-				//If we can't find the resource we throw an exception
-				if (resource == null) {
-					throw new RuntimeException("Unexpected problem: No resource for " + relPath);
-				}
-
-				//If the resource is a jar get all classes from jar
-				if (resource.toString().startsWith("jar:")) {
-					classes.addAll(processJarfile(resource, pkgname, classLoader));
-				} else {
-					classes.addAll(processDirectory(new File(resource.getPath()), pkgname, classLoader));
-				}
+			//If we can't find the resource we throw an exception
+			if (resource == null) {
+				throw new RuntimeException("Unexpected problem: No resource for " + relPath);
 			}
 
-			return classes;
+			//If the resource is a jar get all classes from jar
+			if (resource.toString().startsWith("jar:")) {
+				classes.addAll(processJarfile(resource, pkgname));
+			} else {
+				classes.addAll(processDirectory(new File(resource.getPath()), pkgname));
+			}
 		}
+		return classes;
     }
 
-	public <T> Map<Class<?>, Collection<Class<T>>> discoverAnnotatedClasses(ClassLoader classloader, String rootPackage, Class<T> type, Class<?>... annotationClasses) throws Exception {
-		Map<Class<?>, Collection<Class<T>>> allAnnotatedClasses = new HashMap<>();
-		Collection<Package> packagesToScan = Arrays.stream(Package.getPackages()).filter(p -> p.getName().startsWith(rootPackage)).collect(Collectors.toList());
-		for (Package aPackage : packagesToScan) {
-			Collection<Class<?>> classes = ClassDiscovery.getInstance().getClassesForPackage(aPackage, classloader);
-			for (Class<?> aClass : classes) {
-				for (Class<?> annotationClass : annotationClasses) {
-					Annotation[] classAnnotations = aClass.getAnnotations();
-					for (Annotation aClassAnnotation : classAnnotations) {
-						if(aClassAnnotation.annotationType().isAssignableFrom(annotationClass)) {
-							Collection<Class<T>> classesForAnnotation = allAnnotatedClasses.get(annotationClass);
-							if(classesForAnnotation == null) {
-								classesForAnnotation = new HashSet<>();
-								allAnnotatedClasses.put(annotationClass, classesForAnnotation);
-							}
-							classesForAnnotation.add((Class<T>)aClass);
-						}
+	public <T> Collection<Class<T>> discoverAnnotatedClasses(Class<T> type, Class<?>... annotationClasses) throws Exception {
+		Collection<Class<T>> allAnnotatedClasses = new HashSet<>();
+		for (Class<?> aClass : discoveredClasses) {
+			for (Class<?> annotationClass : annotationClasses) {
+				Annotation[] classAnnotations = aClass.getAnnotations();
+				for (Annotation aClassAnnotation : classAnnotations) {
+					if(aClassAnnotation.annotationType().isAssignableFrom(annotationClass)) {
+						allAnnotatedClasses.add((Class<T>)aClass);
 					}
 				}
 			}
 		}
 		return allAnnotatedClasses;
 	}
-    
-	private Collection<Class<?>> processJarfile(URL resource, String pkgname, ClassLoader classLoader) {
+
+	public <T> Class<T> getImplementation(Class<T> aClass) {
+		if(aClass.isInterface()) {
+			Class<T> implementation = (Class<T>)implementations.get(aClass);
+			if(implementation == null) {
+				for(Class<?> aDiscoveredClass : discoveredClasses) {
+					if(!aDiscoveredClass.isInterface() && aClass.isAssignableFrom(aDiscoveredClass)) {
+						implementation = (Class<T>)aDiscoveredClass;
+						implementations.put(aClass, implementation);
+					}
+				}
+			}
+			return  implementation;
+		} else {
+			return aClass;
+		}
+	}
+
+	private Collection<Class<?>> processJarfile(URL resource, String pkgname) {
 		Collection<Class<?>> classes = new ArrayList<Class<?>>();
 		
 		//Turn package name to relative path to jar file
@@ -96,7 +111,7 @@ public class ClassDiscovery {
 					String className = null;
 					className = entryName.replace('/', '.').replace('\\', '.').replace(".class", "");
 					log.log(Level.INFO, "JarEntry '" + entryName + "'  =>  class '" + className + "'");
-					return loadClass(classLoader, className);
+					return loadClass(applicationClassLoader, className);
 
 				})
 				.collect(Collectors.toList());
@@ -115,7 +130,7 @@ public class ClassDiscovery {
 		}
     }
     
-	private Collection<Class<?>> processDirectory(File directory, String pkgname, ClassLoader classLoader) {
+	private Collection<Class<?>> processDirectory(File directory, String pkgname) {
 		
 		ArrayList<Class<?>> classes = new ArrayList<Class<?>>();
 		 
@@ -130,13 +145,13 @@ public class ClassDiscovery {
 			
 			if (className != null) {
 				log.log(Level.INFO, "FileName '" + fileName + "'  =>  class '" + className + "'");
-				classes.add(loadClass(classLoader, className));
+				classes.add(loadClass(applicationClassLoader, className));
 			}
 			
 			//If the file is a directory recursively class this method.
 			File subdir = new File(directory, fileName);
 			if (subdir.isDirectory()) {
-				classes.addAll(processDirectory(subdir, pkgname + '.' + fileName, classLoader));
+				classes.addAll(processDirectory(subdir, pkgname + '.' + fileName));
 			}
 		}
 		return classes;

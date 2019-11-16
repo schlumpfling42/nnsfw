@@ -4,6 +4,7 @@ import static net.nnwsf.handler.ControllerProxy.CONTROLLER_PROXY_ATTACHMENT_KEY;
 import static net.nnwsf.handler.URLMatcher.URL_MATCHER_ATTACHMENT_KEY;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,6 +18,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -33,6 +35,7 @@ import io.undertow.util.HttpString;
 import net.nnwsf.authentication.Authenticated;
 import net.nnwsf.authentication.IdentityManagerImplementation;
 import net.nnwsf.controller.*;
+import net.nnwsf.util.Injection;
 import net.nnwsf.util.Reflection;
 
 public class HttpHandlerImpl implements HttpHandler {
@@ -133,7 +136,7 @@ public class HttpHandlerImpl implements HttpHandler {
 				Controller controllerAnnotation = Reflection.getInstance().findAnnotation(aClass, Controller.class);
 				Collection<Annotation> annotations = Arrays.asList(aClass.getAnnotations());
 				Map<Annotation, Collection<Method>> annotatedMethods = Reflection.getInstance().findAnnotationMethods(aClass, Get.class, Post.class, Put.class, Delete.class);
-				Object object = aClass.getDeclaredConstructor().newInstance();
+				Object object = createObject(aClass);
 				if (annotatedMethods == null) {
 					throw new RuntimeException("Invalid controller");
 				}
@@ -168,6 +171,10 @@ public class HttpHandlerImpl implements HttpHandler {
 		}
 
 		return matchingProxy;
+	}
+
+	private Object createObject(Class<?> aClass) throws Exception {
+		return Injection.getInstance().getInjectable(aClass);
 	}
 
 	private ControllerProxy getBestMatch(HttpServerExchange exchange, URLMatcher requestUrlMatcher) {
