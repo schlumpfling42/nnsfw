@@ -32,19 +32,21 @@ public class Reflection {
         }
     }
 
-    public <T extends Annotation> Map<T, Collection<Method>> findAnnotationMethods(Class<?> aClass, Class<T> annotationClass) {
-        Map<T, Collection<Method>> annotationMethodMap = new HashMap<>();
+    public Map<Annotation, Collection<Method>> findAnnotationMethods(Class<?> aClass, Class<?>... annotationClasses) {
+        Map<Annotation, Collection<Method>> annotationMethodMap = new HashMap<>();
         Method[] methods = aClass.getMethods();
         for(Method method : methods) {
             Annotation[] annotations = method.getAnnotations();
             for(Annotation annotation : annotations) {
-                if(annotation.annotationType().isAssignableFrom(annotationClass)) {
-                    Collection<Method> annotatedMethods = annotationMethodMap.get((T)annotation);
-                    if(annotatedMethods == null) {
-                        annotatedMethods = new HashSet<>();
-                        annotationMethodMap.put((T)annotation, annotatedMethods);
+                for(Class<?> annotationClass : annotationClasses) {
+                    if (annotation.annotationType().isAssignableFrom(annotationClass)) {
+                        Collection<Method> annotatedMethods = annotationMethodMap.get(annotation);
+                        if (annotatedMethods == null) {
+                            annotatedMethods = new HashSet<>();
+                            annotationMethodMap.put((Annotation)annotation, annotatedMethods);
+                        }
+                        annotatedMethods.add(method);
                     }
-                    annotatedMethods.add(method);
                 }
             }
         }
@@ -84,5 +86,13 @@ public class Reflection {
             }
         }
         return instances;
+    }
+
+    public String getValue(Annotation methodAnnotation, String value) {
+        try {
+            return (String)methodAnnotation.getClass().getMethod(value, new Class[0]).invoke(methodAnnotation, new Object[0]);
+        } catch(Exception e) {
+            throw new RuntimeException("Unable to get value from annotation " + methodAnnotation, e);
+        }
     }
 }

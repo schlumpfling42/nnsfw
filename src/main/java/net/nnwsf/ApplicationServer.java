@@ -1,6 +1,8 @@
 package net.nnwsf;
 
 import java.util.Collection;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -18,11 +20,17 @@ import net.nnwsf.util.Reflection;
 
 public class ApplicationServer {
 
-    private final static Logger log = Logger.getLogger(ApplicationServer.class.getName());
+    private static final Logger log = Logger.getLogger(ApplicationServer.class.getName());
 
     private static ApplicationServer instance;
 
     public static ApplicationServer start(Class<?> applicationClass) {
+        try {
+            LogManager.getLogManager().readConfiguration(applicationClass.getClassLoader().getResourceAsStream("logging.properties"));
+        } catch(Exception e) {
+            System.err.println("Unable to read log configuration");
+            e.printStackTrace();
+        }
         instance = new ApplicationServer(applicationClass);
         return instance;
     }

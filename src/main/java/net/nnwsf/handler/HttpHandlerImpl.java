@@ -32,13 +32,7 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HttpString;
 import net.nnwsf.authentication.Authenticated;
 import net.nnwsf.authentication.IdentityManagerImplementation;
-import net.nnwsf.controller.AuthenticationPrincipal;
-import net.nnwsf.controller.Controller;
-import net.nnwsf.controller.Get;
-import net.nnwsf.controller.PathVariable;
-import net.nnwsf.controller.Post;
-import net.nnwsf.controller.RequestBody;
-import net.nnwsf.controller.RequestParameter;
+import net.nnwsf.controller.*;
 import net.nnwsf.util.Reflection;
 
 public class HttpHandlerImpl implements HttpHandler {
@@ -94,7 +88,7 @@ public class HttpHandlerImpl implements HttpHandler {
      		exchange.dispatch(this);
       		return;
     	}
-		log.log(Level.INFO, "HttpRequest: start");
+		log.log(Level.INFO, "HttpRequest: start: {0}: {1}", new Object[] {exchange.getRequestMethod(), exchange.getRequestPath()});
 		HttpString method = exchange.getRequestMethod();
 
 		URLMatcher requestUrlMatcher = new URLMatcher(method.toString(), exchange.getRequestPath());
@@ -138,44 +132,21 @@ public class HttpHandlerImpl implements HttpHandler {
 			for (Class<?> aClass : controllerClasses) {
 				Controller controllerAnnotation = Reflection.getInstance().findAnnotation(aClass, Controller.class);
 				Collection<Annotation> annotations = Arrays.asList(aClass.getAnnotations());
-				Map<Get, Collection<Method>> annotatedGetMethods = Reflection.getInstance().findAnnotationMethods(aClass, Get.class);
-				Map<Post, Collection<Method>> annotatedPostMethods = Reflection.getInstance().findAnnotationMethods(aClass, Post.class);
+				Map<Annotation, Collection<Method>> annotatedMethods = Reflection.getInstance().findAnnotationMethods(aClass, Get.class, Post.class, Put.class, Delete.class);
 				Object object = aClass.getDeclaredConstructor().newInstance();
-				if (annotatedGetMethods == null) {
+				if (annotatedMethods == null) {
 					throw new RuntimeException("Invalid controller");
 				}
-				for (Get methodAnnotation : annotatedGetMethods.keySet()) {
-					for (Method annotatedMethod : annotatedGetMethods.get(methodAnnotation)) {
+				for (Annotation methodAnnotation : annotatedMethods.keySet()) {
+					for (Method annotatedMethod : annotatedMethods.get(methodAnnotation)) {
 						if (annotatedMethod == null) {
 							throw new RuntimeException("Invalid controller");
 						}
 						AnnotatedMethodParameter[] annotatedMethodParameters = getMethodParameters(annotatedMethod);
 						MethodParameter[] specialMethodParameters = getSpecialMethodParameters(annotatedMethod);
 						URLMatcher proxyUrlMatcher = new URLMatcher(
-								"Get",
-								(controllerAnnotation.value() + "/" + methodAnnotation.value()).replace("/+", "/"));
-
-						matchingProxies = proxies.get(proxyUrlMatcher);
-						if (matchingProxies == null) {
-							matchingProxies = new ArrayList<>();
-							proxies.put(proxyUrlMatcher, matchingProxies);
-							matchedProxies.put(proxyUrlMatcher, new HashMap<>());
-						}
-
-						matchingProxies.add(new ControllerProxy(object, annotations, annotatedMethod, annotatedMethodParameters, specialMethodParameters, Arrays.asList(proxyUrlMatcher.getPathElements())));
-					}
-				}
-
-				for (Post methodAnnotation : annotatedPostMethods.keySet()) {
-					for (Method annotatedMethod : annotatedPostMethods.get(methodAnnotation)) {
-						if (annotatedMethod == null) {
-							throw new RuntimeException("Invalid controller");
-						}
-						AnnotatedMethodParameter[] annotatedMethodParameters = getMethodParameters(annotatedMethod);
-						MethodParameter[] specialMethodParameters = getSpecialMethodParameters(annotatedMethod);
-						URLMatcher proxyUrlMatcher = new URLMatcher(
-								"Post",
-								(controllerAnnotation.value() + "/" + methodAnnotation.value()).replace("/+", "/"));
+								methodAnnotation.annotationType().getSimpleName(),
+								(controllerAnnotation.value() + "/" + Reflection.getInstance().getValue(methodAnnotation, "value").replace("/+", "/")));
 
 						matchingProxies = proxies.get(proxyUrlMatcher);
 						if (matchingProxies == null) {
