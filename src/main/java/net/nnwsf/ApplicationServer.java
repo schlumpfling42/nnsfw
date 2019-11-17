@@ -1,10 +1,8 @@
 package net.nnwsf;
 
 import java.util.Collection;
-import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import io.undertow.Undertow;

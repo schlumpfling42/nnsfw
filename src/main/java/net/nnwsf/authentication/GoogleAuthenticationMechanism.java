@@ -1,5 +1,12 @@
 package net.nnwsf.authentication;
 
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.security.Principal;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
+
 import com.google.api.client.auth.oauth2.BrowserClientRequestUrl;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
@@ -7,22 +14,13 @@ import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.oauth2.Oauth2;
 import com.google.api.services.oauth2.model.Userinfoplus;
+
 import io.undertow.security.api.AuthenticationMechanism;
 import io.undertow.security.api.SecurityContext;
 import io.undertow.security.idm.Account;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.server.handlers.Cookie;
 import io.undertow.util.Headers;
-import io.undertow.util.RedirectBuilder;
 import io.undertow.util.StatusCodes;
-
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URLEncoder;
-import java.security.Principal;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Set;
 
 public abstract class GoogleAuthenticationMechanism implements AuthenticationMechanism {
 

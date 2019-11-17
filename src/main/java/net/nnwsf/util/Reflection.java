@@ -1,15 +1,18 @@
 package net.nnwsf.util;
 
-import net.nnwsf.configuration.Server;
-import net.nnwsf.configuration.ServerConfiguration;
-import net.nnwsf.configuration.ServerConfigurationImpl;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import net.nnwsf.configuration.Server;
+import net.nnwsf.configuration.ServerConfiguration;
 
 public class Reflection {
 
