@@ -4,7 +4,6 @@ import static net.nnwsf.handler.ControllerProxy.CONTROLLER_PROXY_ATTACHMENT_KEY;
 import static net.nnwsf.handler.URLMatcher.URL_MATCHER_ATTACHMENT_KEY;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,7 +17,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -34,7 +32,15 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HttpString;
 import net.nnwsf.authentication.Authenticated;
 import net.nnwsf.authentication.IdentityManagerImplementation;
-import net.nnwsf.controller.*;
+import net.nnwsf.controller.AuthenticationPrincipal;
+import net.nnwsf.controller.Controller;
+import net.nnwsf.controller.Delete;
+import net.nnwsf.controller.Get;
+import net.nnwsf.controller.PathVariable;
+import net.nnwsf.controller.Post;
+import net.nnwsf.controller.Put;
+import net.nnwsf.controller.RequestBody;
+import net.nnwsf.controller.RequestParameter;
 import net.nnwsf.util.Injection;
 import net.nnwsf.util.Reflection;
 
