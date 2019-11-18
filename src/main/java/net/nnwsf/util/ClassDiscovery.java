@@ -24,12 +24,17 @@ public class ClassDiscovery {
 
 	private final Collection<Class<?>> discoveredClasses;
 	private final Map<Class<?>, Class<?>> implementations;
+	private final Map<Class<?>, Collection<Class<?>>> superClassesAndInferfaces;
+	private final Map<Class<?>, Collection<Class<?>>> subClasses;
 
 	private ClassDiscovery(ClassLoader applicationClassLoader, String rootPackage) {
 		this.applicationClassLoader = applicationClassLoader;
 		Collection<Package> packagesToScan = Arrays.stream(Package.getPackages()).filter(p -> p.getName().startsWith(rootPackage)).collect(Collectors.toList());
 		this.discoveredClasses = Collections.synchronizedCollection(getClassesForPackages(packagesToScan));
 		this.implementations = Collections.synchronizedMap(new HashMap<>());
+		this.superClassesAndInferfaces = Collections.synchronizedMap(new HashMap<>());
+		subClasses = Collections.synchronizedMap(new HashMap<>());
+		catalogAllSubAnSuperClasses();
 	}
 
     public static ClassDiscovery getInstance() {
@@ -61,15 +66,28 @@ public class ClassDiscovery {
 		return classes;
     }
 
-	public <T> Collection<Class<T>> discoverAnnotatedClasses(Class<T> type, Class<?>... annotationClasses) throws Exception {
-		Collection<Class<T>> allAnnotatedClasses = new HashSet<>();
+	public <T> Map<Annotation, Class<T>> discoverAnnotatedClasses(Class<?>... annotationClasses) throws Exception {
+		Map<Annotation, Class<T>> allAnnotatedClasses = new HashMap<>();
 		for (Class<?> aClass : discoveredClasses) {
 			for (Class<?> annotationClass : annotationClasses) {
 				Annotation[] classAnnotations = aClass.getAnnotations();
 				for (Annotation aClassAnnotation : classAnnotations) {
 					if(aClassAnnotation.annotationType().isAssignableFrom(annotationClass)) {
-						allAnnotatedClasses.add((Class<T>)aClass);
+						allAnnotatedClasses.put(aClassAnnotation, (Class<T>) aClass);
 					}
+				}
+			}
+		}
+		return allAnnotatedClasses;
+	}
+
+	public <T, A> Map<A, Class<T>> discoverAnnotatedClasses(Class<T> type, Class<A> annotationClass) throws Exception {
+		Map<A, Class<T>> allAnnotatedClasses = new HashMap<>();
+		for (Class<?> aClass : discoveredClasses) {
+			Annotation[] classAnnotations = aClass.getAnnotations();
+			for (Annotation aClassAnnotation : classAnnotations) {
+				if(aClassAnnotation.annotationType().isAssignableFrom(annotationClass)) {
+					allAnnotatedClasses.put((A)aClassAnnotation, (Class<T>)aClass);
 				}
 			}
 		}
@@ -93,7 +111,48 @@ public class ClassDiscovery {
 		}
 	}
 
+	private void catalogAllSubAnSuperClasses() {
+		for(Class<?> aClass : discoveredClasses) {
+			getAllSuperClassesAndInterfaces(aClass);
+		}
+	}
+
+
+	private synchronized Collection<Class<?>> getAllSuperClassesAndInterfaces(Class<?> aClass) {
+		Collection<Class<?>> allSuperClassesAndInterfaces = superClassesAndInferfaces.get(aClass);
+		if(allSuperClassesAndInterfaces == null) {
+			allSuperClassesAndInterfaces = new HashSet<>();
+			if(aClass.getSuperclass() != null && !Object.class.equals(aClass.getSuperclass())) {
+				allSuperClassesAndInterfaces.add(aClass.getSuperclass());
+			}
+			allSuperClassesAndInterfaces.addAll(Arrays.asList(aClass.getInterfaces()));
+			for (Class superClasseOrInterface : allSuperClassesAndInterfaces) {
+				allSuperClassesAndInterfaces.addAll(getAllSuperClassesAndInterfaces(superClasseOrInterface));
+			}
+			superClassesAndInferfaces.put(aClass, allSuperClassesAndInterfaces);
+			if(!aClass.isInterface()) {
+				for (Class subClassOrInterface : allSuperClassesAndInterfaces) {
+					Collection<Class<?>> allSubClasses = subClasses.get(subClassOrInterface);
+					if(allSubClasses == null) {
+						allSubClasses = new ArrayList<>();
+						subClasses.put(subClassOrInterface, allSubClasses);
+					}
+					if(!allSubClasses.contains(aClass)) {
+						allSubClasses.add(aClass);
+					}
+				}
+			}
+		}
+		return  allSuperClassesAndInterfaces;
+	}
+
+	public synchronized Collection<Class<?>> findAllImplementations(Class<?> aClass) {
+		return subClasses.get(aClass);
+	}
+
+
 	private Collection<Class<?>> processJarfile(URL resource, String pkgname) {
+		log.log(Level.INFO, "Discovering classes for package {0} in resource {1}", new Object[] {pkgname, resource});
 		Collection<Class<?>> classes = new ArrayList<Class<?>>();
 		
 		//Turn package name to relative path to jar file
@@ -131,9 +190,11 @@ public class ClassDiscovery {
     }
     
 	private Collection<Class<?>> processDirectory(File directory, String pkgname) {
-		
-		ArrayList<Class<?>> classes = new ArrayList<Class<?>>();
-		 
+		log.log(Level.INFO, "Discovering classes for package {0} in directory {1}", new Object[] {pkgname, directory});
+		ArrayList<Class<?>> classes = new ArrayList<>();
+
+		ArrayList<File> subDirectories = new ArrayList<>();
+
 		String[] files = directory.list();
 		for (int i = 0; i < files.length; i++) {
 			String fileName = files[i];
@@ -151,8 +212,11 @@ public class ClassDiscovery {
 			//If the file is a directory recursively class this method.
 			File subdir = new File(directory, fileName);
 			if (subdir.isDirectory()) {
-				classes.addAll(processDirectory(subdir, pkgname + '.' + fileName));
+				subDirectories.add(subdir);
 			}
+		}
+		for (File subdir : subDirectories) {
+			classes.addAll(processDirectory(subdir, pkgname + '.' + subdir.getName()));
 		}
 		return classes;
 	}

@@ -1,5 +1,7 @@
-package net.example;
+package net.example.controller;
 
+import net.example.ExampleBean;
+import net.example.ExampleService;
 import net.nnwsf.controller.Controller;
 import net.nnwsf.controller.Get;
 import net.nnwsf.controller.PathVariable;
