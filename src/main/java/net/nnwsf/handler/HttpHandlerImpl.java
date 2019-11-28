@@ -92,41 +92,47 @@ public class HttpHandlerImpl implements HttpHandler {
 	}
 
 	@Override
-	public void handleRequest(final HttpServerExchange exchange) throws Exception {
-		if (exchange.isInIoThread()) {
-     		exchange.dispatch(this);
-      		return;
-    	}
-		log.log(Level.INFO, "HttpRequest: start: {0}: {1}", new Object[] {exchange.getRequestMethod(), exchange.getRequestPath()});
-		HttpString method = exchange.getRequestMethod();
-
-		URLMatcher requestUrlMatcher = new URLMatcher(method.toString(), exchange.getRequestPath());
-		exchange.putAttachment(URL_MATCHER_ATTACHMENT_KEY, requestUrlMatcher);
-
-		ControllerProxy proxy = findController(exchange, requestUrlMatcher);
-		if(proxy != null) {
-			exchange.putAttachment(CONTROLLER_PROXY_ATTACHMENT_KEY, proxy);
-			if(needsAuthentication(proxy)) {
-				controllerSecurityHandler.handleRequest(exchange);
-			} else {
-				controllerHandler.handleRequest(exchange);
+	public void handleRequest(final HttpServerExchange exchange) {
+		try {
+			if (exchange.isInIoThread()) {
+				exchange.dispatch(this);
+				return;
 			}
-		} else {
-			boolean authenticate = false;
-			String requestPath = exchange.getRequestPath();
-			for(String aPath : authenticatedResourcePaths) {
-				if(requestPath.startsWith(aPath)) {
-					authenticate = true;
-					break;
+			log.log(Level.INFO, "HttpRequest: start: {0}: {1}", new Object[] {exchange.getRequestMethod(), exchange.getRequestPath()});
+			HttpString method = exchange.getRequestMethod();
+
+			URLMatcher requestUrlMatcher = new URLMatcher(method.toString(), exchange.getRequestPath());
+			exchange.putAttachment(URL_MATCHER_ATTACHMENT_KEY, requestUrlMatcher);
+
+			ControllerProxy proxy = findController(exchange, requestUrlMatcher);
+			if(proxy != null) {
+				exchange.putAttachment(CONTROLLER_PROXY_ATTACHMENT_KEY, proxy);
+				if(needsAuthentication(proxy)) {
+					controllerSecurityHandler.handleRequest(exchange);
+				} else {
+					controllerHandler.handleRequest(exchange);
+				}
+			} else {
+				boolean authenticate = false;
+				String requestPath = exchange.getRequestPath();
+				for(String aPath : authenticatedResourcePaths) {
+					if(requestPath.startsWith(aPath)) {
+						authenticate = true;
+						break;
+					}
+				}
+				if(authenticate) {
+					resourceSecurityHandler.handleRequest(exchange);
+				} else {
+					resourceHandler.handleRequest(exchange);
 				}
 			}
-			if(authenticate) {
-				resourceSecurityHandler.handleRequest(exchange);
-			} else {
-				resourceHandler.handleRequest(exchange);
-			}
+		} catch(Exception e) {
+			log.log(Level.SEVERE, "Unable to complete the request", e);
+			throw new RuntimeException(e);
+		} finally {
+			log.log(Level.INFO, "HttpRequest: end");
 		}
-		log.log(Level.INFO, "HttpRequest: end");
 	}
 
 	private ControllerProxy findController(HttpServerExchange exchange, URLMatcher requestUrlMatcher) throws Exception {

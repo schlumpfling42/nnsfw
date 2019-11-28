@@ -17,7 +17,7 @@ public class ExampleController {
 
     @Get("/")
     public String get() {
-        return "Hello example";
+        return service.echo("Hello example");
     }
 
     @Post("/")
