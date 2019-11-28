@@ -7,7 +7,6 @@ bin
 build
 classes
 out
-gradle
 *.iml
 /src/main/resources/credentials.json
 

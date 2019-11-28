@@ -1,6 +1,7 @@
 package net.nnwsf.util;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -73,13 +74,23 @@ public class Reflection {
     }
 
     public <T extends Annotation> T findAnnotation(Class<?> aClass, Class<T> annotationClass) {
-        Annotation[] annotations = aClass.getAnnotations();
-        for(Annotation annotation : annotations) {
-            if(annotation.annotationType().isAssignableFrom(annotationClass)) {
-                return (T)annotation;
+        if(Object.class.equals(aClass)) {
+            return null;
+        }
+        T annotation = aClass.getAnnotation(annotationClass);
+        if(annotation != null) {
+            return annotation;
+        }
+        AnnotatedType[] annotatedTypes = aClass.getAnnotatedInterfaces();
+        if(annotatedTypes != null) {
+            for(AnnotatedType annotatedType : annotatedTypes) {
+                annotation = (T) ((Class)annotatedType.getType()).getAnnotation(annotationClass);
+                if(annotation != null) {
+                    return annotation;
+                }
             }
         }
-        return null;
+        return findAnnotation(aClass.getSuperclass(), annotationClass);
     }
 
     public <T extends Annotation> Collection<T> findAnnotations(Class<?> aClass, Class<T> annotationClass) {
