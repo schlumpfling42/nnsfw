@@ -1,4 +1,4 @@
-package net.example;
+package net.example.controller;
 
 import java.io.IOException;
 import java.io.InputStreamReader;

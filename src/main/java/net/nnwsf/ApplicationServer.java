@@ -1,6 +1,7 @@
 package net.nnwsf;
 
 import java.util.Collection;
+import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -29,6 +30,7 @@ public class ApplicationServer {
             System.err.println("Unable to read log configuration");
             e.printStackTrace();
         }
+        log.log(Level.INFO, "Starting server application {0}", applicationClass);
         instance = new ApplicationServer(applicationClass);
         return instance;
     }
@@ -45,8 +47,8 @@ public class ApplicationServer {
             .collect(Collectors.toList());
         HttpHandler httpHandler;
         try {
-            Collection<Class<Object>> controllerClasses = ClassDiscovery.getInstance().discoverAnnotatedClasses(Object.class, Controller.class);
-            Collection<Class<io.undertow.security.api.AuthenticationMechanism>> authenticationMechanimsClasses = ClassDiscovery.getInstance().discoverAnnotatedClasses(io.undertow.security.api.AuthenticationMechanism.class, AuthenticationMechanism.class);
+            Collection<Class<Object>> controllerClasses = ClassDiscovery.getInstance().discoverAnnotatedClasses(Object.class, Controller.class).values();
+            Collection<Class<io.undertow.security.api.AuthenticationMechanism>> authenticationMechanimsClasses = ClassDiscovery.getInstance().discoverAnnotatedClasses(io.undertow.security.api.AuthenticationMechanism.class, AuthenticationMechanism.class).values();
             httpHandler = new HttpHandlerImpl(applicationClass.getClassLoader(), configuration.getResourcePath(), authenticatedResourcePaths, controllerClasses, authenticationMechanimsClasses);
         } catch(Exception e) {
             throw new RuntimeException("Unable to discover annotated classes", e);

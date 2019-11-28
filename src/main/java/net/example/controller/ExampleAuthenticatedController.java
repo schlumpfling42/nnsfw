@@ -1,5 +1,6 @@
-package net.example;
+package net.example.controller;
 
+import net.example.ExampleBean;
 import net.nnwsf.authentication.Authenticated;
 import net.nnwsf.controller.*;
 
