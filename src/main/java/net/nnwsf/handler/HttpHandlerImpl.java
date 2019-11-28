@@ -207,7 +207,7 @@ public class HttpHandlerImpl implements HttpHandler {
 					.filter(s -> s != null && s.getAnnotation().annotationType().isAssignableFrom(RequestParameter.class))
 					.map(m -> m.getName())
 					.filter(s -> s != null).collect(Collectors.toList());
-			if(Objects.equals(methodParameters, requestParameters)) {
+			if(Objects.equals(new HashSet<>(methodParameters), new HashSet<>(requestParameters))) {
 				matchedProxies.get(requestUrlMatcher).put(requestParameters, aProxy);
 				return aProxy;
 			}
