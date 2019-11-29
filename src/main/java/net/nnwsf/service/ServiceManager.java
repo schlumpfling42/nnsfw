@@ -1,24 +1,29 @@
 package net.nnwsf.service;
 
 import net.nnwsf.util.ClassDiscovery;
+import net.nnwsf.util.Reflection;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class Services {
+import javax.inject.Inject;
 
-    private static Logger log = Logger.getLogger(Services.class.getName());
+public class ServiceManager {
 
-    private static Services instance;
+    private static Logger log = Logger.getLogger(ServiceManager.class.getName());
 
-    public static Services getInstance() {
+    private static ServiceManager instance;
+
+    public static ServiceManager getInstance() {
         if(instance == null) {
             try {
                 Map<Service, Class<Object>> serviceClasses = ClassDiscovery.getInstance().discoverAnnotatedClasses(Object.class, Service.class);
-                instance = new Services(serviceClasses);
+                instance = new ServiceManager(serviceClasses);
             } catch (Exception e) {
                 log.log(Level.SEVERE, "Unable to discover services", e);
                 throw new RuntimeException("Unable to discover services", e);
@@ -32,7 +37,7 @@ public class Services {
 
     private final Map<String, Object> serviceSingletons;
 
-    public Services(Map<Service, Class<Object>> annotationServiceClasses) {
+    public ServiceManager(Map<Service, Class<Object>> annotationServiceClasses) {
         this.serviceClasses = new HashMap<>();
         this.serviceImplementation = new HashMap<>();
         for(Map.Entry<Service, Class<Object>> annotationClass : annotationServiceClasses.entrySet()) {
@@ -55,9 +60,8 @@ public class Services {
         return serviceClasses.get(serviceClass) != null;
     }
 
-    public <T> T createService(Class<T> serviceClass) {
-        Service serviceAnnotation = serviceClasses.get(serviceClass);
-        String serviceName = serviceClass + ":" + serviceAnnotation.value();
+    public <T> T createService(Class<T> serviceClass, String name) {
+        String serviceName = serviceClass + ":" + (name == null ? "" : name);
         Class<?> implementationClass = serviceImplementation.get(serviceName);
         T service = (T)serviceSingletons.get(serviceName);
         if(service == null) {
@@ -73,6 +77,11 @@ public class Services {
         }
         return service;
     }
+
+	public Object getActualServiceObject(Object injectable) {
+        ServiceInvocationHandler handler = (ServiceInvocationHandler)Proxy.getInvocationHandler(injectable);
+		return handler.getServiceObject();
+	}
 
 }
 

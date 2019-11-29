@@ -186,7 +186,7 @@ public class HttpHandlerImpl implements HttpHandler {
 	}
 
 	private Object createObject(Class<?> aClass) throws Exception {
-		return Injection.getInstance().getInjectable(aClass);
+		return Injection.getInstance().getInjectable(aClass, null);
 	}
 
 	private ControllerProxy getBestMatch(HttpServerExchange exchange, URLMatcher requestUrlMatcher) {

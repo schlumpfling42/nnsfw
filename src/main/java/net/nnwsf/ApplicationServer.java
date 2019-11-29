@@ -14,7 +14,7 @@ import net.nnwsf.configuration.AuthenticatedResourcePath;
 import net.nnwsf.configuration.ServerConfiguration;
 import net.nnwsf.controller.Controller;
 import net.nnwsf.handler.HttpHandlerImpl;
-import net.nnwsf.persistence.Persistence;
+import net.nnwsf.persistence.PersistenceManager;
 import net.nnwsf.persistence.PersistenceConfiguration;
 import net.nnwsf.util.ClassDiscovery;
 import net.nnwsf.util.Reflection;
@@ -43,15 +43,17 @@ public class ApplicationServer {
         AnnotationConfiguration annotationConfiguration = Reflection.getInstance().findAnnotation(applicationClass, AnnotationConfiguration.class);
         configuration = Reflection.getInstance().getConfiguration(applicationClass);
 
+        ClassDiscovery.init(applicationClass.getClassLoader(), annotationConfiguration.value());
+
         PersistenceConfiguration persistenceConfiguration = Reflection.getInstance().findAnnotation(applicationClass, PersistenceConfiguration.class);
-        Persistence.init(
+        PersistenceManager.init(
             persistenceConfiguration.providerClass(), 
             persistenceConfiguration.jdbcDriver(), 
-            persistenceConfiguration.jdbcUrl(), 
+            persistenceConfiguration.jdbcUrl(),             
+            persistenceConfiguration.dialect(), 
             persistenceConfiguration.user(), 
             persistenceConfiguration.password());
 
-        ClassDiscovery.init(applicationClass.getClassLoader(), annotationConfiguration.value());
         Collection<String> authenticatedResourcePaths = Reflection.getInstance()
             .findAnnotations(applicationClass, AuthenticatedResourcePath.class)
             .stream().map(annotation -> annotation.value())

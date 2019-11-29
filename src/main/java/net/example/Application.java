@@ -1,5 +1,6 @@
 package net.example;
 
+import org.hibernate.dialect.H2Dialect;
 import org.hibernate.jpa.HibernatePersistenceProvider;
 
 import net.nnwsf.ApplicationServer;
@@ -13,9 +14,10 @@ import net.nnwsf.persistence.PersistenceConfiguration;;
 @AuthenticatedResourcePath("/secure")
 @PersistenceConfiguration(
     providerClass=HibernatePersistenceProvider.class,
-    jdbcDriver="org.postgresql.Driver",
-    jdbcUrl="jdbc:postgresql://localhost/administration",
-    user="postgres",
+    jdbcDriver="org.h2.Driver",
+    jdbcUrl="jdbc:h2:~/example",
+    dialect = "org.hibernate.dialect.H2Dialect",
+    user="",
     password=""
 )
 public class Application {
