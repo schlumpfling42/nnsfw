@@ -27,7 +27,8 @@ dependencies {
             "com.google.apis:google-api-services-oauth2:v2-rev150-1.25.+",
             "javax.persistence:javax.persistence-api:2.2",
             "org.hibernate:hibernate-core:5.4.9.Final",
-            "postgresql:postgresql:9.1-901-1.jdbc4"
+            "postgresql:postgresql:9.1-901-1.jdbc4",
+            "com.h2database:h2:1.4.200"
 
 
 }
