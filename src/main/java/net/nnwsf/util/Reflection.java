@@ -93,6 +93,14 @@ public class Reflection {
         return findAnnotation(aClass.getSuperclass(), annotationClass);
     }
 
+    public <T extends Annotation> T findAnnotation(Method method, Class<T> annotationClass) {
+        T annotation = method.getAnnotation(annotationClass);
+        if(annotation != null) {
+            return annotation;
+        }
+        return null;
+    }
+
     public <T extends Annotation> Collection<T> findAnnotations(Class<?> aClass, Class<T> annotationClass) {
         Collection<T> foundAnnotations = new ArrayList<>();
         Annotation[] annotations = aClass.getAnnotations();

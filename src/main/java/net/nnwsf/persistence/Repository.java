@@ -1,4 +1,4 @@
-package net.nnwsf.repository;
+package net.nnwsf.persistence;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;

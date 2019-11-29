@@ -1,16 +1,13 @@
 package net.nnwsf.util;
 
-import net.nnwsf.controller.Controller;
-import net.nnwsf.service.Service;
-import net.nnwsf.service.Services;
-
-import javax.inject.Inject;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.inject.Inject;
+
+import net.nnwsf.service.Services;
 
 public class Injection {
     private static Injection instance;
