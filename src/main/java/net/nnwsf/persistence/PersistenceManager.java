@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.reflect.Proxy;
 import java.net.URL;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -27,6 +28,7 @@ import javax.sql.DataSource;
 import com.google.common.collect.ImmutableMap;
 
 import net.nnwsf.util.ClassDiscovery;
+import net.nnwsf.util.Reflection;
 
 public class PersistenceManager {
 
@@ -188,7 +190,9 @@ public class PersistenceManager {
                 .put(USER, user)
 				.put(PASS, password)
 				.put(HBM2DDL_AUTO, "create-drop")
-                .put(SHOW_SQL, false)
+				.put(CONNECTION_PROVIDER_DISABLES_AUTOCOMMIT, true)
+				.put(AUTOCOMMIT, false)
+                .put(SHOW_SQL, true)
                 .put(QUERY_STARTUP_CHECKING, false)
                 .put(GENERATE_STATISTICS, false)
                 .put(USE_REFLECTION_OPTIMIZER, false)
@@ -233,7 +237,7 @@ public class PersistenceManager {
 	public static Object createRepository(Class<?> aClass) {
 		return Proxy.newProxyInstance(
 			aClass.getClassLoader(), 
-			new Class<?>[] { aClass },
+			new Class<?>[] {aClass},
 			new RepositoryInvocationHandler(instance.repositoryClasses.get(aClass).value()));
 	}
 

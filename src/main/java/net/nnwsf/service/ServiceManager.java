@@ -9,6 +9,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import net.nnwsf.util.ClassDiscovery;
+import net.nnwsf.util.Reflection;
 
 public class ServiceManager {
 
@@ -40,7 +41,7 @@ public class ServiceManager {
             Class<?> aClass = annotationClass.getValue();
             if(!annotationClass.getValue().isInterface()) {
                 Class<?> anImplementationClass = annotationClass.getValue();
-                Collection<Class<?>> allClasses = ClassDiscovery.getAllClassesAndInterfaces(anImplementationClass, packagesToScan);
+                Collection<Class<?>> allClasses = Reflection.getAllClassesAndInterfaces(anImplementationClass, packagesToScan);
                 for(Class<?> aSubClass : allClasses) {
                     String serviceName = aSubClass + ":";
                     if(!aSubClass.equals(anImplementationClass)) {
