@@ -6,10 +6,6 @@ import java.lang.reflect.Method;
 import java.util.Collection;
 
 import javax.persistence.Id;
-import javax.persistence.TypedQuery;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
 
 import net.nnwsf.util.Reflection;
 
@@ -26,7 +22,7 @@ public class RepositoryInvocationHandler implements InvocationHandler {
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        if("save".equals(method.getName()) && method.getParameterTypes().length == 1 && entityClass.equals(method.getParameterTypes()[0])) {
+        if("save".equals(method.getName()) && method.getParameterTypes().length == 1) {
             try(EntityManagerHolder entityManagerHolder = PersistenceManager.createEntityManager()) {
                 entityManagerHolder.beginTransaction();
                 Object result = entityManagerHolder.getEntityManager().merge(args[0]);
@@ -34,7 +30,7 @@ public class RepositoryInvocationHandler implements InvocationHandler {
                 return result;
             }
         }
-        if("delete".equals(method.getName()) && method.getParameterTypes().length == 1 && entityClass.equals(method.getParameterTypes()[0])) {
+        if("delete".equals(method.getName()) && method.getParameterTypes().length == 1) {
             try(EntityManagerHolder entityManagerHolder = PersistenceManager.createEntityManager()) {
                 entityManagerHolder.beginTransaction();
                 entityManagerHolder.getEntityManager().remove(args[0]);
@@ -42,7 +38,7 @@ public class RepositoryInvocationHandler implements InvocationHandler {
                 return null;
             }
         }
-        if("findById".equals(method.getName()) && method.getParameterTypes().length == 1 && idClass.equals(method.getParameterTypes()[0])) {
+        if("findById".equals(method.getName()) && method.getParameterTypes().length == 1) {
             try(EntityManagerHolder entityManagerHolder = PersistenceManager.createEntityManager()) {
                 entityManagerHolder.beginTransaction();
                 Object result = entityManagerHolder.getEntityManager().find(entityClass, args[0]);

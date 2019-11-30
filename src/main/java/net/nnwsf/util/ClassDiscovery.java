@@ -218,19 +218,6 @@ public class ClassDiscovery {
 		return classes;
 	}
 
-	public static Collection<Class<?>>  getAllClassesAndInterfaces(Class<?> aClass, Collection<Package> packagesToScan) {
-		Collection<Class<?>> allClassesAndInterfaces = new HashSet<>();
-		if(aClass != null && !Object.class.equals(aClass) && packagesToScan.contains(aClass.getPackage())) {
-			allClassesAndInterfaces.add(aClass);
-			for(Class<?> anInterface: aClass.getInterfaces()) {
-				allClassesAndInterfaces.add(anInterface);
-				allClassesAndInterfaces.addAll(getAllClassesAndInterfaces(anInterface.getSuperclass(), packagesToScan));
-			}
-			allClassesAndInterfaces.addAll(getAllClassesAndInterfaces(aClass.getSuperclass(), packagesToScan));
-		}
-		return allClassesAndInterfaces;
-	}
-
 	public static Collection<Package> getPackagesToScan() {
 		return instance.packagesToScan;
 	}

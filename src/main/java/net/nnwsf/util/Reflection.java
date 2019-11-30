@@ -133,4 +133,21 @@ public class Reflection {
             throw new RuntimeException("Unable to get value from annotation " + methodAnnotation, e);
         }
     }
+	public static Collection<Class<?>>  getAllClassesAndInterfaces(Class<?> aClass, Collection<Package> packagesToScan) {
+		Collection<Class<?>> allClassesAndInterfaces = new HashSet<>();
+		if(aClass != null && !Object.class.equals(aClass) && isContainedIn(packagesToScan, aClass.getPackage())) {
+			allClassesAndInterfaces.add(aClass);
+			for(Class<?> anInterface: aClass.getInterfaces()) {
+				allClassesAndInterfaces.add(anInterface);
+				allClassesAndInterfaces.addAll(getAllClassesAndInterfaces(anInterface.getSuperclass(), packagesToScan));
+			}
+			allClassesAndInterfaces.addAll(getAllClassesAndInterfaces(aClass.getSuperclass(), packagesToScan));
+		}
+		return allClassesAndInterfaces;
+    }
+    
+    private static boolean isContainedIn(Collection<Package> packagesToScan, Package aPackage) {
+        return packagesToScan.stream().map(p -> p.getName()).anyMatch(name -> aPackage.getName().contains(name));
+    } 
+    
 }
