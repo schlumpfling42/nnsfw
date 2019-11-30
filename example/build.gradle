@@ -19,12 +19,10 @@ repositories {
 }
 
 dependencies {
-    compile project(':library')
+    compile project(':nnsfw')
     compile "org.hibernate:hibernate-core:5.4.9.Final",
             "postgresql:postgresql:9.1-901-1.jdbc4",
             "com.h2database:h2:1.4.200"
-
-
 }
 jar {
     manifest {
