@@ -22,6 +22,19 @@ import net.nnwsf.util.Reflection;
 
 public class ApplicationServer {
 
+    public static void main(String[] args) {
+        try {
+            if(args.length == 1) {
+                start(Class.forName(args[0]));
+            }
+        } catch(Exception e) {
+
+        }
+        System.out.println("Usage: ApplicationServer <server class>");
+        
+        System.exit(-1);
+    }
+
     private static final Logger log = Logger.getLogger(ApplicationServer.class.getName());
 
     private static ApplicationServer instance;

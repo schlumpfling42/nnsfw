@@ -23,27 +23,39 @@ public class RepositoryInvocationHandler implements InvocationHandler {
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         if("save".equals(method.getName()) && method.getParameterTypes().length == 1) {
-            try(EntityManagerHolder entityManagerHolder = PersistenceManager.createEntityManager()) {
-                entityManagerHolder.beginTransaction();
-                Object result = entityManagerHolder.getEntityManager().merge(args[0]);
-                entityManagerHolder.commitTransaction();
-                return result;
+            if(entityClass.isInstance(args[0])) {
+                try(EntityManagerHolder entityManagerHolder = PersistenceManager.createEntityManager()) {
+                    entityManagerHolder.beginTransaction();
+                    Object result = entityManagerHolder.getEntityManager().merge(args[0]);
+                    entityManagerHolder.commitTransaction();
+                    return result;
+                }
+            } else {
+                throw new IllegalAccessException("enity type doesn't match");
             }
         }
         if("delete".equals(method.getName()) && method.getParameterTypes().length == 1) {
-            try(EntityManagerHolder entityManagerHolder = PersistenceManager.createEntityManager()) {
-                entityManagerHolder.beginTransaction();
-                entityManagerHolder.getEntityManager().remove(args[0]);
-                entityManagerHolder.commitTransaction();
-                return null;
+            if(entityClass.isInstance(args[0])) {
+                try(EntityManagerHolder entityManagerHolder = PersistenceManager.createEntityManager()) {
+                    entityManagerHolder.beginTransaction();
+                    entityManagerHolder.getEntityManager().remove(args[0]);
+                    entityManagerHolder.commitTransaction();
+                    return null;
+                }
+            } else {
+                throw new IllegalAccessException("enity type doesn't match");
             }
         }
         if("findById".equals(method.getName()) && method.getParameterTypes().length == 1) {
-            try(EntityManagerHolder entityManagerHolder = PersistenceManager.createEntityManager()) {
-                entityManagerHolder.beginTransaction();
-                Object result = entityManagerHolder.getEntityManager().find(entityClass, args[0]);
-                entityManagerHolder.commitTransaction();
-                return result;
+            if(idClass.isInstance(args[0])) {
+                try(EntityManagerHolder entityManagerHolder = PersistenceManager.createEntityManager()) {
+                    entityManagerHolder.beginTransaction();
+                    Object result = entityManagerHolder.getEntityManager().find(entityClass, args[0]);
+                    entityManagerHolder.commitTransaction();
+                    return result;
+                }
+            } else {
+                throw new IllegalAccessException("id type doesn't match");
             }
         }
         if("findAll".equals(method.getName()) && method.getParameterTypes().length == 0) {
