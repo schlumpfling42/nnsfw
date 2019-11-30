@@ -1,9 +1,8 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '5.2.0'
+  id 'com.github.johnrengelman.shadow' version '5.2.0'
+  id 'java'
+  id 'maven-publish'
 }
-
-apply plugin: 'java'
-apply plugin: 'java-library'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -26,8 +25,25 @@ dependencies {
             "javax.transaction:javax.transaction-api:1.3",
             "javax.persistence:javax.persistence-api:2.2"
 }
-jar {
-    manifest {
-        attributes 'Main-Class': 'net.nnwsf.Application'
+
+shadowJar {
+  configurations = [project.configurations.compile]
+}
+
+publishing {
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/schlumpfling42/server-fw")
+            credentials {
+                username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
+                password = project.findProperty("gpr.key") ?: System.getenv("PASSWORD")
+            }
+        }
+    }
+    publications {
+        gpr(MavenPublication) {
+            from(components.java)
+        }
     }
 }
