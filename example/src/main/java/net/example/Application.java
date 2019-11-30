@@ -1,13 +1,12 @@
 package net.example;
 
-import org.hibernate.dialect.H2Dialect;
 import org.hibernate.jpa.HibernatePersistenceProvider;
 
 import net.nnwsf.ApplicationServer;
 import net.nnwsf.configuration.AnnotationConfiguration;
 import net.nnwsf.configuration.AuthenticatedResourcePath;
 import net.nnwsf.configuration.Server;
-import net.nnwsf.persistence.PersistenceConfiguration;;
+import net.nnwsf.persistence.PersistenceConfiguration;
 
 @Server()
 @AnnotationConfiguration("net.example")
