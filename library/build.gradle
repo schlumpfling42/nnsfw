@@ -1,0 +1,33 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '5.2.0'
+}
+
+apply plugin: 'java'
+apply plugin: 'java-library'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+version = '0.0.2'
+
+def undertowVersion = '2.0.1.Final'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile "io.undertow:undertow-core:$undertowVersion",
+            "io.undertow:undertow-servlet:$undertowVersion",
+            "com.fasterxml.jackson.core:jackson-databind:2.9.6",
+            "javax.inject:javax.inject:1",
+            "com.google.api-client:google-api-client:1.25.+",
+            "com.google.apis:google-api-services-oauth2:v2-rev150-1.25.+",
+            "javax.transaction:javax.transaction-api:1.3",
+            "javax.persistence:javax.persistence-api:2.2"
+}
+jar {
+    manifest {
+        attributes 'Main-Class': 'net.nnwsf.Application'
+    }
+}

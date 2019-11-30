@@ -1,12 +1,9 @@
 package net.nnwsf.persistence;
 
-import static org.hibernate.cfg.AvailableSettings.*;
-
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.reflect.Proxy;
 import java.net.URL;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -28,7 +25,6 @@ import javax.sql.DataSource;
 import com.google.common.collect.ImmutableMap;
 
 import net.nnwsf.util.ClassDiscovery;
-import net.nnwsf.util.Reflection;
 
 public class PersistenceManager {
 
@@ -184,22 +180,10 @@ public class PersistenceManager {
             this.entityManagerFactory = persistenceProviderClass.newInstance().createContainerEntityManagerFactory(
                 new PersistenceUnitInfoImplementation(persistenceProviderClass),
                 ImmutableMap.<String, Object>builder()
-                .put(JPA_JDBC_DRIVER, jdbcDriver)
-                .put(JPA_JDBC_URL, jdbcUrl)
-                .put(DIALECT, Class.forName(jdbcDialect))
-                .put(USER, user)
-				.put(PASS, password)
-				.put(HBM2DDL_AUTO, "create-drop")
-				.put(CONNECTION_PROVIDER_DISABLES_AUTOCOMMIT, true)
-				.put(AUTOCOMMIT, false)
-                .put(SHOW_SQL, true)
-                .put(QUERY_STARTUP_CHECKING, false)
-                .put(GENERATE_STATISTICS, false)
-                .put(USE_REFLECTION_OPTIMIZER, false)
-                .put(USE_SECOND_LEVEL_CACHE, false)
-                .put(USE_QUERY_CACHE, false)
-                .put(USE_STRUCTURED_CACHE, false)
-                .put(STATEMENT_BATCH_SIZE, 20)
+                .put("javax.persistence.jdbc.driver", jdbcDriver)
+                .put("javax.persistence.jdbc.url", jdbcUrl)
+                .put("javax.persistence.jdbc.user", user)
+				.put("avax.persistence.jdbc.password", password)
                 .build()
             );
             } catch(Exception e) {

@@ -19,14 +19,8 @@ repositories {
 }
 
 dependencies {
-    compile "io.undertow:undertow-core:$undertowVersion",
-            "io.undertow:undertow-servlet:$undertowVersion",
-            "com.fasterxml.jackson.core:jackson-databind:2.9.6",
-            "javax.inject:javax.inject:1",
-            "com.google.api-client:google-api-client:1.25.+",
-            "com.google.apis:google-api-services-oauth2:v2-rev150-1.25.+",
-            "javax.persistence:javax.persistence-api:2.2",
-            "org.hibernate:hibernate-core:5.4.9.Final",
+    compile project(':library')
+    compile "org.hibernate:hibernate-core:5.4.9.Final",
             "postgresql:postgresql:9.1-901-1.jdbc4",
             "com.h2database:h2:1.4.200"
 
