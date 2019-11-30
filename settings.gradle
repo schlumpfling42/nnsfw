@@ -1,2 +1,2 @@
-rootProject.name = 'nnwsf'
-include 'library', 'example'
+rootProject.name = 'nnswf'
+include 'nnsfw', 'example'
