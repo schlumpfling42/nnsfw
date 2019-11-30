@@ -31,13 +31,13 @@ public class Injection {
         if(injectable == null) {
             Object actualObject = null;
             Collection<Field> annotationFields = null;
-            if(ServiceManager.getInstance().isService(aClass)) {
-                injectable = ServiceManager.getInstance().createService(aClass, name);
-                actualObject = ServiceManager.getInstance().getActualServiceObject(injectable);
+            if(ServiceManager.isService(aClass)) {
+                injectable = ServiceManager.createService(aClass, name);
+                actualObject = ServiceManager.getActualServiceObject(injectable);
             } else if(PersistenceManager.isRepository(aClass)) {
                 injectable = PersistenceManager.createRepository(aClass);
             } else {
-                Class<?> implementationClass = ClassDiscovery.getInstance().getImplementation(aClass);
+                Class<?> implementationClass = ClassDiscovery.getImplementation(aClass);
                 injectable = implementationClass.newInstance();
                 actualObject = injectable;
             }

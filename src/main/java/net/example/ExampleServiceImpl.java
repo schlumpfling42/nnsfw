@@ -16,7 +16,8 @@ public class ExampleServiceImpl implements ExampleService{
         ExampleEntity entity = new ExampleEntity();
         entity.setName(echo);
         entity = repository.save(entity);
-        entity = repository.findById(entity.getId());
-        return entity.getName();
+        entity = repository.findAll().iterator().next();
+        repository.delete(entity);
+        return entity.getName() + ":" + repository.findAll().size();
     }
 }

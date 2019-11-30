@@ -1,17 +1,14 @@
 package net.nnwsf.service;
 
-import net.nnwsf.util.ClassDiscovery;
-import net.nnwsf.util.Reflection;
-
-import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.inject.Inject;
+import net.nnwsf.util.ClassDiscovery;
 
 public class ServiceManager {
 
@@ -19,48 +16,59 @@ public class ServiceManager {
 
     private static ServiceManager instance;
 
-    public static ServiceManager getInstance() {
+    public static void init(Collection<Package> packagesToScan) {
         if(instance == null) {
             try {
-                Map<Service, Class<Object>> serviceClasses = ClassDiscovery.getInstance().discoverAnnotatedClasses(Object.class, Service.class);
-                instance = new ServiceManager(serviceClasses);
+                Map<Service, Class<Object>> serviceClasses = ClassDiscovery.discoverAnnotatedClasses(Object.class, Service.class);
+                instance = new ServiceManager(serviceClasses, packagesToScan);
             } catch (Exception e) {
                 log.log(Level.SEVERE, "Unable to discover services", e);
                 throw new RuntimeException("Unable to discover services", e);
             }
         }
-        return instance;
     }
 
-    private final Map<Class<?>, Service> serviceClasses;
+    private final Collection<Class<?>> serviceClasses;
     private final Map<String, Class<?>> serviceImplementation;
 
     private final Map<String, Object> serviceSingletons;
 
-    public ServiceManager(Map<Service, Class<Object>> annotationServiceClasses) {
-        this.serviceClasses = new HashMap<>();
+    private ServiceManager(Map<Service, Class<Object>> annotationServiceClasses, Collection<Package> packagesToScan) {
+        this.serviceClasses = new HashSet<>();
         this.serviceImplementation = new HashMap<>();
         for(Map.Entry<Service, Class<Object>> annotationClass : annotationServiceClasses.entrySet()) {
             Class<?> aClass = annotationClass.getValue();
-            Class<?> anImplementationClass = ClassDiscovery.getInstance().getImplementation(annotationClass.getValue());
-            String serviceName = aClass + ":" + annotationClass.getKey().value();
-            if(!anImplementationClass.isInterface()) {
-                if (serviceImplementation.containsKey(serviceName)) {
-                    throw new RuntimeException("Duplicate implementation for service: " + serviceName);
-                } else {
-                    serviceImplementation.put(serviceName, anImplementationClass);
+            if(!annotationClass.getValue().isInterface()) {
+                Class<?> anImplementationClass = annotationClass.getValue();
+                Collection<Class<?>> allClasses = ClassDiscovery.getAllClassesAndInterfaces(anImplementationClass, packagesToScan);
+                for(Class<?> aSubClass : allClasses) {
+                    String serviceName = aSubClass + ":";
+                    if(!aSubClass.equals(anImplementationClass)) {
+                        serviceName +=  annotationClass.getKey().value();
+                    }
+                    if(!anImplementationClass.isInterface()) {
+                        if (serviceImplementation.containsKey(serviceName)) {
+                            throw new RuntimeException("Duplicate implementation for service: " + serviceName);
+                        } else {
+                            serviceImplementation.put(serviceName, anImplementationClass);
+                        }
+                    }
+                    this.serviceClasses.add(aSubClass);
                 }
             }
-            this.serviceClasses.put(aClass, annotationClass.getKey());
         }
         this.serviceSingletons = new HashMap<>();
     }
 
-    public boolean isService(Class<?> serviceClass) {
-        return serviceClasses.get(serviceClass) != null;
+    public static boolean isService(Class<?> serviceClass) {
+        return instance.serviceClasses.contains(serviceClass);
     }
 
-    public <T> T createService(Class<T> serviceClass, String name) {
+    public static <T> T createService(Class<T> serviceClass, String name) {
+        return instance.internalCreateService(serviceClass, name);
+    }
+
+    private <T> T internalCreateService(Class<T> serviceClass, String name) {
         String serviceName = serviceClass + ":" + (name == null ? "" : name);
         Class<?> implementationClass = serviceImplementation.get(serviceName);
         T service = (T)serviceSingletons.get(serviceName);
@@ -78,7 +86,7 @@ public class ServiceManager {
         return service;
     }
 
-	public Object getActualServiceObject(Object injectable) {
+	public static Object getActualServiceObject(Object injectable) {
         ServiceInvocationHandler handler = (ServiceInvocationHandler)Proxy.getInvocationHandler(injectable);
 		return handler.getServiceObject();
 	}

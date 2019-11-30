@@ -26,19 +26,16 @@ public class ClassDiscovery {
 	private final Map<Class<?>, Class<?>> implementations;
 	private final Map<Class<?>, Collection<Class<?>>> superClassesAndInferfaces;
 	private final Map<Class<?>, Collection<Class<?>>> subClasses;
+	private final Collection<Package> packagesToScan;
 
 	private ClassDiscovery(ClassLoader applicationClassLoader, String rootPackage) {
 		this.applicationClassLoader = applicationClassLoader;
-		Collection<Package> packagesToScan = Arrays.stream(Package.getPackages()).filter(p -> p.getName().startsWith(rootPackage)).collect(Collectors.toList());
+		this.packagesToScan = Arrays.stream(Package.getPackages()).filter(p -> p.getName().startsWith(rootPackage)).collect(Collectors.toList());
 		this.discoveredClasses = Collections.synchronizedCollection(getClassesForPackages(packagesToScan));
 		this.implementations = Collections.synchronizedMap(new HashMap<>());
 		this.superClassesAndInferfaces = Collections.synchronizedMap(new HashMap<>());
 		subClasses = Collections.synchronizedMap(new HashMap<>());
 		catalogAllSubAnSuperClasses();
-	}
-
-	public static ClassDiscovery getInstance() {
-		return instance;
 	}
 
 	private synchronized Collection<Class<?>> getClassesForPackages(Collection<Package> packagesToScan) {
@@ -66,9 +63,9 @@ public class ClassDiscovery {
 		return classes;
 	}
 
-	public <T> Map<Annotation, Class<T>> discoverAnnotatedClasses(Class<?>... annotationClasses) throws Exception {
+	public static <T> Map<Annotation, Class<T>> discoverAnnotatedClasses(Class<?>... annotationClasses) throws Exception {
 		Map<Annotation, Class<T>> allAnnotatedClasses = new HashMap<>();
-		for (Class<?> aClass : discoveredClasses) {
+		for (Class<?> aClass : instance.discoveredClasses) {
 			for (Class<?> annotationClass : annotationClasses) {
 				Annotation[] classAnnotations = aClass.getAnnotations();
 				for (Annotation aClassAnnotation : classAnnotations) {
@@ -81,9 +78,9 @@ public class ClassDiscovery {
 		return allAnnotatedClasses;
 	}
 
-	public <T, A> Map<A, Class<T>> discoverAnnotatedClasses(Class<T> type, Class<A> annotationClass) throws Exception {
-		Map<A, Class<T>> allAnnotatedClasses = new HashMap<>();
-		for (Class<?> aClass : discoveredClasses) {
+	public static <T, A> Map<A, Class<T>> discoverAnnotatedClasses(Class<T> type, Class<A> annotationClass) throws Exception {
+		Map<A, Class<T>> allAnnotatedClasses = new IdentityHashMap<>();
+		for (Class<?> aClass : instance.discoveredClasses) {
 			Annotation[] classAnnotations = aClass.getAnnotations();
 			for (Annotation aClassAnnotation : classAnnotations) {
 					if (aClassAnnotation.annotationType().isAssignableFrom(annotationClass)) {
@@ -94,14 +91,14 @@ public class ClassDiscovery {
 		return allAnnotatedClasses;
 	}
 
-	public <T> Class<T> getImplementation(Class<T> aClass) {
+	public static <T> Class<T> getImplementation(Class<T> aClass) {
 		if (aClass.isInterface()) {
-			Class<T> implementation = (Class<T>) implementations.get(aClass);
+			Class<T> implementation = (Class<T>) instance.implementations.get(aClass);
 			if (implementation == null) {
-				for(Class<?> aDiscoveredClass : discoveredClasses) {
+				for(Class<?> aDiscoveredClass : instance.discoveredClasses) {
 					if (!aDiscoveredClass.isInterface() && aClass.isAssignableFrom(aDiscoveredClass)) {
 						implementation = (Class<T>) aDiscoveredClass;
-						implementations.put(aClass, implementation);
+						instance.implementations.put(aClass, implementation);
 					}
 				}
 			}
@@ -219,5 +216,22 @@ public class ClassDiscovery {
 			classes.addAll(processDirectory(subdir, pkgname + '.' + subdir.getName()));
 		}
 		return classes;
+	}
+
+	public static Collection<Class<?>>  getAllClassesAndInterfaces(Class<?> aClass, Collection<Package> packagesToScan) {
+		Collection<Class<?>> allClassesAndInterfaces = new HashSet<>();
+		if(aClass != null && !Object.class.equals(aClass) && packagesToScan.contains(aClass.getPackage())) {
+			allClassesAndInterfaces.add(aClass);
+			for(Class<?> anInterface: aClass.getInterfaces()) {
+				allClassesAndInterfaces.add(anInterface);
+				allClassesAndInterfaces.addAll(getAllClassesAndInterfaces(anInterface.getSuperclass(), packagesToScan));
+			}
+			allClassesAndInterfaces.addAll(getAllClassesAndInterfaces(aClass.getSuperclass(), packagesToScan));
+		}
+		return allClassesAndInterfaces;
+	}
+
+	public static Collection<Package> getPackagesToScan() {
+		return instance.packagesToScan;
 	}
 }

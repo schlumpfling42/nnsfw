@@ -141,7 +141,7 @@ public class PersistenceManager {
         String password) {
         if(instance == null) {
 			try {
-                Map<Repository, Class<Object>> repositoryClasses = ClassDiscovery.getInstance().discoverAnnotatedClasses(Object.class, Repository.class);
+                Map<Repository, Class<Object>> repositoryClasses = ClassDiscovery.discoverAnnotatedClasses(Object.class, Repository.class);
 				instance = new PersistenceManager(
 					repositoryClasses,
 					persistenceProviderClass,

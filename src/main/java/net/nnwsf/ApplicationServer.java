@@ -15,6 +15,7 @@ import net.nnwsf.configuration.ServerConfiguration;
 import net.nnwsf.controller.Controller;
 import net.nnwsf.handler.HttpHandlerImpl;
 import net.nnwsf.persistence.PersistenceManager;
+import net.nnwsf.service.ServiceManager;
 import net.nnwsf.persistence.PersistenceConfiguration;
 import net.nnwsf.util.ClassDiscovery;
 import net.nnwsf.util.Reflection;
@@ -45,7 +46,10 @@ public class ApplicationServer {
 
         ClassDiscovery.init(applicationClass.getClassLoader(), annotationConfiguration.value());
 
+        ServiceManager.init(ClassDiscovery.getPackagesToScan());
+
         PersistenceConfiguration persistenceConfiguration = Reflection.getInstance().findAnnotation(applicationClass, PersistenceConfiguration.class);
+        
         PersistenceManager.init(
             persistenceConfiguration.providerClass(), 
             persistenceConfiguration.jdbcDriver(), 
@@ -60,8 +64,8 @@ public class ApplicationServer {
             .collect(Collectors.toList());
         HttpHandler httpHandler;
         try {
-            Collection<Class<Object>> controllerClasses = ClassDiscovery.getInstance().discoverAnnotatedClasses(Object.class, Controller.class).values();
-            Collection<Class<io.undertow.security.api.AuthenticationMechanism>> authenticationMechanimsClasses = ClassDiscovery.getInstance().discoverAnnotatedClasses(io.undertow.security.api.AuthenticationMechanism.class, AuthenticationMechanism.class).values();
+            Collection<Class<Object>> controllerClasses = ClassDiscovery.discoverAnnotatedClasses(Object.class, Controller.class).values();
+            Collection<Class<io.undertow.security.api.AuthenticationMechanism>> authenticationMechanimsClasses = ClassDiscovery.discoverAnnotatedClasses(io.undertow.security.api.AuthenticationMechanism.class, AuthenticationMechanism.class).values();
             httpHandler = new HttpHandlerImpl(applicationClass.getClassLoader(), configuration.getResourcePath(), authenticatedResourcePaths, controllerClasses, authenticationMechanimsClasses);
         } catch(Exception e) {
             throw new RuntimeException("Unable to discover annotated classes", e);

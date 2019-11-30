@@ -6,6 +6,10 @@ import java.lang.reflect.Method;
 import java.util.Collection;
 
 import javax.persistence.Id;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
 
 import net.nnwsf.util.Reflection;
 
@@ -30,10 +34,26 @@ public class RepositoryInvocationHandler implements InvocationHandler {
                 return result;
             }
         }
+        if("delete".equals(method.getName()) && method.getParameterTypes().length == 1 && entityClass.equals(method.getParameterTypes()[0])) {
+            try(EntityManagerHolder entityManagerHolder = PersistenceManager.createEntityManager()) {
+                entityManagerHolder.beginTransaction();
+                entityManagerHolder.getEntityManager().remove(args[0]);
+                entityManagerHolder.commitTransaction();
+                return null;
+            }
+        }
         if("findById".equals(method.getName()) && method.getParameterTypes().length == 1 && idClass.equals(method.getParameterTypes()[0])) {
             try(EntityManagerHolder entityManagerHolder = PersistenceManager.createEntityManager()) {
                 entityManagerHolder.beginTransaction();
                 Object result = entityManagerHolder.getEntityManager().find(entityClass, args[0]);
+                entityManagerHolder.commitTransaction();
+                return result;
+            }
+        }
+        if("findAll".equals(method.getName()) && method.getParameterTypes().length == 0) {
+            try(EntityManagerHolder entityManagerHolder = PersistenceManager.createEntityManager()) {
+                entityManagerHolder.beginTransaction();
+                Object result = entityManagerHolder.getEntityManager().createQuery("select e from " + entityClass.getSimpleName() + " e").getResultList();
                 entityManagerHolder.commitTransaction();
                 return result;
             }
