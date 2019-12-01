@@ -60,14 +60,17 @@ public class Reflection {
 
     public Collection<Field> findAnnotationFields(Class<?> aClass, Class<?> annotationClass) {
         Collection<Field> annotatedFields = new ArrayList<>();
-        Field[] fields = aClass.getDeclaredFields();
-        for(Field field : fields) {
-            Annotation[] annotations = field.getAnnotations();
-            for(Annotation annotation : annotations) {
-                    if (annotation.annotationType().isAssignableFrom(annotationClass)) {
-                        field.setAccessible(true);
-                        annotatedFields.add(field);
-                    }
+        Collection<Class<?>> classes = Reflection.getAllClassesAndInterfaces(aClass, ClassDiscovery.getPackagesToScan());
+        for(Class<?> aClassToCheck : classes) {
+            Field[] fields = aClassToCheck.getDeclaredFields();
+            for(Field field : fields) {
+                Annotation[] annotations = field.getAnnotations();
+                for(Annotation annotation : annotations) {
+                        if (annotation.annotationType().isAssignableFrom(annotationClass)) {
+                            field.setAccessible(true);
+                            annotatedFields.add(field);
+                        }
+                }
             }
         }
         return annotatedFields;
