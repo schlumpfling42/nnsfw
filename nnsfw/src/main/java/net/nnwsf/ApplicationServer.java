@@ -67,7 +67,8 @@ public class ApplicationServer {
             persistenceConfiguration.providerClass(), 
             persistenceConfiguration.jdbcDriver(), 
             persistenceConfiguration.jdbcUrl(),             
-            persistenceConfiguration.dialect(), 
+            persistenceConfiguration.jdbcDialectProperty(), 
+            persistenceConfiguration.jdbcDialectClass(), 
             persistenceConfiguration.user(), 
             persistenceConfiguration.password());
 

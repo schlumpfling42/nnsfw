@@ -134,7 +134,8 @@ public class PersistenceManager {
         Class<? extends PersistenceProvider> persistenceProviderClass,
         String jdbcDriver,
 		String jdbcUrl,
-		String jdbcDialect,
+		String jdbcDialectProperty,
+		String jdbcDialectClass,
         String user,
         String password) {
         if(instance == null) {
@@ -145,7 +146,8 @@ public class PersistenceManager {
 					persistenceProviderClass,
 					jdbcDriver,
 					jdbcUrl,
-					jdbcDialect,
+					jdbcDialectProperty,
+					jdbcDialectClass,
 					user,
 					password
 				);
@@ -167,7 +169,8 @@ public class PersistenceManager {
         Class<? extends PersistenceProvider> persistenceProviderClass,
         String jdbcDriver,
 		String jdbcUrl,
-		String jdbcDialect,
+		String jdbcDialectProperty,
+		String jdbcDialectClass,
         String user,
         String password) {
 			this.repositoryClasses = new HashMap<>();
@@ -181,9 +184,10 @@ public class PersistenceManager {
                 new PersistenceUnitInfoImplementation(persistenceProviderClass),
                 ImmutableMap.<String, Object>builder()
                 .put("javax.persistence.jdbc.driver", jdbcDriver)
-                .put("javax.persistence.jdbc.url", jdbcUrl)
+				.put("javax.persistence.jdbc.url", jdbcUrl)
+				.put(jdbcDialectProperty, jdbcDialectClass)
                 .put("javax.persistence.jdbc.user", user)
-				.put("avax.persistence.jdbc.password", password)
+				.put("javax.persistence.jdbc.password", password)
                 .build()
             );
             } catch(Exception e) {

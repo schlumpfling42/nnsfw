@@ -10,12 +10,12 @@ import net.nnwsf.persistence.PersistenceConfiguration;
 
 @Server()
 @AnnotationConfiguration("net.example")
-@AuthenticatedResourcePath("/secure")
 @PersistenceConfiguration(
     providerClass=HibernatePersistenceProvider.class,
     jdbcDriver="org.h2.Driver",
     jdbcUrl="jdbc:h2:~/example",
-    dialect = "org.hibernate.dialect.H2Dialect",
+    jdbcDialectProperty = "hibernate.dialect",
+    jdbcDialectClass = "org.hibernate.dialect.H2Dialect",
     user="",
     password=""
 )

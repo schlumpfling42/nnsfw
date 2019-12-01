@@ -16,7 +16,8 @@ public @interface PersistenceConfiguration {
     Class<? extends PersistenceProvider> providerClass();
     String jdbcDriver();
     String jdbcUrl();
-    String dialect();
+    String jdbcDialectProperty();
+    String jdbcDialectClass();
     String user();
     String password();
 }
