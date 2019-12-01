@@ -9,7 +9,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import net.nnwsf.util.ClassDiscovery;
+import net.nnwsf.util.ProxyUtil;
 import net.nnwsf.util.Reflection;
+import net.sf.cglib.proxy.Enhancer;
 
 public class ServiceManager {
 
@@ -75,9 +77,7 @@ public class ServiceManager {
         T service = (T)serviceSingletons.get(serviceName);
         if(service == null) {
             try {
-                service = (T) implementationClass.newInstance();
-                service = (T) Proxy.newProxyInstance(serviceClass.getClassLoader(), new Class<?>[] { serviceClass },
-                        new ServiceInvocationHandler(service));
+                service = (T) ProxyUtil.createProxy(implementationClass, new ServiceInvocationHandler());
                 serviceSingletons.put(serviceName, service);
             } catch (Exception e) {
                 log.log(Level.SEVERE, "Unable to create service {0} with implementation {1}", new Object[]{serviceClass, implementationClass});
@@ -86,11 +86,6 @@ public class ServiceManager {
         }
         return service;
     }
-
-	public static Object getActualServiceObject(Object injectable) {
-        ServiceInvocationHandler handler = (ServiceInvocationHandler)Proxy.getInvocationHandler(injectable);
-		return handler.getServiceObject();
-	}
 
 }
 

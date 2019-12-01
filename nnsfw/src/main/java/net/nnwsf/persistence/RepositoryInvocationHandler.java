@@ -2,17 +2,17 @@ package net.nnwsf.persistence;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
 import java.util.Collection;
 
 import javax.persistence.Id;
 import javax.persistence.Query;
 
 import net.nnwsf.util.Reflection;
+import net.sf.cglib.proxy.MethodInterceptor;
+import net.sf.cglib.proxy.MethodProxy;
 
-public class RepositoryInvocationHandler implements InvocationHandler {
+public class RepositoryInvocationHandler implements MethodInterceptor {
 
     private final Class<?> entityClass;
     private final Class<?> idClass;
@@ -24,7 +24,7 @@ public class RepositoryInvocationHandler implements InvocationHandler {
     }
 
     @Override
-    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+    public Object intercept(Object obj, Method method, Object[] args, MethodProxy proxy) throws Throwable {
         net.nnwsf.persistence.Query queryAnnotation = method.getAnnotation(net.nnwsf.persistence.Query.class);
         if(queryAnnotation != null) {
             try(EntityManagerHolder entityManagerHolder = PersistenceManager.createEntityManager()) {
@@ -73,7 +73,8 @@ public class RepositoryInvocationHandler implements InvocationHandler {
                 if(entityClass.isInstance(args[0])) {
                     try(EntityManagerHolder entityManagerHolder = PersistenceManager.createEntityManager()) {
                         entityManagerHolder.beginTransaction();
-                        entityManagerHolder.getEntityManager().remove(args[0]);
+                        Object mergedObject = entityManagerHolder.getEntityManager().merge(args[0]);
+                        entityManagerHolder.getEntityManager().remove(mergedObject);
                         entityManagerHolder.commitTransaction();
                         return null;
                     }

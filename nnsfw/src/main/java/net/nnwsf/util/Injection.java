@@ -29,25 +29,22 @@ public class Injection {
     public final synchronized Object getInjectable(Class<?> aClass, String name) throws Exception {
         Object injectable = injectables.get(aClass.getName());
         if(injectable == null) {
-            Object actualObject = null;
             Collection<Field> annotationFields = null;
             if(ServiceManager.isService(aClass)) {
                 injectable = ServiceManager.createService(aClass, name);
-                actualObject = ServiceManager.getActualServiceObject(injectable);
             } else if(PersistenceManager.isRepository(aClass)) {
                 injectable = PersistenceManager.createRepository(aClass);
             } else {
                 Class<?> implementationClass = ClassDiscovery.getImplementation(aClass);
                 injectable = implementationClass.newInstance();
-                actualObject = injectable;
             }
             injectables.put(aClass.getName(), injectable);
             
-            if(actualObject != null) {
-                annotationFields = Reflection.getInstance().findAnnotationFields(actualObject.getClass(), Inject.class);
+            if(injectable != null) {
+                annotationFields = Reflection.getInstance().findAnnotationFields(injectable.getClass(), Inject.class);
                 for(Field field : annotationFields) {
                     Named named = field.getAnnotation(Named.class);
-                    field.set(actualObject, getInjectable(field.getType(), named == null ? null : named.value()));
+                    field.set(injectable, getInjectable(field.getType(), named == null ? null : named.value()));
                 }
             }
         }

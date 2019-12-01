@@ -25,6 +25,7 @@ import javax.sql.DataSource;
 import com.google.common.collect.ImmutableMap;
 
 import net.nnwsf.util.ClassDiscovery;
+import net.nnwsf.util.ProxyUtil;
 
 public class PersistenceManager {
 
@@ -220,10 +221,7 @@ public class PersistenceManager {
 	}
 
 	public static Object createRepository(Class<?> aClass) {
-		return Proxy.newProxyInstance(
-			aClass.getClassLoader(), 
-			new Class<?>[] {aClass},
-			new RepositoryInvocationHandler(instance.repositoryClasses.get(aClass).value()));
+		return ProxyUtil.createProxy(aClass, new RepositoryInvocationHandler(instance.repositoryClasses.get(aClass).value()));
 	}
 
 }

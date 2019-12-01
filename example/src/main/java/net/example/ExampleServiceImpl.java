@@ -1,6 +1,7 @@
 package net.example;
 
 import javax.inject.Inject;
+import javax.transaction.Transactional;
 
 import net.example.persistence.ExampleEntity;
 import net.example.persistence.ExampleRepository;
@@ -12,6 +13,7 @@ public class ExampleServiceImpl implements ExampleService{
     @Inject
     private ExampleRepository repository;
     
+    //@Transactional
     public String echo(String echo) {
         ExampleEntity entity = new ExampleEntity();
         entity.setName(echo);
