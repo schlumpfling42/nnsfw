@@ -1,4 +1,5 @@
 package net.nnwsf.persistence;
+
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
@@ -6,17 +7,10 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import javax.persistence.spi.PersistenceProvider;
-
 @Documented
-@Target(ElementType.TYPE)
+@Target(ElementType.METHOD)
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
-public @interface PersistenceConfiguration {
-    Class<? extends PersistenceProvider> providerClass();
-    String jdbcDriver();
-    String jdbcUrl();
-    String user();
-    String password();
-    Property[] properties() default {};
+public @interface Query {
+    String value();
 }

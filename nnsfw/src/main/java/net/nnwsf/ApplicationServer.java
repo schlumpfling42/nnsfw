@@ -1,6 +1,9 @@
 package net.nnwsf;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -15,6 +18,7 @@ import net.nnwsf.configuration.ServerConfiguration;
 import net.nnwsf.controller.Controller;
 import net.nnwsf.handler.HttpHandlerImpl;
 import net.nnwsf.persistence.PersistenceManager;
+import net.nnwsf.persistence.Property;
 import net.nnwsf.service.ServiceManager;
 import net.nnwsf.persistence.PersistenceConfiguration;
 import net.nnwsf.util.ClassDiscovery;
@@ -62,15 +66,14 @@ public class ApplicationServer {
         ServiceManager.init(ClassDiscovery.getPackagesToScan());
 
         PersistenceConfiguration persistenceConfiguration = Reflection.getInstance().findAnnotation(applicationClass, PersistenceConfiguration.class);
-        
+
         PersistenceManager.init(
             persistenceConfiguration.providerClass(), 
             persistenceConfiguration.jdbcDriver(), 
             persistenceConfiguration.jdbcUrl(),             
-            persistenceConfiguration.jdbcDialectProperty(), 
-            persistenceConfiguration.jdbcDialectClass(), 
             persistenceConfiguration.user(), 
-            persistenceConfiguration.password());
+            persistenceConfiguration.password(),
+            Arrays.asList(persistenceConfiguration.properties()).stream().collect(Collectors.toMap(p -> p.name(), p -> p.value())));
 
         Collection<String> authenticatedResourcePaths = Reflection.getInstance()
             .findAnnotations(applicationClass, AuthenticatedResourcePath.class)

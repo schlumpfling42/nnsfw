@@ -134,10 +134,9 @@ public class PersistenceManager {
         Class<? extends PersistenceProvider> persistenceProviderClass,
         String jdbcDriver,
 		String jdbcUrl,
-		String jdbcDialectProperty,
-		String jdbcDialectClass,
         String user,
-        String password) {
+		String password,
+		Map<String, Object> properties) {
         if(instance == null) {
 			try {
                 Map<Repository, Class<Object>> repositoryClasses = ClassDiscovery.discoverAnnotatedClasses(Object.class, Repository.class);
@@ -146,10 +145,9 @@ public class PersistenceManager {
 					persistenceProviderClass,
 					jdbcDriver,
 					jdbcUrl,
-					jdbcDialectProperty,
-					jdbcDialectClass,
 					user,
-					password
+					password,
+					properties
 				);
 			} catch (Exception e) {
                 log.log(Level.SEVERE, "Unable to discover repositories", e);
@@ -169,10 +167,9 @@ public class PersistenceManager {
         Class<? extends PersistenceProvider> persistenceProviderClass,
         String jdbcDriver,
 		String jdbcUrl,
-		String jdbcDialectProperty,
-		String jdbcDialectClass,
         String user,
-        String password) {
+		String password,
+		Map<String, Object> properties) {
 			this.repositoryClasses = new HashMap<>();
 			for(Map.Entry<Repository, Class<Object>> annotationClass : annotatedRepositoryClasses.entrySet()) {
 				Class<?> aClass = annotationClass.getValue();
@@ -180,15 +177,15 @@ public class PersistenceManager {
 			}
             try {
 
-            this.entityManagerFactory = persistenceProviderClass.newInstance().createContainerEntityManagerFactory(
+            this.entityManagerFactory = persistenceProviderClass.getConstructor(new Class[0]).newInstance().createContainerEntityManagerFactory(
                 new PersistenceUnitInfoImplementation(persistenceProviderClass),
                 ImmutableMap.<String, Object>builder()
                 .put("javax.persistence.jdbc.driver", jdbcDriver)
 				.put("javax.persistence.jdbc.url", jdbcUrl)
-				.put(jdbcDialectProperty, jdbcDialectClass)
                 .put("javax.persistence.jdbc.user", user)
 				.put("javax.persistence.jdbc.password", password)
-                .build()
+				.putAll(properties)
+				.build()
             );
             } catch(Exception e) {
                 log.log(Level.SEVERE, "Unable to initialize persistence", e);
