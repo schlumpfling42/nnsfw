@@ -3,6 +3,7 @@
 .settings
 .project
 .idea
+.classpath
 bin
 build
 classes

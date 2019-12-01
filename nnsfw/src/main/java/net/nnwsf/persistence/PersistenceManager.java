@@ -212,7 +212,7 @@ public class PersistenceManager {
             }
         }
 
-		return new EntityManagerHolder(entityManager, created);
+		return new EntityManagerHolder(entityManager, e -> entityManagerThreadLocal.remove(), created);
 	}
 
 	public static boolean isRepository(Class<?> aClass) {
