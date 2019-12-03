@@ -12,9 +12,6 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import net.nnwsf.configuration.Server;
-import net.nnwsf.configuration.ServerConfiguration;
-
 public class Reflection {
 
     private static Logger log = Logger.getLogger(Reflection.class.getName());
@@ -23,18 +20,6 @@ public class Reflection {
 
     public static Reflection getInstance() {
         return instance;
-    }
-
-    public ServerConfiguration getConfiguration(Class<?> aClass) {
-        Server annotation = findAnnotation(aClass, Server.class);
-        if(annotation == null) {
-            throw new RuntimeException("No configuration provided");
-        }
-        try {
-            return annotation.value().newInstance();
-        } catch (Exception e) {
-            throw new RuntimeException("Invalid configuration", e);
-        }
     }
 
     public Map<Annotation, Collection<Method>> findAnnotationMethods(Class<?> aClass, Class<?>... annotationClasses) {

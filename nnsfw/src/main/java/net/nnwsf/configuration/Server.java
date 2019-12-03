@@ -7,5 +7,7 @@ import java.lang.annotation.*;
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Server {
-    Class<? extends ServerConfiguration> value() default ServerConfigurationImpl.class;
+    int port() default Integer.MIN_VALUE;
+    String hostname() default "";
+    String resourcePath() default "";
 }

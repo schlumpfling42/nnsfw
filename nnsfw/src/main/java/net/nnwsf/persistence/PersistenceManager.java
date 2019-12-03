@@ -183,8 +183,8 @@ public class PersistenceManager {
                 ImmutableMap.<String, Object>builder()
                 .put("javax.persistence.jdbc.driver", jdbcDriver)
 				.put("javax.persistence.jdbc.url", jdbcUrl)
-                .put("javax.persistence.jdbc.user", user)
-				.put("javax.persistence.jdbc.password", password)
+                .put("javax.persistence.jdbc.user", user == null ? "" : user)
+				.put("javax.persistence.jdbc.password", password == null ? "" : password)
 				.putAll(properties)
 				.build()
             );
