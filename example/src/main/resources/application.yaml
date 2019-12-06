@@ -1,0 +1,9 @@
+datasource:
+    providerClass: org.hibernate.jpa.HibernatePersistenceProvider
+    jdbcDriver: org.h2.Driver
+    jdbcUrl: jdbc:h2:~/example
+    user:
+    password:
+    properties:
+      hibernate.dialect: org.hibernate.dialect.H2Dialect
+      hibernate.hbm2ddl.auto: create-drop

@@ -1,6 +1,5 @@
 package net.nnwsf.service;
 
-import java.lang.reflect.Proxy;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -9,6 +8,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import net.nnwsf.util.ClassDiscovery;
+import net.nnwsf.util.ProxyUtil;
 import net.nnwsf.util.ReflectionHelper;
 
 public class ServiceManager {
@@ -74,9 +74,7 @@ public class ServiceManager {
         T service = serviceClass.cast(serviceSingletons.get(serviceName));
         if(service == null) {
             try {
-                service = serviceClass.cast(implementationClass.getConstructor().newInstance());
-                service = serviceClass.cast(Proxy.newProxyInstance(serviceClass.getClassLoader(), new Class<?>[] { serviceClass },
-                        new ServiceInvocationHandler(service)));
+                service = serviceClass.cast(ProxyUtil.createProxy(implementationClass, new ServiceInvocationHandler()));
                 serviceSingletons.put(serviceName, service);
             } catch (Exception e) {
                 log.log(Level.SEVERE, "Unable to create service {0} with implementation {1}", new Object[]{serviceClass, implementationClass});
@@ -85,11 +83,6 @@ public class ServiceManager {
         }
         return service;
     }
-
-	public static Object getActualServiceObject(Object injectable) {
-        ServiceInvocationHandler handler = (ServiceInvocationHandler)Proxy.getInvocationHandler(injectable);
-		return handler.getServiceObject();
-	}
 
 }
 

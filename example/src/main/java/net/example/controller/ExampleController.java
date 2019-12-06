@@ -2,6 +2,8 @@ package net.example.controller;
 
 import net.example.ExampleBean;
 import net.example.ExampleService;
+import net.example.ExampleService2Impl;
+import net.example.ExampleServiceImpl;
 import net.nnwsf.controller.Controller;
 import net.nnwsf.controller.Get;
 import net.nnwsf.controller.PathVariable;
@@ -17,6 +19,9 @@ public class ExampleController {
     @Inject
     private ExampleService service;
 
+    @Inject
+    private ExampleService2Impl service2;
+
     @Get("/")
     public String get() {
         return service.echo("Hello example");
@@ -30,7 +35,7 @@ public class ExampleController {
 
     @Get("/")
     public String getQuery(@RequestParameter("echo") String echo, String ignore) {
-        return service.echo(echo);
+        return service2.echo(echo) + " ---" +  service.echo(echo);
     }
 
     @Get("/{echo}")

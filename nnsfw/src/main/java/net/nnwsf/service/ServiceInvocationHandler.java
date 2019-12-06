@@ -1,6 +1,5 @@
 package net.nnwsf.service;
 
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
 import javax.transaction.Transactional;
@@ -8,30 +7,25 @@ import javax.transaction.Transactional;
 import net.nnwsf.persistence.EntityManagerHolder;
 import net.nnwsf.persistence.PersistenceManager;
 import net.nnwsf.util.ReflectionHelper;
+import net.sf.cglib.proxy.MethodInterceptor;
+import net.sf.cglib.proxy.MethodProxy;
 
-public class ServiceInvocationHandler implements InvocationHandler {
+public class ServiceInvocationHandler implements MethodInterceptor {
 
-    private final Object service;
-
-    public ServiceInvocationHandler(Object aService) {
-        this.service = aService;
+    public ServiceInvocationHandler() {
     }
 
     @Override
-    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+    public Object intercept(Object obj, Method method, Object[] args, MethodProxy proxy) throws Throwable {
         if(ReflectionHelper.findAnnotation(method, Transactional.class) != null) {
             try(EntityManagerHolder entityManager = PersistenceManager.createEntityManager()) {
                 entityManager.beginTransaction();
-                Object result = method.invoke(service, args);
+                Object result = proxy.invokeSuper(obj, args);;
                 entityManager.commitTransaction();
                 return result;
             }
         }
-        return method.invoke(service, args);
+        return proxy.invokeSuper(obj, args);
     }
-
-	public Object getServiceObject() {
-		return service;
-	}
 
 }

@@ -12,7 +12,7 @@ import javax.persistence.spi.PersistenceProvider;
 @Target(ElementType.TYPE)
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
-public @interface PersistenceConfiguration {
+public @interface Datasource {
     Class<? extends PersistenceProvider> providerClass();
     String jdbcDriver();
     String jdbcUrl();

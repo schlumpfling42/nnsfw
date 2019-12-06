@@ -12,24 +12,9 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import net.nnwsf.configuration.Server;
-import net.nnwsf.configuration.ServerConfiguration;
-
 public class ReflectionHelper {
 
     private static Logger log = Logger.getLogger(ReflectionHelper.class.getName());
-
-    public static ServerConfiguration getConfiguration(Class<?> aClass) {
-        Server annotation = findAnnotation(aClass, Server.class);
-        if(annotation == null) {
-            throw new RuntimeException("No configuration provided");
-        }
-        try {
-            return annotation.value().getConstructor().newInstance();
-        } catch (Exception e) {
-            throw new RuntimeException("Invalid configuration", e);
-        }
-    }
 
     public static Map<Annotation, Collection<Method>> findAnnotationMethods(Class<?> aClass, Class<?>... annotationClasses) {
         Map<Annotation, Collection<Method>> annotationMethodMap = new HashMap<>();

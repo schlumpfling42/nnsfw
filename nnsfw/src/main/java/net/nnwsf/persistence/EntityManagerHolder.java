@@ -1,18 +1,22 @@
 package net.nnwsf.persistence;
 
+import java.util.function.Consumer;
+
 import javax.persistence.EntityManager;
 
 public class EntityManagerHolder implements AutoCloseable {
     
     private final boolean created;
-    private EntityManager entityManager;
+    private final EntityManager entityManager;
+    private final Consumer<EntityManager> releaseFunction;
 
-    EntityManagerHolder(EntityManager entityManager, boolean created) {
+    EntityManagerHolder(EntityManager entityManager, Consumer<EntityManager> releaseFunction, boolean created) {
         this.entityManager = entityManager;
         this.created = created;
+        this.releaseFunction = releaseFunction;
     }
 
-    public void beginTransaction() {
+	public void beginTransaction() {
         if(!entityManager.getTransaction().isActive()) {
             entityManager.getTransaction().begin();
         }
@@ -39,6 +43,7 @@ public class EntityManagerHolder implements AutoCloseable {
         if(created) {
             rollbackTransaction();
             entityManager.close();
+            releaseFunction.accept(entityManager);
         }
     }
 }

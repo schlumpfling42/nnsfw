@@ -25,6 +25,7 @@ import javax.sql.DataSource;
 import com.google.common.collect.ImmutableMap;
 
 import net.nnwsf.util.ClassDiscovery;
+import net.nnwsf.util.ProxyUtil;
 
 public class PersistenceManager {
 
@@ -182,8 +183,8 @@ public class PersistenceManager {
                 ImmutableMap.<String, Object>builder()
                 .put("javax.persistence.jdbc.driver", jdbcDriver)
 				.put("javax.persistence.jdbc.url", jdbcUrl)
-                .put("javax.persistence.jdbc.user", user)
-				.put("javax.persistence.jdbc.password", password)
+                .put("javax.persistence.jdbc.user", user == null ? "" : user)
+				.put("javax.persistence.jdbc.password", password == null ? "" : password)
 				.putAll(properties)
 				.build()
             );
@@ -212,7 +213,7 @@ public class PersistenceManager {
             }
         }
 
-		return new EntityManagerHolder(entityManager, created);
+		return new EntityManagerHolder(entityManager, e -> entityManagerThreadLocal.remove(), created);
 	}
 
 	public static boolean isRepository(Class<?> aClass) {
@@ -220,10 +221,7 @@ public class PersistenceManager {
 	}
 
 	public static Object createRepository(Class<?> aClass) {
-		return Proxy.newProxyInstance(
-			aClass.getClassLoader(), 
-			new Class<?>[] {aClass},
-			new RepositoryInvocationHandler(instance.repositoryClasses.get(aClass).value()));
+		return ProxyUtil.createProxy(aClass, new RepositoryInvocationHandler(instance.repositoryClasses.get(aClass).value()));
 	}
 
 }

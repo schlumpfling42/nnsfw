@@ -1,0 +1,4 @@
+application:
+  hostname: localhost
+  port: 8080
+  resourcePath: /static
