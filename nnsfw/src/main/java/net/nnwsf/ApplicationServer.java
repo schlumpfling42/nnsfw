@@ -2,8 +2,6 @@ package net.nnwsf;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -17,12 +15,11 @@ import net.nnwsf.configuration.AuthenticatedResourcePath;
 import net.nnwsf.configuration.ServerConfiguration;
 import net.nnwsf.controller.Controller;
 import net.nnwsf.handler.HttpHandlerImpl;
-import net.nnwsf.persistence.PersistenceManager;
-import net.nnwsf.persistence.Property;
-import net.nnwsf.service.ServiceManager;
 import net.nnwsf.persistence.PersistenceConfiguration;
+import net.nnwsf.persistence.PersistenceManager;
+import net.nnwsf.service.ServiceManager;
 import net.nnwsf.util.ClassDiscovery;
-import net.nnwsf.util.Reflection;
+import net.nnwsf.util.ReflectionHelper;
 
 public class ApplicationServer {
 
@@ -58,14 +55,14 @@ public class ApplicationServer {
     private final ServerConfiguration configuration;
 
     private ApplicationServer(Class<?> applicationClass) {
-        AnnotationConfiguration annotationConfiguration = Reflection.getInstance().findAnnotation(applicationClass, AnnotationConfiguration.class);
-        configuration = Reflection.getInstance().getConfiguration(applicationClass);
+        AnnotationConfiguration annotationConfiguration = ReflectionHelper.findAnnotation(applicationClass, AnnotationConfiguration.class);
+        configuration = ReflectionHelper.getConfiguration(applicationClass);
 
         ClassDiscovery.init(applicationClass.getClassLoader(), annotationConfiguration.value());
 
         ServiceManager.init(ClassDiscovery.getPackagesToScan());
 
-        PersistenceConfiguration persistenceConfiguration = Reflection.getInstance().findAnnotation(applicationClass, PersistenceConfiguration.class);
+        PersistenceConfiguration persistenceConfiguration = ReflectionHelper.findAnnotation(applicationClass, PersistenceConfiguration.class);
 
         PersistenceManager.init(
             persistenceConfiguration.providerClass(), 
@@ -75,7 +72,7 @@ public class ApplicationServer {
             persistenceConfiguration.password(),
             Arrays.asList(persistenceConfiguration.properties()).stream().collect(Collectors.toMap(p -> p.name(), p -> p.value())));
 
-        Collection<String> authenticatedResourcePaths = Reflection.getInstance()
+        Collection<String> authenticatedResourcePaths = ReflectionHelper
             .findAnnotations(applicationClass, AuthenticatedResourcePath.class)
             .stream().map(annotation -> annotation.value())
             .collect(Collectors.toList());

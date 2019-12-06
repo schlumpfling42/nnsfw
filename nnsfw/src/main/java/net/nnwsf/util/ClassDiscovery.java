@@ -70,7 +70,7 @@ public class ClassDiscovery {
 				Annotation[] classAnnotations = aClass.getAnnotations();
 				for (Annotation aClassAnnotation : classAnnotations) {
 					if(aClassAnnotation.annotationType().isAssignableFrom(annotationClass)) {
-						allAnnotatedClasses.put(aClassAnnotation, (Class<T>) aClass);
+						allAnnotatedClasses.put(aClassAnnotation, (Class<T>)aClass);
 					}
 				}
 			}
@@ -84,7 +84,7 @@ public class ClassDiscovery {
 			Annotation[] classAnnotations = aClass.getAnnotations();
 			for (Annotation aClassAnnotation : classAnnotations) {
 					if (aClassAnnotation.annotationType().isAssignableFrom(annotationClass)) {
-					allAnnotatedClasses.put((A)aClassAnnotation, (Class<T>)aClass);
+					allAnnotatedClasses.put(annotationClass.cast(aClassAnnotation), (Class<T>)aClass);
 				}
 			}
 		}
@@ -123,12 +123,12 @@ public class ClassDiscovery {
 				allSuperClassesAndInterfaces.add(aClass.getSuperclass());
 			}
 			allSuperClassesAndInterfaces.addAll(Arrays.asList(aClass.getInterfaces()));
-			for (Class superClasseOrInterface : allSuperClassesAndInterfaces) {
+			for (Class<?> superClasseOrInterface : allSuperClassesAndInterfaces) {
 				allSuperClassesAndInterfaces.addAll(getAllSuperClassesAndInterfaces(superClasseOrInterface));
 			}
 			superClassesAndInferfaces.put(aClass, allSuperClassesAndInterfaces);
 			if(!aClass.isInterface()) {
-				for (Class subClassOrInterface : allSuperClassesAndInterfaces) {
+				for (Class<?> subClassOrInterface : allSuperClassesAndInterfaces) {
 					Collection<Class<?>> allSubClasses = subClasses.get(subClassOrInterface);
 					if(allSubClasses == null) {
 						allSubClasses = new ArrayList<>();

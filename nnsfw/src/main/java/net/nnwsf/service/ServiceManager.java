@@ -9,7 +9,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import net.nnwsf.util.ClassDiscovery;
-import net.nnwsf.util.Reflection;
+import net.nnwsf.util.ReflectionHelper;
 
 public class ServiceManager {
 
@@ -38,10 +38,9 @@ public class ServiceManager {
         this.serviceClasses = new HashSet<>();
         this.serviceImplementation = new HashMap<>();
         for(Map.Entry<Service, Class<Object>> annotationClass : annotationServiceClasses.entrySet()) {
-            Class<?> aClass = annotationClass.getValue();
             if(!annotationClass.getValue().isInterface()) {
                 Class<?> anImplementationClass = annotationClass.getValue();
-                Collection<Class<?>> allClasses = Reflection.getAllClassesAndInterfaces(anImplementationClass, packagesToScan);
+                Collection<Class<?>> allClasses = ReflectionHelper.getAllClassesAndInterfaces(anImplementationClass, packagesToScan);
                 for(Class<?> aSubClass : allClasses) {
                     String serviceName = aSubClass + ":";
                     if(!aSubClass.equals(anImplementationClass)) {
@@ -72,12 +71,12 @@ public class ServiceManager {
     private <T> T internalCreateService(Class<T> serviceClass, String name) {
         String serviceName = serviceClass + ":" + (name == null ? "" : name);
         Class<?> implementationClass = serviceImplementation.get(serviceName);
-        T service = (T)serviceSingletons.get(serviceName);
+        T service = serviceClass.cast(serviceSingletons.get(serviceName));
         if(service == null) {
             try {
-                service = (T) implementationClass.newInstance();
-                service = (T) Proxy.newProxyInstance(serviceClass.getClassLoader(), new Class<?>[] { serviceClass },
-                        new ServiceInvocationHandler(service));
+                service = serviceClass.cast(implementationClass.getConstructor().newInstance());
+                service = serviceClass.cast(Proxy.newProxyInstance(serviceClass.getClassLoader(), new Class<?>[] { serviceClass },
+                        new ServiceInvocationHandler(service)));
                 serviceSingletons.put(serviceName, service);
             } catch (Exception e) {
                 log.log(Level.SEVERE, "Unable to create service {0} with implementation {1}", new Object[]{serviceClass, implementationClass});

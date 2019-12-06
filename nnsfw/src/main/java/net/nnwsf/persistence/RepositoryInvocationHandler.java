@@ -4,13 +4,12 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
 import java.util.Collection;
 
 import javax.persistence.Id;
 import javax.persistence.Query;
 
-import net.nnwsf.util.Reflection;
+import net.nnwsf.util.ReflectionHelper;
 
 public class RepositoryInvocationHandler implements InvocationHandler {
 
@@ -19,7 +18,7 @@ public class RepositoryInvocationHandler implements InvocationHandler {
 
     public RepositoryInvocationHandler(Class<?> entityClass) {
         this.entityClass = entityClass;
-        Collection<Field> idFields = Reflection.getInstance().findAnnotationFields(entityClass, Id.class);
+        Collection<Field> idFields = ReflectionHelper.findAnnotationFields(entityClass, Id.class);
         idClass = idFields.iterator().next().getType();
     }
 

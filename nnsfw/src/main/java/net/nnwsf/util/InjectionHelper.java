@@ -11,22 +11,19 @@ import javax.inject.Named;
 import net.nnwsf.persistence.PersistenceManager;
 import net.nnwsf.service.ServiceManager;
 
-public class Injection {
-    private static Injection instance;
-
-    public static Injection getInstance() {
-        if(instance == null) {
-           instance = new Injection();
-        }
-        return instance;
-    }
+public class InjectionHelper {
+    private static InjectionHelper instance = new InjectionHelper();
 
     private final Map<String, Object> injectables = new HashMap<>();
 
-    private Injection() {
+    private InjectionHelper() {
     }
 
-    public final synchronized Object getInjectable(Class<?> aClass, String name) throws Exception {
+    public static Object getInjectable(Class<?> aClass, String name) throws Exception {
+        return instance.internalGetInjectable(aClass, name);
+    }
+
+    private synchronized Object internalGetInjectable(Class<?> aClass, String name) throws Exception {
         Object injectable = injectables.get(aClass.getName());
         if(injectable == null) {
             Object actualObject = null;
@@ -38,13 +35,13 @@ public class Injection {
                 injectable = PersistenceManager.createRepository(aClass);
             } else {
                 Class<?> implementationClass = ClassDiscovery.getImplementation(aClass);
-                injectable = implementationClass.newInstance();
+                injectable = implementationClass.getConstructor().newInstance();
                 actualObject = injectable;
             }
             injectables.put(aClass.getName(), injectable);
             
             if(actualObject != null) {
-                annotationFields = Reflection.getInstance().findAnnotationFields(actualObject.getClass(), Inject.class);
+                annotationFields = ReflectionHelper.findAnnotationFields(actualObject.getClass(), Inject.class);
                 for(Field field : annotationFields) {
                     Named named = field.getAnnotation(Named.class);
                     field.set(actualObject, getInjectable(field.getType(), named == null ? null : named.value()));

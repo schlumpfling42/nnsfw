@@ -41,8 +41,8 @@ import net.nnwsf.controller.Post;
 import net.nnwsf.controller.Put;
 import net.nnwsf.controller.RequestBody;
 import net.nnwsf.controller.RequestParameter;
-import net.nnwsf.util.Injection;
-import net.nnwsf.util.Reflection;
+import net.nnwsf.util.InjectionHelper;
+import net.nnwsf.util.ReflectionHelper;
 
 public class HttpHandlerImpl implements HttpHandler {
 
@@ -70,7 +70,7 @@ public class HttpHandlerImpl implements HttpHandler {
 		this.controllerHandler = new ControllerHandlerImpl();
 		HttpHandler aControllerHandler = new AuthenticationCallHandler(controllerHandler);
 		aControllerHandler = new AuthenticationConstraintHandler(aControllerHandler);
-		List<AuthenticationMechanism> mechanisms = new ArrayList<>(Reflection.getInstance().getInstances(authenticationMechanisms));
+		List<AuthenticationMechanism> mechanisms = new ArrayList<>(ReflectionHelper.getInstances(authenticationMechanisms));
 		aControllerHandler = new AuthenticationMechanismsHandler(aControllerHandler, mechanisms);
 		controllerSecurityHandler = new SecurityInitialHandler(
 				AuthenticationMode.CONSTRAINT_DRIVEN, identityManager, aControllerHandler);
@@ -145,9 +145,9 @@ public class HttpHandlerImpl implements HttpHandler {
 			Collection<Class<?>> processedClasses = new HashSet<>();
 
 			for (Class<?> aClass : controllerClasses) {
-				Controller controllerAnnotation = Reflection.getInstance().findAnnotation(aClass, Controller.class);
+				Controller controllerAnnotation = ReflectionHelper.findAnnotation(aClass, Controller.class);
 				Collection<Annotation> annotations = Arrays.asList(aClass.getAnnotations());
-				Map<Annotation, Collection<Method>> annotatedMethods = Reflection.getInstance().findAnnotationMethods(aClass, Get.class, Post.class, Put.class, Delete.class);
+				Map<Annotation, Collection<Method>> annotatedMethods = ReflectionHelper.findAnnotationMethods(aClass, Get.class, Post.class, Put.class, Delete.class);
 				Object object = createObject(aClass);
 				if (annotatedMethods == null) {
 					throw new RuntimeException("Invalid controller");
@@ -161,7 +161,7 @@ public class HttpHandlerImpl implements HttpHandler {
 						MethodParameter[] specialMethodParameters = getSpecialMethodParameters(annotatedMethod);
 						URLMatcher proxyUrlMatcher = new URLMatcher(
 								methodAnnotation.annotationType().getSimpleName(),
-								(controllerAnnotation.value() + "/" + Reflection.getInstance().getValue(methodAnnotation, "value").replace("/+", "/")));
+								(controllerAnnotation.value() + "/" + ReflectionHelper.getValue(methodAnnotation, "value").replace("/+", "/")));
 
 						matchingProxies = proxies.get(proxyUrlMatcher);
 						if (matchingProxies == null) {
@@ -186,7 +186,7 @@ public class HttpHandlerImpl implements HttpHandler {
 	}
 
 	private Object createObject(Class<?> aClass) throws Exception {
-		return Injection.getInstance().getInjectable(aClass, null);
+		return InjectionHelper.getInjectable(aClass, null);
 	}
 
 	private ControllerProxy getBestMatch(HttpServerExchange exchange, URLMatcher requestUrlMatcher) {

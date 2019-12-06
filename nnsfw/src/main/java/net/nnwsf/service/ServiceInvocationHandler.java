@@ -7,7 +7,7 @@ import javax.transaction.Transactional;
 
 import net.nnwsf.persistence.EntityManagerHolder;
 import net.nnwsf.persistence.PersistenceManager;
-import net.nnwsf.util.Reflection;
+import net.nnwsf.util.ReflectionHelper;
 
 public class ServiceInvocationHandler implements InvocationHandler {
 
@@ -19,7 +19,7 @@ public class ServiceInvocationHandler implements InvocationHandler {
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        if(Reflection.getInstance().findAnnotation(method, Transactional.class) != null) {
+        if(ReflectionHelper.findAnnotation(method, Transactional.class) != null) {
             try(EntityManagerHolder entityManager = PersistenceManager.createEntityManager()) {
                 entityManager.beginTransaction();
                 Object result = method.invoke(service, args);
