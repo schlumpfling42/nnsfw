@@ -1,11 +1,16 @@
 package net.nnwsf.configuration;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Proxy;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.yaml.snakeyaml.Yaml;
+
+import net.nnwsf.util.TransformerHelper;
 
 public class ConfigurationManager {
 	private static Logger log = Logger.getLogger(ConfigurationManager.class.getName());
@@ -26,7 +31,31 @@ public class ConfigurationManager {
     }
 
     public static  <T> T get(String key, Class<T> aClass) {
-        return (T)instance.internalGet(key);
+        return aClass.cast(instance.internalGet(key));
+    }
+
+    public static  <T> T get(String[] keys, Class<T> aClass) {
+        StringBuilder keyBuilder = new StringBuilder();
+        keyBuilder.append("${");
+        for(int i=0; i<keys.length; i++) {
+            if(i>0) {
+                keyBuilder.append(".");
+            }
+            keyBuilder.append(keys[i]);
+        }
+        keyBuilder.append("}");
+        return TransformerHelper.transform(instance.internalGet(keyBuilder.toString()), aClass);
+    }
+
+    public static <T extends Annotation> T apply(T annotation) {
+        try {
+            return(T) Proxy.newProxyInstance(annotation.getClass().getClassLoader(), new Class[] { annotation.annotationType() }, new ConfigurationInvocationHandler(annotation));
+
+        } catch(Exception e) {
+            log.log(Level.WARNING, "Unable to instantiate Annotation of type {0}", annotation.annotationType());
+        }
+        return annotation;
+
     }
 
     private final Map<String, Object> configuration;

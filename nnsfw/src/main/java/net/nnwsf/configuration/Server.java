@@ -6,8 +6,12 @@ import java.lang.annotation.*;
 @Target(ElementType.TYPE)
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
+@ConfigurationKey("server")
 public @interface Server {
+    @ConfigurationKey("port")
     int port() default Integer.MIN_VALUE;
+    @ConfigurationKey("hostname")
     String hostname() default "";
+    @ConfigurationKey("resourcePath")
     String resourcePath() default "";
 }

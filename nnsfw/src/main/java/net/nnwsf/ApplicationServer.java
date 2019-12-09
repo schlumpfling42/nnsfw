@@ -61,22 +61,11 @@ public class ApplicationServer {
     private ApplicationServer(Class<?> applicationClass) {
 
         Server serverConfiguration = ReflectionHelper.findAnnotation(applicationClass, Server.class);
+        serverConfiguration = ConfigurationManager.apply(serverConfiguration);
 
-        String hostname = (String)ConfigurationManager.get(ConfigurationNames.APPLICATION_HOSTNAME, String.class);
-        int port = (Integer)ConfigurationManager.get(ConfigurationNames.APPLICATION_PORT, Integer.class);
-        String resourcePath = (String)ConfigurationManager.get(ConfigurationNames.APPLICATION_RESOURCEPATH, String.class);
-
-        if(serverConfiguration != null) {
-            if(serverConfiguration.port() != Integer.MIN_VALUE) {
-                port = serverConfiguration.port();
-            }
-            if(!"".equals(serverConfiguration.hostname())) {
-                hostname = (String)ConfigurationManager.get(serverConfiguration.hostname(), String.class);
-            }
-            if(!"".equals(serverConfiguration.resourcePath())) {
-                hostname = (String)ConfigurationManager.get(serverConfiguration.resourcePath(), String.class);
-            }
-        }
+        String hostname = serverConfiguration.hostname();
+        int port = serverConfiguration.port();
+        String resourcePath = serverConfiguration.resourcePath();
 
         AnnotationConfiguration annotationConfiguration = ReflectionHelper.findAnnotation(applicationClass, AnnotationConfiguration.class);
 
