@@ -52,7 +52,7 @@ public class ConfigurationManager {
             return(T) Proxy.newProxyInstance(annotation.getClass().getClassLoader(), new Class[] { annotation.annotationType() }, new ConfigurationInvocationHandler(annotation));
 
         } catch(Exception e) {
-            log.log(Level.WARNING, "Unable to instantiate Annotation of type {0}", annotation.annotationType());
+            log.log(Level.WARNING, "Unable to instantiate Annotation of type " + annotation.annotationType(), e);
         }
         return annotation;
 

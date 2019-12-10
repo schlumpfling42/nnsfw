@@ -8,15 +8,24 @@ import java.lang.annotation.Target;
 
 import javax.persistence.spi.PersistenceProvider;
 
+import net.nnwsf.configuration.ConfigurationKey;
+
 @Documented
 @Target(ElementType.TYPE)
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
+@ConfigurationKey("datasource")
 public @interface Datasource {
-    Class<? extends PersistenceProvider> providerClass();
-    String jdbcDriver();
-    String jdbcUrl();
-    String user();
-    String password();
+    @ConfigurationKey("providerClass")
+    Class<? extends PersistenceProvider> providerClass() default PersistenceProvider.class;
+    @ConfigurationKey("jdbcDriver")
+    String jdbcDriver() default "";
+    @ConfigurationKey("jdbcUrl")
+    String jdbcUrl() default "";
+    @ConfigurationKey("user")
+    String user() default "";
+    @ConfigurationKey("password")
+    String password() default "";
+    @ConfigurationKey("properties")
     Property[] properties() default {};
 }

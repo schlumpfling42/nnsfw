@@ -20,7 +20,7 @@ public class ConfigurationInvocationHandler implements InvocationHandler {
         ConfigurationKey key = ReflectionHelper.findAnnotation(method, ConfigurationKey.class);
 
         Object codeValue = method.invoke(object, args);
-        if(codeValue == null || "".equals(codeValue) || Integer.valueOf(Integer.MIN_VALUE).equals(codeValue) ||  Long.valueOf(Long.MIN_VALUE).equals(codeValue)) {
+        if(codeValue == null || codeValue.equals(method.getDefaultValue())) {
             if(key != null) {
                 return ConfigurationManager.get(new String[]{configurationName, key.value()}, method.getReturnType());
             }

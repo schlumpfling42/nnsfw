@@ -2,7 +2,9 @@ package net.nnwsf;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -72,45 +74,22 @@ public class ApplicationServer {
         ClassDiscovery.init(applicationClass.getClassLoader(), annotationConfiguration.value());
 
         ServiceManager.init(ClassDiscovery.getPackagesToScan());
-
-        String providerClassName = ConfigurationManager.get(ConfigurationNames.DATASOURCE_PROVIDERCLASS, String.class);
-        Class<? extends PersistenceProvider> providerClass = null;
-        
-        String jdbcDriverClassName = ConfigurationManager.get(ConfigurationNames.DATASOURCE_JDBCDRIVER, String.class);
-                
-        String jdbcUrl = ConfigurationManager.get(ConfigurationNames.DATASOURCE_JDBCURL, String.class);
-        String user = ConfigurationManager.get(ConfigurationNames.DATASOURCE_USERNAME, String.class);
-        String password = ConfigurationManager.get(ConfigurationNames.DATASOURCE_PASSWORD, String.class);
-        
-        Map<String, Object> datasourceProperties = ConfigurationManager.get(ConfigurationNames.DATASOURCE_PROPERTIES, Map.class);
         
         Datasource datasource = ReflectionHelper.findAnnotation(applicationClass, Datasource.class);
-        
-        if(datasource != null) {
-            providerClass = datasource.providerClass();
-            jdbcDriverClassName = ConfigurationManager.get(datasource.jdbcDriver(), String.class);
-            user = ConfigurationManager.get(datasource.user(), String.class);
-            password = ConfigurationManager.get(datasource.password(), String.class);
-            if(datasource.properties() != null) {
-                datasourceProperties = Arrays.asList(datasource.properties()).stream().collect(Collectors.toMap(p -> p.name(), p -> p.value()));
-            }
-        }
-        
-        if(providerClassName != null) {
-            try {
-                providerClass =  (Class<? extends PersistenceProvider>)Class.forName(providerClassName);
-            } catch(ClassNotFoundException e) {
-                throw new RuntimeException("Unable to find class for name " + providerClassName, e);
-            }   
-        }
+        datasource = ConfigurationManager.apply(datasource);
         
         PersistenceManager.init(
-            providerClass, 
-            jdbcDriverClassName, 
-            jdbcUrl,             
-            user, 
-            password,
-            datasourceProperties);
+            datasource.providerClass(), 
+            datasource.jdbcDriver(), 
+            datasource.jdbcUrl(), 
+            datasource.user(), 
+            datasource.password(), 
+            (Map<String, Object>)Optional.ofNullable(datasource.properties())
+                .map(p -> 
+                    Arrays.stream(p)
+                    .collect(Collectors.toMap(v -> v.name(), v -> v.value()))
+                ).orElse(Collections.EMPTY_MAP)
+        );
             
             Collection<String> authenticatedResourcePaths = ReflectionHelper
             .findAnnotations(applicationClass, AuthenticatedResourcePath.class)
