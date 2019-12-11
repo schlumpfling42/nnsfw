@@ -66,7 +66,7 @@ public class ReflectionHelper {
         AnnotatedType[] annotatedTypes = aClass.getAnnotatedInterfaces();
         if(annotatedTypes != null) {
             for(AnnotatedType annotatedType : annotatedTypes) {
-                annotation = (T) ((Class)annotatedType.getType()).getAnnotation(annotationClass);
+                annotation = (T) ((Class<?>)annotatedType.getType()).getAnnotation(annotationClass);
                 if(annotation != null) {
                     return annotation;
                 }

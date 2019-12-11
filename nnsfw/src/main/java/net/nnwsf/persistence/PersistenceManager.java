@@ -2,7 +2,6 @@ package net.nnwsf.persistence;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.lang.reflect.Proxy;
 import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;

@@ -63,6 +63,7 @@ public class ClassDiscovery {
 		return classes;
 	}
 
+	@SuppressWarnings("unchecked")
 	public static <T> Map<Annotation, Class<T>> discoverAnnotatedClasses(Class<?>... annotationClasses) throws Exception {
 		Map<Annotation, Class<T>> allAnnotatedClasses = new HashMap<>();
 		for (Class<?> aClass : instance.discoveredClasses) {
@@ -78,6 +79,7 @@ public class ClassDiscovery {
 		return allAnnotatedClasses;
 	}
 
+	@SuppressWarnings("unchecked")
 	public static <T, A> Map<A, Class<T>> discoverAnnotatedClasses(Class<T> type, Class<A> annotationClass) throws Exception {
 		Map<A, Class<T>> allAnnotatedClasses = new IdentityHashMap<>();
 		for (Class<?> aClass : instance.discoveredClasses) {
@@ -91,6 +93,7 @@ public class ClassDiscovery {
 		return allAnnotatedClasses;
 	}
 
+	@SuppressWarnings("unchecked")
 	public static <T> Class<T> getImplementation(Class<T> aClass) {
 		if (aClass.isInterface()) {
 			Class<T> implementation = (Class<T>) instance.implementations.get(aClass);

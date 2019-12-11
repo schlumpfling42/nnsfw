@@ -10,6 +10,7 @@ import net.nnwsf.persistence.Property;
 
 public class TransformerHelper {
 
+    @SuppressWarnings("all")
     private final class PropertyImplementation implements Property {
         private final Entry<String, String> configurationEntry;
         private PropertyImplementation(Entry<String, String> entry) {
@@ -44,6 +45,7 @@ public class TransformerHelper {
 
     private final Map<Class<?>, Transformer<?>> transformers = new HashMap<>();
 
+    @SuppressWarnings("unchecked")
     private TransformerHelper() {
         transformers.put(Class.class, value -> {
             if(value == null) {
@@ -141,6 +143,7 @@ public class TransformerHelper {
         });
     }
 
+    @SuppressWarnings("unchecked")
     private  <T, F> T internalTransform(F from, Class<T> toClass) {
         if(from != null) {
             if(from.getClass().isAssignableFrom(toClass)) {

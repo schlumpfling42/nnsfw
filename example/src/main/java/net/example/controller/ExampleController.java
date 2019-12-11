@@ -1,17 +1,16 @@
 package net.example.controller;
 
+import javax.inject.Inject;
+
 import net.example.ExampleBean;
 import net.example.ExampleService;
 import net.example.ExampleService2Impl;
-import net.example.ExampleServiceImpl;
 import net.nnwsf.controller.Controller;
 import net.nnwsf.controller.Get;
 import net.nnwsf.controller.PathVariable;
 import net.nnwsf.controller.Post;
 import net.nnwsf.controller.RequestBody;
 import net.nnwsf.controller.RequestParameter;
-
-import javax.inject.Inject;
 
 @Controller("/test")
 public class ExampleController {

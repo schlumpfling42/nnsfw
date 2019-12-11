@@ -10,15 +10,12 @@ import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import javax.persistence.spi.PersistenceProvider;
-
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
 import net.nnwsf.authentication.AuthenticationMechanism;
 import net.nnwsf.configuration.AnnotationConfiguration;
 import net.nnwsf.configuration.AuthenticatedResourcePath;
 import net.nnwsf.configuration.ConfigurationManager;
-import net.nnwsf.configuration.ConfigurationNames;
 import net.nnwsf.configuration.Server;
 import net.nnwsf.controller.Controller;
 import net.nnwsf.handler.HttpHandlerImpl;
@@ -73,23 +70,9 @@ public class ApplicationServer {
 
         ClassDiscovery.init(applicationClass.getClassLoader(), annotationConfiguration.value());
 
-        ServiceManager.init(ClassDiscovery.getPackagesToScan());
+        initServices();
         
-        Datasource datasource = ReflectionHelper.findAnnotation(applicationClass, Datasource.class);
-        datasource = ConfigurationManager.apply(datasource);
-        
-        PersistenceManager.init(
-            datasource.providerClass(), 
-            datasource.jdbcDriver(), 
-            datasource.jdbcUrl(), 
-            datasource.user(), 
-            datasource.password(), 
-            (Map<String, Object>)Optional.ofNullable(datasource.properties())
-                .map(p -> 
-                    Arrays.stream(p)
-                    .collect(Collectors.toMap(v -> v.name(), v -> v.value()))
-                ).orElse(Collections.EMPTY_MAP)
-        );
+        initPersistence(applicationClass);
             
             Collection<String> authenticatedResourcePaths = ReflectionHelper
             .findAnnotations(applicationClass, AuthenticatedResourcePath.class)
@@ -112,6 +95,28 @@ public class ApplicationServer {
                 .setHandler(httpHandler)
                 .build();
         server.start();
+    }
+    
+    @SuppressWarnings("unchecked")
+    private void initPersistence(Class<?> applicationClass) {
+        Datasource datasource = ReflectionHelper.findAnnotation(applicationClass, Datasource.class);
+        datasource = ConfigurationManager.apply(datasource);
+        PersistenceManager.init(
+            datasource.providerClass(), 
+            datasource.jdbcDriver(), 
+            datasource.jdbcUrl(), 
+            datasource.user(), 
+            datasource.password(), 
+            (Map<String, Object>)Optional.ofNullable(datasource.properties())
+                .map(p -> 
+                    Arrays.stream(p)
+                    .collect(Collectors.toMap(v -> v.name(), v -> v.value()))
+                ).orElse(Collections.EMPTY_MAP)
+        );
+    }
+
+    private void initServices() {
+        ServiceManager.init(ClassDiscovery.getPackagesToScan());
     }
 
 }
