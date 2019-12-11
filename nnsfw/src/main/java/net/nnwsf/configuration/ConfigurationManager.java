@@ -47,10 +47,7 @@ public class ConfigurationManager {
         return TransformerHelper.transform(instance.internalGet(keyBuilder.toString()), aClass);
     }
 
-<<<<<<< HEAD
     @SuppressWarnings("unchecked")
-=======
->>>>>>> 49b26a087988985f30ba4702a2ddd4c0f58354e9
     public static <T extends Annotation> T apply(T annotation) {
         try {
             return(T) Proxy.newProxyInstance(annotation.getClass().getClassLoader(), new Class[] { annotation.annotationType() }, new ConfigurationInvocationHandler(annotation));
