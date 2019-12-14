@@ -27,6 +27,7 @@ dependencies {
             "com.google.apis:google-api-services-oauth2:v2-rev150-1.25.+",
             "javax.transaction:javax.transaction-api:1.3",
             "javax.persistence:javax.persistence-api:2.2",
+            "org.flywaydb:flyway-core:6.1.1",
             "cglib:cglib-nodep:3.3.0",
             "org.yaml:snakeyaml:1.25"
 }

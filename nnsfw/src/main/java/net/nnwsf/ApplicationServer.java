@@ -20,6 +20,7 @@ import net.nnwsf.configuration.Server;
 import net.nnwsf.controller.Controller;
 import net.nnwsf.handler.HttpHandlerImpl;
 import net.nnwsf.persistence.Datasource;
+import net.nnwsf.persistence.Flyway;
 import net.nnwsf.persistence.PersistenceManager;
 import net.nnwsf.service.ServiceManager;
 import net.nnwsf.util.ClassDiscovery;
@@ -60,6 +61,9 @@ public class ApplicationServer {
     private ApplicationServer(Class<?> applicationClass) {
 
         Server serverConfiguration = ReflectionHelper.findAnnotation(applicationClass, Server.class);
+        if(serverConfiguration == null) {
+            throw new IllegalStateException("Server annotation required to start the server");
+        }
         serverConfiguration = ConfigurationManager.apply(serverConfiguration);
 
         String hostname = serverConfiguration.hostname();
@@ -74,20 +78,18 @@ public class ApplicationServer {
         
         initPersistence(applicationClass);
             
-            Collection<String> authenticatedResourcePaths = ReflectionHelper
+        Collection<String> authenticatedResourcePaths = ReflectionHelper
             .findAnnotations(applicationClass, AuthenticatedResourcePath.class)
             .stream().map(annotation -> annotation.value())
             .collect(Collectors.toList());
-            HttpHandler httpHandler;
-            try {
-                Collection<Class<Object>> controllerClasses = ClassDiscovery.discoverAnnotatedClasses(Object.class, Controller.class).values();
-                Collection<Class<io.undertow.security.api.AuthenticationMechanism>> authenticationMechanimsClasses = ClassDiscovery.discoverAnnotatedClasses(io.undertow.security.api.AuthenticationMechanism.class, AuthenticationMechanism.class).values();
-                httpHandler = new HttpHandlerImpl(applicationClass.getClassLoader(), resourcePath, authenticatedResourcePaths, controllerClasses, authenticationMechanimsClasses);
-            } catch(Exception e) {
-                throw new RuntimeException("Unable to discover annotated classes", e);
-            }
-            
-            
+        HttpHandler httpHandler;
+        try {
+            Collection<Class<Object>> controllerClasses = ClassDiscovery.discoverAnnotatedClasses(Object.class, Controller.class).values();
+            Collection<Class<io.undertow.security.api.AuthenticationMechanism>> authenticationMechanimsClasses = ClassDiscovery.discoverAnnotatedClasses(io.undertow.security.api.AuthenticationMechanism.class, AuthenticationMechanism.class).values();
+            httpHandler = new HttpHandlerImpl(applicationClass.getClassLoader(), resourcePath, authenticatedResourcePaths, controllerClasses, authenticationMechanimsClasses);
+        } catch(Exception e) {
+            throw new RuntimeException("Unable to discover annotated classes", e);
+        }
 
         log.info("Starting server at " + hostname + " port " + port);
         Undertow server = Undertow.builder()
@@ -100,19 +102,30 @@ public class ApplicationServer {
     @SuppressWarnings("unchecked")
     private void initPersistence(Class<?> applicationClass) {
         Datasource datasource = ReflectionHelper.findAnnotation(applicationClass, Datasource.class);
-        datasource = ConfigurationManager.apply(datasource);
-        PersistenceManager.init(
-            datasource.providerClass(), 
-            datasource.jdbcDriver(), 
-            datasource.jdbcUrl(), 
-            datasource.user(), 
-            datasource.password(), 
-            (Map<String, Object>)Optional.ofNullable(datasource.properties())
-                .map(p -> 
-                    Arrays.stream(p)
-                    .collect(Collectors.toMap(v -> v.name(), v -> v.value()))
-                ).orElse(Collections.EMPTY_MAP)
-        );
+        if(datasource != null) {
+            datasource = ConfigurationManager.apply(datasource);
+            PersistenceManager.init(
+                datasource.providerClass(), 
+                datasource.jdbcDriver(), 
+                datasource.jdbcUrl(), 
+                datasource.user(), 
+                datasource.password(), 
+                (Map<String, Object>)Optional.ofNullable(datasource.properties())
+                    .map(p -> 
+                        Arrays.stream(p)
+                        .collect(Collectors.toMap(v -> v.name(), v -> v.value()))
+                    ).orElse(Collections.EMPTY_MAP)
+            );
+
+            Flyway flywayConfiguration = ReflectionHelper.findAnnotation(applicationClass, Flyway.class);
+            if(flywayConfiguration != null) {
+                flywayConfiguration = ConfigurationManager.apply(flywayConfiguration);
+                org.flywaydb.core.Flyway flyway = org.flywaydb.core.Flyway.configure().locations(flywayConfiguration.location())
+                    .dataSource(datasource.jdbcUrl(), datasource.user(), datasource.password()).load();
+                flyway.migrate();
+            }
+        }
+
     }
 
     private void initServices() {
