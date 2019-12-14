@@ -6,6 +6,6 @@ import java.lang.annotation.*;
 @Target(ElementType.TYPE)
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
-public @interface AuthenticatedResourcePath {
+public @interface AuthenticatedResourcePathConfiguration {
     String value();
 }

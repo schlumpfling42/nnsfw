@@ -222,6 +222,9 @@ public class ClassDiscovery {
 	}
 
 	public static Collection<Package> getPackagesToScan() {
+		if(instance == null) {
+			return null;
+		}
 		return instance.packagesToScan;
 	}
 }

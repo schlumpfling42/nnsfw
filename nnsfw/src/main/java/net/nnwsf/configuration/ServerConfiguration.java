@@ -7,7 +7,7 @@ import java.lang.annotation.*;
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
 @ConfigurationKey("server")
-public @interface Server {
+public @interface ServerConfiguration {
     @ConfigurationKey("port")
     int port() default Integer.MIN_VALUE;
     @ConfigurationKey("hostname")

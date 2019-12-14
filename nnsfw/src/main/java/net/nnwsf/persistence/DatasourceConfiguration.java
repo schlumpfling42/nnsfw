@@ -15,17 +15,21 @@ import net.nnwsf.configuration.ConfigurationKey;
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
 @ConfigurationKey("datasource")
-public @interface Datasource {
-    @ConfigurationKey("providerClass")
+public @interface DatasourceConfiguration {
+    @ConfigurationKey(value = "name", containsKeys = true)
+    String name() default "";
+    @ConfigurationKey("${name}.providerClass")
     Class<? extends PersistenceProvider> providerClass() default PersistenceProvider.class;
-    @ConfigurationKey("jdbcDriver")
+    @ConfigurationKey("${name}.jdbcDriver")
     String jdbcDriver() default "";
-    @ConfigurationKey("jdbcUrl")
+    @ConfigurationKey("${name}.jdbcUrl")
     String jdbcUrl() default "";
-    @ConfigurationKey("user")
+    @ConfigurationKey("${name}.schema")
+    String schema() default "";
+    @ConfigurationKey("${name}.user")
     String user() default "";
-    @ConfigurationKey("password")
+    @ConfigurationKey("${name}.password")
     String password() default "";
-    @ConfigurationKey("properties")
+    @ConfigurationKey("${name}.properties")
     Property[] properties() default {};
 }

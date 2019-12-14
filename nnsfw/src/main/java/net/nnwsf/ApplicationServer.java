@@ -10,17 +10,19 @@ import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import org.flywaydb.core.Flyway;
+
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
 import net.nnwsf.authentication.AuthenticationMechanism;
 import net.nnwsf.configuration.AnnotationConfiguration;
-import net.nnwsf.configuration.AuthenticatedResourcePath;
+import net.nnwsf.configuration.AuthenticatedResourcePathConfiguration;
 import net.nnwsf.configuration.ConfigurationManager;
-import net.nnwsf.configuration.Server;
+import net.nnwsf.configuration.ServerConfiguration;
 import net.nnwsf.controller.Controller;
 import net.nnwsf.handler.HttpHandlerImpl;
-import net.nnwsf.persistence.Datasource;
-import net.nnwsf.persistence.Flyway;
+import net.nnwsf.persistence.DatasourceConfiguration;
+import net.nnwsf.persistence.FlywayConfiguration;
 import net.nnwsf.persistence.PersistenceManager;
 import net.nnwsf.service.ServiceManager;
 import net.nnwsf.util.ClassDiscovery;
@@ -60,7 +62,7 @@ public class ApplicationServer {
 
     private ApplicationServer(Class<?> applicationClass) {
 
-        Server serverConfiguration = ReflectionHelper.findAnnotation(applicationClass, Server.class);
+        ServerConfiguration serverConfiguration = ReflectionHelper.findAnnotation(applicationClass, ServerConfiguration.class);
         if(serverConfiguration == null) {
             throw new IllegalStateException("Server annotation required to start the server");
         }
@@ -79,7 +81,7 @@ public class ApplicationServer {
         initPersistence(applicationClass);
             
         Collection<String> authenticatedResourcePaths = ReflectionHelper
-            .findAnnotations(applicationClass, AuthenticatedResourcePath.class)
+            .findAnnotations(applicationClass, AuthenticatedResourcePathConfiguration.class)
             .stream().map(annotation -> annotation.value())
             .collect(Collectors.toList());
         HttpHandler httpHandler;
@@ -101,7 +103,7 @@ public class ApplicationServer {
     
     @SuppressWarnings("unchecked")
     private void initPersistence(Class<?> applicationClass) {
-        Datasource datasource = ReflectionHelper.findAnnotation(applicationClass, Datasource.class);
+        DatasourceConfiguration datasource = ReflectionHelper.findAnnotation(applicationClass, DatasourceConfiguration.class);
         if(datasource != null) {
             datasource = ConfigurationManager.apply(datasource);
             PersistenceManager.init(
@@ -117,10 +119,11 @@ public class ApplicationServer {
                     ).orElse(Collections.EMPTY_MAP)
             );
 
-            Flyway flywayConfiguration = ReflectionHelper.findAnnotation(applicationClass, Flyway.class);
+            FlywayConfiguration flywayConfiguration = ReflectionHelper.findAnnotation(applicationClass, FlywayConfiguration.class);
             if(flywayConfiguration != null) {
                 flywayConfiguration = ConfigurationManager.apply(flywayConfiguration);
-                org.flywaydb.core.Flyway flyway = org.flywaydb.core.Flyway.configure().locations(flywayConfiguration.location())
+                Flyway flyway = Flyway.configure().locations(flywayConfiguration.location())
+                    .schemas(datasource.schema())
                     .dataSource(datasource.jdbcUrl(), datasource.user(), datasource.password()).load();
                 flyway.migrate();
             }

@@ -8,4 +8,5 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ConfigurationKey {
     String value();
+    boolean containsKeys() default false;
 }

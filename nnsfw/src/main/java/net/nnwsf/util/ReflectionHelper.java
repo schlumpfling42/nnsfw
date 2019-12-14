@@ -4,6 +4,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -16,20 +17,18 @@ public class ReflectionHelper {
 
     private static Logger log = Logger.getLogger(ReflectionHelper.class.getName());
 
-    public static Map<Annotation, Collection<Method>> findAnnotationMethods(Class<?> aClass, Class<?>... annotationClasses) {
-        Map<Annotation, Collection<Method>> annotationMethodMap = new HashMap<>();
-        Method[] methods = aClass.getMethods();
-        for(Method method : methods) {
-            Annotation[] annotations = method.getAnnotations();
-            for(Annotation annotation : annotations) {
-                for(Class<?> annotationClass : annotationClasses) {
-                    if (annotation.annotationType().isAssignableFrom(annotationClass)) {
-                        Collection<Method> annotatedMethods = annotationMethodMap.get(annotation);
-                        if (annotatedMethods == null) {
-                            annotatedMethods = new HashSet<>();
-                            annotationMethodMap.put((Annotation)annotation, annotatedMethods);
+    public static Map<Annotation, Method> findAnnotationMethods(Class<?> aRootClass, Class<?>... annotationClasses) {
+        Map<Annotation, Method> annotationMethodMap = new HashMap<>();
+        Collection<Class<?>> classes = ReflectionHelper.getAllClassesAndInterfaces(aRootClass, ClassDiscovery.getPackagesToScan());
+        for(Class<?> aClass : classes){
+            Method[] methods = aClass.getMethods();
+            for(Method method : methods) {
+                Annotation[] annotations = method.getAnnotations();
+                for(Annotation annotation : annotations) {
+                    for(Class<?> annotationClass : annotationClasses) {
+                        if (annotation.annotationType().isAssignableFrom(annotationClass)) {
+                            annotationMethodMap.put((Annotation)annotation, method);
                         }
-                        annotatedMethods.add(method);
                     }
                 }
             }
@@ -129,6 +128,9 @@ public class ReflectionHelper {
     }
     
     private static boolean isContainedIn(Collection<Package> packagesToScan, Package aPackage) {
+        if(packagesToScan == null || aPackage == null) {
+            return true;
+        }
         return packagesToScan.stream().map(p -> p.getName()).anyMatch(name -> aPackage.getName().contains(name));
     } 
     

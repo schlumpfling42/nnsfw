@@ -147,31 +147,30 @@ public class HttpHandlerImpl implements HttpHandler {
 			for (Class<?> aClass : controllerClasses) {
 				Controller controllerAnnotation = ReflectionHelper.findAnnotation(aClass, Controller.class);
 				Collection<Annotation> annotations = Arrays.asList(aClass.getAnnotations());
-				Map<Annotation, Collection<Method>> annotatedMethods = ReflectionHelper.findAnnotationMethods(aClass, Get.class, Post.class, Put.class, Delete.class);
+				Map<Annotation, Method> annotatedMethods = ReflectionHelper.findAnnotationMethods(aClass, Get.class, Post.class, Put.class, Delete.class);
 				Object object = createObject(aClass);
 				if (annotatedMethods == null) {
 					throw new RuntimeException("Invalid controller");
 				}
 				for (Annotation methodAnnotation : annotatedMethods.keySet()) {
-					for (Method annotatedMethod : annotatedMethods.get(methodAnnotation)) {
-						if (annotatedMethod == null) {
-							throw new RuntimeException("Invalid controller");
-						}
-						AnnotatedMethodParameter[] annotatedMethodParameters = getMethodParameters(annotatedMethod);
-						MethodParameter[] specialMethodParameters = getSpecialMethodParameters(annotatedMethod);
-						URLMatcher proxyUrlMatcher = new URLMatcher(
-								methodAnnotation.annotationType().getSimpleName(),
-								(controllerAnnotation.value() + "/" + ReflectionHelper.getValue(methodAnnotation, "value").replace("/+", "/")));
-
-						matchingProxies = proxies.get(proxyUrlMatcher);
-						if (matchingProxies == null) {
-							matchingProxies = new ArrayList<>();
-							proxies.put(proxyUrlMatcher, matchingProxies);
-							matchedProxies.put(proxyUrlMatcher, new HashMap<>());
-						}
-
-						matchingProxies.add(new ControllerProxy(object, annotations, annotatedMethod, annotatedMethodParameters, specialMethodParameters, Arrays.asList(proxyUrlMatcher.getPathElements())));
+					Method annotatedMethod = annotatedMethods.get(methodAnnotation);
+					if (annotatedMethod == null) {
+						throw new RuntimeException("Invalid controller");
 					}
+					AnnotatedMethodParameter[] annotatedMethodParameters = getMethodParameters(annotatedMethod);
+					MethodParameter[] specialMethodParameters = getSpecialMethodParameters(annotatedMethod);
+					URLMatcher proxyUrlMatcher = new URLMatcher(
+							methodAnnotation.annotationType().getSimpleName(),
+							(controllerAnnotation.value() + "/" + ReflectionHelper.getValue(methodAnnotation, "value").replace("/+", "/")));
+
+					matchingProxies = proxies.get(proxyUrlMatcher);
+					if (matchingProxies == null) {
+						matchingProxies = new ArrayList<>();
+						proxies.put(proxyUrlMatcher, matchingProxies);
+						matchedProxies.put(proxyUrlMatcher, new HashMap<>());
+					}
+
+					matchingProxies.add(new ControllerProxy(object, annotations, annotatedMethod, annotatedMethodParameters, specialMethodParameters, Arrays.asList(proxyUrlMatcher.getPathElements())));
 				}
 
 				processedClasses.add(aClass);

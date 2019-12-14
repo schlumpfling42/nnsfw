@@ -137,6 +137,18 @@ public class PersistenceManager {
         String user,
 		String password,
 		Map<String, Object> properties) {
+		if(persistenceProviderClass == null) {
+			log.log(Level.SEVERE, "Unable to discover repositories, no persistenceProviderClass found");
+			throw new RuntimeException("Unable to discover repositories, no persistenceProviderClass found");
+		}
+		if(jdbcDriver == null || jdbcDriver.isEmpty()) {
+			log.log(Level.SEVERE, "Unable to discover repositories, no jdbcDriver found");
+			throw new RuntimeException("Unable to discover repositories, no jdbcDriver found");
+		}
+		if(jdbcUrl == null || jdbcUrl.isEmpty()) {
+			log.log(Level.SEVERE, "Unable to discover repositories, no jdbcUrl found");
+			throw new RuntimeException("Unable to discover repositories, no jdbcUrl found");
+		}
         if(instance == null) {
 			try {
                 Map<Repository, Class<Object>> repositoryClasses = ClassDiscovery.discoverAnnotatedClasses(Object.class, Repository.class);

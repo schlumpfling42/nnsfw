@@ -13,7 +13,9 @@ import net.nnwsf.configuration.ConfigurationKey;
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
 @ConfigurationKey("flyway")
-public @interface Flyway {
-    @ConfigurationKey("location")
+public @interface FlywayConfiguration {
+    @ConfigurationKey(value = "datasource", containsKeys = true)
+    String datasource() default "";
+    @ConfigurationKey("${datasource}.location")
     String location() default "";
 }

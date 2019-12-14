@@ -1,4 +1,5 @@
 datasource:
+  #default:
     providerClass: org.hibernate.jpa.HibernatePersistenceProvider
     jdbcDriver: org.h2.Driver
     jdbcUrl: jdbc:h2:~/example
