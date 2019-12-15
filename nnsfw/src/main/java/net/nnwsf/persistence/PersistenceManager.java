@@ -228,7 +228,12 @@ public class PersistenceManager {
 		}
 		if(flywayConfiguration != null) {
 			flywayConfiguration = ConfigurationManager.apply(flywayConfiguration);
-			FluentConfiguration flywayFluentConfiguration = Flyway.configure().locations(flywayConfiguration.location());
+			FluentConfiguration flywayFluentConfiguration = Flyway.configure()
+				.locations(flywayConfiguration.location())
+				.dataSource(
+					datasourceConfiguration.jdbcUrl(),
+					datasourceConfiguration.user(), 
+					datasourceConfiguration.password());
 			if(!"".equals(datasourceConfiguration.schema())) {
 				flywayFluentConfiguration.schemas(datasourceConfiguration.schema());
 			}

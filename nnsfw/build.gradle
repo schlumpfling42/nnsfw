@@ -36,6 +36,11 @@ shadowJar {
   configurations = [project.configurations.compile]
 }
 
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
 publishing {
     repositories {
         maven {
