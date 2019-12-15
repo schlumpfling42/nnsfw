@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 
 import javax.transaction.Transactional;
 
+import net.nnwsf.configuration.Default;
 import net.nnwsf.persistence.EntityManagerHolder;
 import net.nnwsf.persistence.PersistenceManager;
 import net.nnwsf.util.ReflectionHelper;
@@ -18,7 +19,7 @@ public class ServiceInvocationHandler implements MethodInterceptor {
     @Override
     public Object intercept(Object obj, Method method, Object[] args, MethodProxy proxy) throws Throwable {
         if(ReflectionHelper.findAnnotation(method, Transactional.class) != null) {
-            try(EntityManagerHolder entityManager = PersistenceManager.createEntityManager()) {
+            try(EntityManagerHolder entityManager = PersistenceManager.createEntityManager(Default.DATASOURCE_NAME)) {
                 entityManager.beginTransaction();
                 Object result = proxy.invokeSuper(obj, args);;
                 entityManager.commitTransaction();

@@ -16,18 +16,20 @@ public class RepositoryInvocationHandler implements MethodInterceptor {
 
     private final Class<?> entityClass;
     private final Class<?> idClass;
+    private final String datasourceName;
 
-    public RepositoryInvocationHandler(Class<?> entityClass) {
+    public RepositoryInvocationHandler(Class<?> entityClass, String datasourceName) {
         this.entityClass = entityClass;
         Collection<Field> idFields = ReflectionHelper.findAnnotationFields(entityClass, Id.class);
         idClass = idFields.iterator().next().getType();
+        this.datasourceName = datasourceName;
     }
 
     @Override
     public Object intercept(Object obj, Method method, Object[] args, MethodProxy proxy) throws Throwable {
         net.nnwsf.persistence.Query queryAnnotation = method.getAnnotation(net.nnwsf.persistence.Query.class);
         if(queryAnnotation != null) {
-            try(EntityManagerHolder entityManagerHolder = PersistenceManager.createEntityManager()) {
+            try(EntityManagerHolder entityManagerHolder = PersistenceManager.createEntityManager(datasourceName)) {
                 entityManagerHolder.beginTransaction();
                 Query query = entityManagerHolder.getEntityManager().createQuery(queryAnnotation.value());
                 if(args.length > 0) {
@@ -59,7 +61,7 @@ public class RepositoryInvocationHandler implements MethodInterceptor {
         } else {
             if("save".equals(method.getName()) && method.getParameterTypes().length == 1) {
                 if(entityClass.isInstance(args[0])) {
-                    try(EntityManagerHolder entityManagerHolder = PersistenceManager.createEntityManager()) {
+                    try(EntityManagerHolder entityManagerHolder = PersistenceManager.createEntityManager(datasourceName)) {
                         entityManagerHolder.beginTransaction();
                         Object result = entityManagerHolder.getEntityManager().merge(args[0]);
                         entityManagerHolder.commitTransaction();
@@ -71,7 +73,7 @@ public class RepositoryInvocationHandler implements MethodInterceptor {
             }
             if("delete".equals(method.getName()) && method.getParameterTypes().length == 1) {
                 if(entityClass.isInstance(args[0])) {
-                    try(EntityManagerHolder entityManagerHolder = PersistenceManager.createEntityManager()) {
+                    try(EntityManagerHolder entityManagerHolder = PersistenceManager.createEntityManager(datasourceName)) {
                         entityManagerHolder.beginTransaction();
                         Object mergedObject = entityManagerHolder.getEntityManager().merge(args[0]);
                         entityManagerHolder.getEntityManager().remove(mergedObject);
@@ -84,7 +86,7 @@ public class RepositoryInvocationHandler implements MethodInterceptor {
             }
             if("findById".equals(method.getName()) && method.getParameterTypes().length == 1) {
                 if(idClass.isInstance(args[0])) {
-                    try(EntityManagerHolder entityManagerHolder = PersistenceManager.createEntityManager()) {
+                    try(EntityManagerHolder entityManagerHolder = PersistenceManager.createEntityManager(datasourceName)) {
                         entityManagerHolder.beginTransaction();
                         Object result = entityManagerHolder.getEntityManager().find(entityClass, args[0]);
                         entityManagerHolder.commitTransaction();
@@ -95,7 +97,7 @@ public class RepositoryInvocationHandler implements MethodInterceptor {
                 }
             }
             if("findAll".equals(method.getName()) && method.getParameterTypes().length == 0) {
-                try(EntityManagerHolder entityManagerHolder = PersistenceManager.createEntityManager()) {
+                try(EntityManagerHolder entityManagerHolder = PersistenceManager.createEntityManager(datasourceName)) {
                     entityManagerHolder.beginTransaction();
                     Object result = entityManagerHolder.getEntityManager().createQuery("select e from " + entityClass.getSimpleName() + " e").getResultList();
                     entityManagerHolder.commitTransaction();

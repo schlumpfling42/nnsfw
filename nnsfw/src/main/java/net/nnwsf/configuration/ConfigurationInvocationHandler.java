@@ -3,7 +3,10 @@ package net.nnwsf.configuration;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Map.Entry;
@@ -13,6 +16,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import net.nnwsf.util.ReflectionHelper;
+import net.sf.cglib.proxy.Proxy;
 
 public class ConfigurationInvocationHandler implements InvocationHandler {
     private static Logger log = Logger.getLogger(ConfigurationInvocationHandler.class.getName());
@@ -31,7 +35,8 @@ public class ConfigurationInvocationHandler implements InvocationHandler {
             if(ConfigurationKey.class.isAssignableFrom(entry.getKey().getClass()) && ConfigurationKey.class.cast(entry.getKey()).containsKeys()) {
                 try {
                     String value = entry.getValue().invoke(object, new Object[0]).toString();
-                    if(!Objects.equals(value, entry.getValue().getDefaultValue())) {
+                    boolean configurationExists = ConfigurationManager.exists(new String[] {configurationName, value});
+                    if(!Objects.equals(value, entry.getValue().getDefaultValue()) || configurationExists) {
                         containerElements.put("${" + ConfigurationKey.class.cast(entry.getKey()).value() + "}", value);
                     }
                 } catch(Exception e) {
@@ -60,7 +65,13 @@ public class ConfigurationInvocationHandler implements InvocationHandler {
         Object codeValue = method.invoke(object, args);
         if(codeValue == null || codeValue.equals(method.getDefaultValue())) {
             if(key != null) {
-                return ConfigurationManager.get(new String[]{configurationName, keyValue}, method.getReturnType());
+                List<String> elements = new ArrayList<>();
+                elements.add(configurationName);
+                elements.addAll(Arrays.asList(keyValue.split("\\.")));
+                Object configurationValue = ConfigurationManager.get(elements.toArray(new String[elements.size()]), method.getReturnType());
+                if(configurationValue != null) {
+                    return configurationValue;
+                }
             }
         }
         return codeValue;

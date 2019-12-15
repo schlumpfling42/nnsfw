@@ -7,10 +7,13 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import net.nnwsf.configuration.Default;
+
 @Documented
 @Target(ElementType.TYPE)
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Repository {
-    Class<?> value();
+    String datasource() default Default.DATASOURCE_NAME;
+    Class<?> entityClass();
 }

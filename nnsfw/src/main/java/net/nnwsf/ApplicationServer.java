@@ -1,16 +1,10 @@
 package net.nnwsf;
 
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-
-import org.flywaydb.core.Flyway;
 
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
@@ -21,8 +15,6 @@ import net.nnwsf.configuration.ConfigurationManager;
 import net.nnwsf.configuration.ServerConfiguration;
 import net.nnwsf.controller.Controller;
 import net.nnwsf.handler.HttpHandlerImpl;
-import net.nnwsf.persistence.DatasourceConfiguration;
-import net.nnwsf.persistence.FlywayConfiguration;
 import net.nnwsf.persistence.PersistenceManager;
 import net.nnwsf.service.ServiceManager;
 import net.nnwsf.util.ClassDiscovery;
@@ -101,34 +93,8 @@ public class ApplicationServer {
         server.start();
     }
     
-    @SuppressWarnings("unchecked")
     private void initPersistence(Class<?> applicationClass) {
-        DatasourceConfiguration datasource = ReflectionHelper.findAnnotation(applicationClass, DatasourceConfiguration.class);
-        if(datasource != null) {
-            datasource = ConfigurationManager.apply(datasource);
-            PersistenceManager.init(
-                datasource.providerClass(), 
-                datasource.jdbcDriver(), 
-                datasource.jdbcUrl(), 
-                datasource.user(), 
-                datasource.password(), 
-                (Map<String, Object>)Optional.ofNullable(datasource.properties())
-                    .map(p -> 
-                        Arrays.stream(p)
-                        .collect(Collectors.toMap(v -> v.name(), v -> v.value()))
-                    ).orElse(Collections.EMPTY_MAP)
-            );
-
-            FlywayConfiguration flywayConfiguration = ReflectionHelper.findAnnotation(applicationClass, FlywayConfiguration.class);
-            if(flywayConfiguration != null) {
-                flywayConfiguration = ConfigurationManager.apply(flywayConfiguration);
-                Flyway flyway = Flyway.configure().locations(flywayConfiguration.location())
-                    .schemas(datasource.schema())
-                    .dataSource(datasource.jdbcUrl(), datasource.user(), datasource.password()).load();
-                flyway.migrate();
-            }
-        }
-
+            PersistenceManager.init();
     }
 
     private void initServices() {

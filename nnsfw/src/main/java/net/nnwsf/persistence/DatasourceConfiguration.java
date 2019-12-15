@@ -9,6 +9,7 @@ import java.lang.annotation.Target;
 import javax.persistence.spi.PersistenceProvider;
 
 import net.nnwsf.configuration.ConfigurationKey;
+import net.nnwsf.configuration.Default;
 
 @Documented
 @Target(ElementType.TYPE)
@@ -17,7 +18,7 @@ import net.nnwsf.configuration.ConfigurationKey;
 @ConfigurationKey("datasource")
 public @interface DatasourceConfiguration {
     @ConfigurationKey(value = "name", containsKeys = true)
-    String name() default "";
+    String name() default Default.DATASOURCE_NAME;
     @ConfigurationKey("${name}.providerClass")
     Class<? extends PersistenceProvider> providerClass() default PersistenceProvider.class;
     @ConfigurationKey("${name}.jdbcDriver")

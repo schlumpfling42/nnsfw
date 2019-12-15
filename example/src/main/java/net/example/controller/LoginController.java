@@ -28,7 +28,7 @@ public class LoginController {
     public LoginController() {
         try {
             clientSecrets = GoogleClientSecrets.load(jsonFactory,
-                    new InputStreamReader(ClassLoader.getSystemClassLoader().getResourceAsStream("credentials.json")));
+                    new InputStreamReader(LoginController.class.getClassLoader().getResourceAsStream("credentials.json")));
         } catch (IOException ioe) {
             throw new RuntimeException("Unable to load the google oauth credentials", ioe);
         }

@@ -7,6 +7,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 import net.nnwsf.configuration.ConfigurationKey;
+import net.nnwsf.configuration.Default;
 
 @Documented
 @Target(ElementType.TYPE)
@@ -15,7 +16,7 @@ import net.nnwsf.configuration.ConfigurationKey;
 @ConfigurationKey("flyway")
 public @interface FlywayConfiguration {
     @ConfigurationKey(value = "datasource", containsKeys = true)
-    String datasource() default "";
+    String datasource() default Default.DATASOURCE_NAME;
     @ConfigurationKey("${datasource}.location")
     String location() default "";
 }

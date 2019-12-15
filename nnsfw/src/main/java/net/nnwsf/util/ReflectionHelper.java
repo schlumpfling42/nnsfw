@@ -116,7 +116,7 @@ public class ReflectionHelper {
     }
 	public static Collection<Class<?>>  getAllClassesAndInterfaces(Class<?> aClass, Collection<Package> packagesToScan) {
 		Collection<Class<?>> allClassesAndInterfaces = new HashSet<>();
-		if(aClass != null && !Object.class.equals(aClass) && isContainedIn(packagesToScan, aClass.getPackage())) {
+		if(aClass != null && !Object.class.equals(aClass) && (Proxy.isProxyClass(aClass) || isContainedIn(packagesToScan, aClass.getPackage()))) {
 			allClassesAndInterfaces.add(aClass);
 			for(Class<?> anInterface: aClass.getInterfaces()) {
 				allClassesAndInterfaces.add(anInterface);
@@ -128,8 +128,11 @@ public class ReflectionHelper {
     }
     
     private static boolean isContainedIn(Collection<Package> packagesToScan, Package aPackage) {
-        if(packagesToScan == null || aPackage == null) {
-            return true;
+        if(aPackage == null) {
+            return false;
+        }
+        if(packagesToScan == null) {
+            return !aPackage.getName().startsWith("java");
         }
         return packagesToScan.stream().map(p -> p.getName()).anyMatch(name -> aPackage.getName().contains(name));
     } 

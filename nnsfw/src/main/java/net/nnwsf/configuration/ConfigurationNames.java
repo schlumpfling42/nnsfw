@@ -5,6 +5,7 @@ public interface ConfigurationNames {
     String APPLICATION_PORT = "${application.port}";
     String APPLICATION_RESOURCEPATH = "${application.resourcePath}";
 
+    String DEFAULT_DATASOURCE_NAME = "default";
     String DATASOURCE_PROVIDERCLASS = "${datasource.providerClass}";
     String DATASOURCE_JDBCDRIVER = "${datasource.jdbcDriver}";
     String DATASOURCE_JDBCURL = "${datasource.jdbcUrl}";

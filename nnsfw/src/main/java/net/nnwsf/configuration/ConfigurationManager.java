@@ -35,17 +35,12 @@ public class ConfigurationManager {
     }
 
     public static  <T> T get(String[] keys, Class<T> aClass) {
-        StringBuilder keyBuilder = new StringBuilder();
-        keyBuilder.append("${");
-        for(int i=0; i<keys.length; i++) {
-            if(i>0) {
-                keyBuilder.append(".");
-            }
-            keyBuilder.append(keys[i]);
-        }
-        keyBuilder.append("}");
-        return TransformerHelper.transform(instance.internalGet(keyBuilder.toString()), aClass);
+        return TransformerHelper.transform(instance.internalGet(keys), aClass);
     }
+
+	public static boolean exists(String[] keys) {
+        return instance.internalGet(keys) != null;
+	}
 
     @SuppressWarnings("unchecked")
     public static <T extends Annotation> T apply(T annotation) {
@@ -66,6 +61,10 @@ public class ConfigurationManager {
         this.configuration = configuration;
     }
 
+    private Object internalGet(String[] keys) {
+        return getFrom(keys, 0, configuration);
+    }
+    
     private Object internalGet(String key) {
         Matcher keyMatcher = configurationParameterPattern.matcher(key);
         if(key != null && keyMatcher.matches()) {
@@ -86,5 +85,4 @@ public class ConfigurationManager {
         }
         return null;
     }
-
 }
