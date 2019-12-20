@@ -4,6 +4,7 @@ import static net.nnwsf.handler.ControllerProxy.CONTROLLER_PROXY_ATTACHMENT_KEY;
 import static net.nnwsf.handler.URLMatcher.URL_MATCHER_ATTACHMENT_KEY;
 
 import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
 import java.util.Deque;
 import java.util.Map;
@@ -86,16 +87,24 @@ public class ControllerHandlerImpl implements HttpHandler {
 					}
 				}
 			}
-			Object result = controllerProxy.getMethod().invoke(controllerProxy.getInstance(), parameters);
-			if(!exchange.isComplete()) {
-				StringBuilder body = new StringBuilder();
-
-				if (shouldProcessJson(exchange, Headers.ACCEPT)) {
-					body.append(mapper.writeValueAsString(result));
-				} else if (result != null) {
-					body.append(result.toString());
+			try {
+				
+				Object result = controllerProxy.getMethod().invoke(controllerProxy.getInstance(), parameters);
+				if(!exchange.isComplete()) {
+					StringBuilder body = new StringBuilder();
+					
+					if (shouldProcessJson(exchange, Headers.ACCEPT)) {
+						body.append(mapper.writeValueAsString(result));
+					} else if (result != null) {
+						body.append(result.toString());
+					}
+					exchange.setStatusCode(200).getResponseSender().send(body.toString());
 				}
-				exchange.setStatusCode(200).getResponseSender().send(body.toString());
+			} catch(InvocationTargetException ite) {
+				if(ite.getCause() != null) {
+					throw (Exception)ite.getCause();
+				}
+				throw ite;
 			}
 		} else {
 			log.log(Level.SEVERE, "Unable to find controller for " + exchange.getRequestPath() + exchange.getQueryString());

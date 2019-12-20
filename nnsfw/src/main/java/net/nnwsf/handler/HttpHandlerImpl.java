@@ -129,7 +129,7 @@ public class HttpHandlerImpl implements HttpHandler {
 			}
 		} catch(Exception e) {
 			log.log(Level.SEVERE, "Unable to complete the request", e);
-			throw new RuntimeException(e);
+			exchange.setStatusCode(500).getResponseSender().send("Unexpected error");
 		} finally {
 			log.log(Level.INFO, "HttpRequest: end");
 		}
