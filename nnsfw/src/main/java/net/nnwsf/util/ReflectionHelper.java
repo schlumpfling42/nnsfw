@@ -7,8 +7,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -18,7 +18,7 @@ public class ReflectionHelper {
     private static Logger log = Logger.getLogger(ReflectionHelper.class.getName());
 
     public static Map<Annotation, Method> findAnnotationMethods(Class<?> aRootClass, Class<?>... annotationClasses) {
-        Map<Annotation, Method> annotationMethodMap = new HashMap<>();
+        Map<Annotation, Method> annotationMethodMap = new IdentityHashMap<>();
         Collection<Class<?>> classes = ReflectionHelper.getAllClassesAndInterfaces(aRootClass, ClassDiscovery.getPackagesToScan());
         for(Class<?> aClass : classes){
             Method[] methods = aClass.getMethods();
