@@ -16,7 +16,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import net.nnwsf.util.ReflectionHelper;
-import net.sf.cglib.proxy.Proxy;
 
 public class ConfigurationInvocationHandler implements InvocationHandler {
     private static Logger log = Logger.getLogger(ConfigurationInvocationHandler.class.getName());
@@ -63,7 +62,7 @@ public class ConfigurationInvocationHandler implements InvocationHandler {
         }
 
         Object codeValue = method.invoke(object, args);
-        if(codeValue == null || codeValue.equals(method.getDefaultValue())) {
+        if(codeValue == null || codeValue.equals(method.getDefaultValue()) || (codeValue.getClass().isArray() && ((Object[])codeValue).length == 0)) {
             if(key != null) {
                 List<String> elements = new ArrayList<>();
                 elements.add(configurationName);

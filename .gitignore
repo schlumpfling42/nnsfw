@@ -11,3 +11,5 @@ out
 *.iml
 credentials.json
 
+example.mv.db
+example.trace.db
