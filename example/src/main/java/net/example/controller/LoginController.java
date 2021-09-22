@@ -21,60 +21,60 @@ import net.nnwsf.controller.Get;
 
 @Controller("/login")
 public class LoginController {
-    final private GoogleClientSecrets clientSecrets;
+    private GoogleClientSecrets clientSecrets;
     private final JacksonFactory jsonFactory = new JacksonFactory();
     private MemoryDataStoreFactory dataStoreFactory = new MemoryDataStoreFactory();
 
     public LoginController() {
         try {
-            clientSecrets = GoogleClientSecrets.load(jsonFactory,
-                    new InputStreamReader(LoginController.class.getClassLoader().getResourceAsStream("credentials.json")));
-        } catch (IOException ioe) {
-            throw new RuntimeException("Unable to load the google oauth credentials", ioe);
+            clientSecrets = GoogleClientSecrets.load(jsonFactory, new InputStreamReader(
+                    LoginController.class.getClassLoader().getResourceAsStream("credentials.json")));
+        } catch (Throwable t) {
+            t.printStackTrace();
+            clientSecrets = null;
         }
 
     }
 
     @Get("/")
     public String get(HttpServerExchange exchange) {
-        try
-        {
+        try {
             String code = exchange.getQueryParameters().get("code").element();
             Deque<String> redirectUrl = exchange.getQueryParameters().get("state");
             TokenResponse tokenResponse = getToken(code);
 
             exchange.getResponseCookies().put("authToken", new CookieImpl("authToken", tokenResponse.getAccessToken()));
             exchange.setStatusCode(StatusCodes.TEMPORARY_REDIRECT);
-            if(redirectUrl != null && !redirectUrl.isEmpty())
-            exchange.getResponseHeaders().put(Headers.LOCATION, redirectUrl.element() );
+            if (redirectUrl != null && !redirectUrl.isEmpty())
+                exchange.getResponseHeaders().put(Headers.LOCATION, redirectUrl.element());
             exchange.endExchange();
 
             return null;
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             e.printStackTrace();
         }
         exchange.setStatusCode(StatusCodes.NOT_FOUND);
         exchange.endExchange();
         return null;
     }
+
     protected TokenResponse getToken(String code) throws IOException {
 
+        try {
+            GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(new NetHttpTransport(),
+                    jsonFactory, clientSecrets, Collections.singleton("https://www.googleapis.com/auth/userinfo.email"))
+                            .setDataStoreFactory(dataStoreFactory).build();
+            // authorize
 
-        GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
-                new NetHttpTransport(), jsonFactory, clientSecrets,
-                Collections.singleton("https://www.googleapis.com/auth/userinfo.email")).setDataStoreFactory(dataStoreFactory)
-                .build();
-        // authorize
-
-        final TokenResponse tokenResponse =
-                flow.newTokenRequest(code)
-                        .setRedirectUri("http://lvh.me:8080/login")
-                        .execute();
-        flow.createAndStoreCredential(tokenResponse, clientSecrets.getDetails().getClientId());
-        return tokenResponse;
+            final TokenResponse tokenResponse = flow.newTokenRequest(code).setRedirectUri("http://lvh.me:8080/login")
+                    .execute();
+            flow.createAndStoreCredential(tokenResponse, clientSecrets.getDetails().getClientId());
+            return tokenResponse;
+        } catch (IOException ioe) {
+            throw ioe;
+        } catch (Throwable t) {
+            throw new IOException(t);
+        }
     }
-
 
 }
