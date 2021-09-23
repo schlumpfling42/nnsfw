@@ -9,7 +9,7 @@ import com.google.api.client.auth.oauth2.TokenResponse;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.util.store.MemoryDataStoreFactory;
 
 import io.undertow.server.HttpServerExchange;
@@ -22,7 +22,7 @@ import net.nnwsf.controller.Get;
 @Controller("/login")
 public class LoginController {
     private GoogleClientSecrets clientSecrets;
-    private final JacksonFactory jsonFactory = new JacksonFactory();
+    private final GsonFactory jsonFactory = new GsonFactory();
     private MemoryDataStoreFactory dataStoreFactory = new MemoryDataStoreFactory();
 
     public LoginController() {
