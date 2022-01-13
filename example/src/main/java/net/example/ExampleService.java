@@ -4,7 +4,7 @@ import javax.transaction.Transactional;
 
 import net.nnwsf.service.Service;
 
-@Service()
+@Service
 public interface ExampleService {
     
     @Transactional

@@ -8,3 +8,7 @@ datasource:
     properties:
       hibernate.dialect: org.hibernate.dialect.H2Dialect
       hibernate.hbm2ddl.auto: create-drop
+authenticationProvider:
+  jsonFileName: credentials.json
+  openIdDiscoveryUri: https://accounts.google.com/.well-known/openid-configuration
+  callbackPath: /login

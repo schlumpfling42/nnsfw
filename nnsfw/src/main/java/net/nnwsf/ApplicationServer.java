@@ -1,6 +1,7 @@
 package net.nnwsf;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -8,9 +9,12 @@ import java.util.stream.Collectors;
 
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
-import net.nnwsf.authentication.AuthenticationMechanism;
+import io.undertow.server.session.InMemorySessionManager;
+import io.undertow.server.session.SessionAttachmentHandler;
+import io.undertow.server.session.SessionCookieConfig;
 import net.nnwsf.configuration.AnnotationConfiguration;
 import net.nnwsf.configuration.AuthenticatedResourcePathConfiguration;
+import net.nnwsf.configuration.AuthenticationProviderConfiguration;
 import net.nnwsf.configuration.ConfigurationManager;
 import net.nnwsf.configuration.ServerConfiguration;
 import net.nnwsf.controller.Controller;
@@ -24,14 +28,14 @@ public class ApplicationServer {
 
     public static void main(String[] args) {
         try {
-            if(args.length == 1) {
+            if (args.length == 1) {
                 start(Class.forName(args[0]));
             }
-        } catch(Exception e) {
+        } catch (Exception e) {
 
         }
         System.out.println("Usage: ApplicationServer <server class>");
-        
+
         System.exit(-1);
     }
 
@@ -42,8 +46,9 @@ public class ApplicationServer {
     public static ApplicationServer start(Class<?> applicationClass) {
         ConfigurationManager.init(applicationClass.getClassLoader());
         try {
-            LogManager.getLogManager().readConfiguration(applicationClass.getClassLoader().getResourceAsStream("logging.properties"));
-        } catch(Exception e) {
+            LogManager.getLogManager()
+                    .readConfiguration(applicationClass.getClassLoader().getResourceAsStream("logging.properties"));
+        } catch (Exception e) {
             System.err.println("Unable to read log configuration");
             e.printStackTrace();
         }
@@ -54,8 +59,9 @@ public class ApplicationServer {
 
     private ApplicationServer(Class<?> applicationClass) {
 
-        ServerConfiguration serverConfiguration = ReflectionHelper.findAnnotation(applicationClass, ServerConfiguration.class);
-        if(serverConfiguration == null) {
+        ServerConfiguration serverConfiguration = ReflectionHelper.findAnnotation(applicationClass,
+                ServerConfiguration.class);
+        if (serverConfiguration == null) {
             throw new IllegalStateException("Server annotation required to start the server");
         }
         serverConfiguration = ConfigurationManager.apply(serverConfiguration);
@@ -64,37 +70,46 @@ public class ApplicationServer {
         int port = serverConfiguration.port();
         String resourcePath = serverConfiguration.resourcePath();
 
-        AnnotationConfiguration annotationConfiguration = ReflectionHelper.findAnnotation(applicationClass, AnnotationConfiguration.class);
+        AnnotationConfiguration annotationConfiguration = ReflectionHelper.findAnnotation(applicationClass,
+                AnnotationConfiguration.class);
 
         ClassDiscovery.init(applicationClass.getClassLoader(), annotationConfiguration.value());
 
         initServices();
-        
+
         initPersistence(applicationClass);
-            
+
+        AuthenticationProviderConfiguration authenticationProviderConfiguration = ReflectionHelper.findAnnotation(
+            applicationClass,
+            AuthenticationProviderConfiguration.class
+        );
+
+        authenticationProviderConfiguration = ConfigurationManager.apply(authenticationProviderConfiguration);
+
         Collection<String> authenticatedResourcePaths = ReflectionHelper
-            .findAnnotations(applicationClass, AuthenticatedResourcePathConfiguration.class)
-            .stream().map(annotation -> annotation.value())
-            .collect(Collectors.toList());
+                .findAnnotations(applicationClass, AuthenticatedResourcePathConfiguration.class).stream()
+                .map(annotation -> annotation.value()).collect(Collectors.toList());
         HttpHandler httpHandler;
         try {
-            Collection<Class<Object>> controllerClasses = ClassDiscovery.discoverAnnotatedClasses(Object.class, Controller.class).values();
-            Collection<Class<io.undertow.security.api.AuthenticationMechanism>> authenticationMechanimsClasses = ClassDiscovery.discoverAnnotatedClasses(io.undertow.security.api.AuthenticationMechanism.class, AuthenticationMechanism.class).values();
-            httpHandler = new HttpHandlerImpl(applicationClass.getClassLoader(), resourcePath, authenticatedResourcePaths, controllerClasses, authenticationMechanimsClasses);
-        } catch(Exception e) {
+            Collection<Class<Object>> controllerClasses = ClassDiscovery
+                    .discoverAnnotatedClasses(Object.class, Controller.class).values();
+            httpHandler = new HttpHandlerImpl(applicationClass.getClassLoader(), resourcePath,
+                    authenticatedResourcePaths, controllerClasses, Collections.emptyList(),
+                    authenticationProviderConfiguration);
+        } catch (Exception e) {
             throw new RuntimeException("Unable to discover annotated classes", e);
         }
 
         log.info("Starting server at " + hostname + " port " + port);
-        Undertow server = Undertow.builder()
-                .addHttpListener(port, hostname)
-                .setHandler(httpHandler)
+        Undertow server = Undertow.builder().addHttpListener(port, hostname)
+                .setHandler(new SessionAttachmentHandler(httpHandler, new InMemorySessionManager("SessionManager"),
+                        new SessionCookieConfig()))
                 .build();
         server.start();
     }
-    
+
     private void initPersistence(Class<?> applicationClass) {
-            PersistenceManager.init();
+        PersistenceManager.init();
     }
 
     private void initServices() {

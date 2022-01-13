@@ -1,16 +1,10 @@
-plugins {
-    id 'com.github.johnrengelman.shadow' version '5.2.0'
-}
-
 apply plugin: 'java'
 apply plugin: 'application'
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = 1.11
+targetCompatibility = 1.11
 
 version = '0.0.2'
-
-def undertowVersion = '2.0.1.Final'
 
 mainClassName = 'net.nnwsf.Application'
 
@@ -19,13 +13,13 @@ repositories {
 }
 
 dependencies {
-    compile project(':nnsfw')
-    compile "org.hibernate:hibernate-core:5.4.9.Final",
+    implementation project(':nnsfw')
+    implementation "org.hibernate:hibernate-core:5.4.9.Final",
             "postgresql:postgresql:9.1-901-1.jdbc4",
             "com.h2database:h2:1.4.200"
 }
 jar {
     manifest {
-        attributes 'Main-Class': 'net.nnwsf.Application'
+        attributes 'Main-Class': 'net.example.Application'
     }
 }

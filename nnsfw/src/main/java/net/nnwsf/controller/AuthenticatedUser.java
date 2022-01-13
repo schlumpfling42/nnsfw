@@ -6,5 +6,5 @@ import java.lang.annotation.*;
 @Target(ElementType.PARAMETER)
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
-public @interface AuthenticationPrincipal {
+public @interface AuthenticatedUser {
 }

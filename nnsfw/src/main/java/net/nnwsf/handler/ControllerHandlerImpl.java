@@ -14,14 +14,17 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.pac4j.undertow.account.Pac4jAccount;
+
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
-import net.nnwsf.controller.AuthenticationPrincipal;
 import net.nnwsf.controller.PathVariable;
 import net.nnwsf.controller.RequestBody;
 import net.nnwsf.controller.RequestParameter;
+import net.nnwsf.authentication.User;
+import net.nnwsf.controller.AuthenticatedUser;
 
 public class ControllerHandlerImpl implements HttpHandler {
 
@@ -77,9 +80,9 @@ public class ControllerHandlerImpl implements HttpHandler {
 							} else if (specialMethodParameter.getType().isAssignableFrom(String.class)) {
 								parameters[i] = body.toString();
 							}
-						} else if(annotatedSpecialMethodParameter.getAnnotation().annotationType().isAssignableFrom(AuthenticationPrincipal.class)) {
+						} else if(annotatedSpecialMethodParameter.getAnnotation().annotationType().isAssignableFrom(AuthenticatedUser.class)) {
 							if(exchange.getSecurityContext() != null && exchange.getSecurityContext().getAuthenticatedAccount() != null) {
-								parameters[i] = exchange.getSecurityContext().getAuthenticatedAccount().getPrincipal();
+								parameters[i] = new User((Pac4jAccount)exchange.getSecurityContext().getAuthenticatedAccount());
 							}
 						}
 					} else if(specialMethodParameter.getType().isAssignableFrom(HttpServerExchange.class)) {

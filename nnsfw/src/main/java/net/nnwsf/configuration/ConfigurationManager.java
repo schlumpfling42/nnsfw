@@ -44,6 +44,9 @@ public class ConfigurationManager {
 
     @SuppressWarnings("unchecked")
     public static <T extends Annotation> T apply(T annotation) {
+        if(annotation == null) {
+            return null;
+        }
         try {
             return(T) Proxy.newProxyInstance(annotation.getClass().getClassLoader(), new Class[] { annotation.annotationType() }, new ConfigurationInvocationHandler(annotation));
 
