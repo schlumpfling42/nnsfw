@@ -1,7 +1,6 @@
 package net.example;
 
 import net.nnwsf.ApplicationServer;
-import net.nnwsf.authentication.Authenticated;
 import net.nnwsf.configuration.AnnotationConfiguration;
 import net.nnwsf.configuration.AuthenticatedResourcePathConfiguration;
 import net.nnwsf.configuration.AuthenticationProviderConfiguration;
