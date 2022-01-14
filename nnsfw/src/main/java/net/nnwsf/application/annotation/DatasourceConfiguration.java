@@ -1,4 +1,4 @@
-package net.nnwsf.persistence;
+package net.nnwsf.application.annotation;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
@@ -8,8 +8,9 @@ import java.lang.annotation.Target;
 
 import javax.persistence.spi.PersistenceProvider;
 
-import net.nnwsf.configuration.ConfigurationKey;
 import net.nnwsf.configuration.Default;
+import net.nnwsf.configuration.annotation.ConfigurationKey;
+import net.nnwsf.persistence.annotation.Property;
 
 @Documented
 @Target(ElementType.TYPE)

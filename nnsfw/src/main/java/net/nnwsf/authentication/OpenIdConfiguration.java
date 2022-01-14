@@ -1,4 +1,4 @@
-package net.nnwsf.authentication.internal;
+package net.nnwsf.authentication;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -19,12 +19,15 @@ public class OpenIdConfiguration {
     private Config apiConfig;
 
     public OpenIdConfiguration(String jsonFileName, String discoveryUri) throws IOException {
-        Map credentialsMap = new ObjectMapper().readValue(
+        @SuppressWarnings("unchecked")
+        Map<String, Object> credentialsMap = (Map<String, Object>) new ObjectMapper().readValue(
                 new InputStreamReader(ClassLoader.getSystemClassLoader().getResourceAsStream("credentials.json")),
                 Map.class);
-        Map credentialParameters = (Map<String, Object>) credentialsMap.get("web");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> credentialParameters =  (Map<String, Object>) credentialsMap.get("web");
         String clientId = (String) credentialParameters.get("client_id");
         String clientSecret =(String) credentialParameters.get("client_secret");
+        @SuppressWarnings("unchecked")
         Collection<String> redirectUris = (Collection<String>) credentialParameters.get("redirect_uris");
         init(clientId, clientSecret, redirectUris, discoveryUri);
     }
@@ -42,7 +45,7 @@ public class OpenIdConfiguration {
         openIdConfig.setUseNonce(true);
         openIdConfig.setDisablePkce(true);
         
-        OidcClient oidcClient = new OidcClient(openIdConfig);
+        OidcClient<OidcConfiguration> oidcClient = new OidcClient<OidcConfiguration>(openIdConfig);
         final Clients controllerClients = new Clients(redirectUris.iterator().next(), oidcClient);
         controllerConfig = new Config(controllerClients);
 

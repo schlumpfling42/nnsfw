@@ -1,4 +1,4 @@
-package net.nnwsf.controller;
+package net.nnwsf.controller.annotation;
 
 import java.lang.annotation.*;
 

@@ -1,4 +1,4 @@
-package net.nnwsf.controller;
+package net.nnwsf.controller.annotation;
 
 import java.lang.annotation.*;
 
@@ -6,6 +6,6 @@ import java.lang.annotation.*;
 @Target(ElementType.METHOD)
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Put {
+public @interface Post {
     String value() default "/";
 }

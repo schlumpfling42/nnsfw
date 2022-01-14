@@ -1,5 +1,4 @@
-package net.nnwsf.persistence;
-
+package net.nnwsf.service.annotation;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
@@ -8,9 +7,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Documented
-@Target(ElementType.PARAMETER)
+@Target(ElementType.TYPE)
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
-public @interface QueryParameter {
-    String value();
+public @interface Service {
+    String value() default "";
 }

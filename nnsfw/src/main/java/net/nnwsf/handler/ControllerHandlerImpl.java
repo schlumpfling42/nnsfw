@@ -20,11 +20,11 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
-import net.nnwsf.controller.PathVariable;
-import net.nnwsf.controller.RequestBody;
-import net.nnwsf.controller.RequestParameter;
-import net.nnwsf.authentication.User;
-import net.nnwsf.controller.AuthenticatedUser;
+import net.nnwsf.controller.annotation.AuthenticatedUser;
+import net.nnwsf.controller.annotation.PathVariable;
+import net.nnwsf.controller.annotation.RequestBody;
+import net.nnwsf.controller.annotation.RequestParameter;
+import net.nnwsf.authentication.annotation.User;
 
 public class ControllerHandlerImpl implements HttpHandler {
 

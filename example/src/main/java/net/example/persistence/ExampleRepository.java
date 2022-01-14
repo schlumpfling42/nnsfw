@@ -2,10 +2,10 @@ package net.example.persistence;
 
 import java.util.Collection;
 
-import net.nnwsf.persistence.Repository;
 import net.nnwsf.persistence.PersistenceRepository;
-import net.nnwsf.persistence.Query;
-import net.nnwsf.persistence.QueryParameter;
+import net.nnwsf.persistence.annotation.Query;
+import net.nnwsf.persistence.annotation.QueryParameter;
+import net.nnwsf.persistence.annotation.Repository;
 
 @Repository(entityClass = ExampleEntity.class)
 public interface ExampleRepository extends PersistenceRepository<ExampleEntity, Integer>{

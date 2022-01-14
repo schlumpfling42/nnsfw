@@ -15,6 +15,7 @@ import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import net.nnwsf.configuration.annotation.ConfigurationKey;
 import net.nnwsf.util.ReflectionHelper;
 
 public class ConfigurationInvocationHandler implements InvocationHandler {

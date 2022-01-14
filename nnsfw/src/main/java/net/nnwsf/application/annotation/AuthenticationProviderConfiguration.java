@@ -1,6 +1,8 @@
-package net.nnwsf.configuration;
+package net.nnwsf.application.annotation;
 
 import java.lang.annotation.*;
+
+import net.nnwsf.configuration.annotation.ConfigurationKey;
 
 @Documented
 @Target(ElementType.TYPE)

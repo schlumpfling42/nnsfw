@@ -1,6 +1,6 @@
 package net.example;
 
-import net.nnwsf.service.Service;
+import net.nnwsf.service.annotation.Service;
 
 @Service("2")
 public class ExampleService2Impl implements ExampleService {

@@ -30,7 +30,10 @@ import com.google.common.collect.ImmutableMap;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.configuration.FluentConfiguration;
 
+import net.nnwsf.application.annotation.DatasourceConfiguration;
+import net.nnwsf.application.annotation.FlywayConfiguration;
 import net.nnwsf.configuration.ConfigurationManager;
+import net.nnwsf.persistence.annotation.Repository;
 import net.nnwsf.util.ClassDiscovery;
 import net.nnwsf.util.ProxyUtil;
 

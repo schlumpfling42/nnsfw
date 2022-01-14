@@ -1,4 +1,4 @@
-package net.nnwsf.controller;
+package net.nnwsf.controller.annotation;
 
 import java.lang.annotation.*;
 
@@ -6,5 +6,6 @@ import java.lang.annotation.*;
 @Target(ElementType.PARAMETER)
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
-public @interface AuthenticatedUser {
+public @interface RequestParameter {
+    String value();
 }

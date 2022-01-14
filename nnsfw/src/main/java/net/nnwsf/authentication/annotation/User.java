@@ -1,4 +1,4 @@
-package net.nnwsf.authentication;
+package net.nnwsf.authentication.annotation;
 
 import java.util.Set;
 

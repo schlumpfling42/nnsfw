@@ -1,11 +1,11 @@
 package net.example;
 
-import net.nnwsf.ApplicationServer;
-import net.nnwsf.configuration.AnnotationConfiguration;
-import net.nnwsf.configuration.AuthenticatedResourcePathConfiguration;
-import net.nnwsf.configuration.AuthenticationProviderConfiguration;
-import net.nnwsf.configuration.ServerConfiguration;
-import net.nnwsf.persistence.DatasourceConfiguration;
+import net.nnwsf.application.ApplicationServer;
+import net.nnwsf.application.annotation.AnnotationConfiguration;
+import net.nnwsf.application.annotation.AuthenticatedResourcePathConfiguration;
+import net.nnwsf.application.annotation.AuthenticationProviderConfiguration;
+import net.nnwsf.application.annotation.DatasourceConfiguration;
+import net.nnwsf.application.annotation.ServerConfiguration;
 
 @ServerConfiguration
 @AnnotationConfiguration("net.example")

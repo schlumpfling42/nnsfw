@@ -1,4 +1,4 @@
-package net.nnwsf.configuration;
+package net.nnwsf.application.annotation;
 
 import java.lang.annotation.*;
 

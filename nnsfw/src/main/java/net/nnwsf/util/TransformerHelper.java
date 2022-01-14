@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
-import net.nnwsf.persistence.Property;
+import net.nnwsf.persistence.annotation.Property;
 
 public class TransformerHelper {
 

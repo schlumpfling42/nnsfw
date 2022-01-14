@@ -5,12 +5,12 @@ import javax.inject.Inject;
 import net.example.ExampleBean;
 import net.example.ExampleService;
 import net.example.ExampleService2Impl;
-import net.nnwsf.controller.Controller;
-import net.nnwsf.controller.Get;
-import net.nnwsf.controller.PathVariable;
-import net.nnwsf.controller.Post;
-import net.nnwsf.controller.RequestBody;
-import net.nnwsf.controller.RequestParameter;
+import net.nnwsf.controller.annotation.Controller;
+import net.nnwsf.controller.annotation.Get;
+import net.nnwsf.controller.annotation.PathVariable;
+import net.nnwsf.controller.annotation.Post;
+import net.nnwsf.controller.annotation.RequestBody;
+import net.nnwsf.controller.annotation.RequestParameter;
 
 @Controller("/test")
 public class ExampleController {

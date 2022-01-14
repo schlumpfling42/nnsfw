@@ -1,4 +1,4 @@
-package net.nnwsf;
+package net.nnwsf.application;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -12,12 +12,12 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.session.InMemorySessionManager;
 import io.undertow.server.session.SessionAttachmentHandler;
 import io.undertow.server.session.SessionCookieConfig;
-import net.nnwsf.configuration.AnnotationConfiguration;
-import net.nnwsf.configuration.AuthenticatedResourcePathConfiguration;
-import net.nnwsf.configuration.AuthenticationProviderConfiguration;
+import net.nnwsf.application.annotation.AnnotationConfiguration;
+import net.nnwsf.application.annotation.AuthenticatedResourcePathConfiguration;
+import net.nnwsf.application.annotation.AuthenticationProviderConfiguration;
+import net.nnwsf.application.annotation.ServerConfiguration;
 import net.nnwsf.configuration.ConfigurationManager;
-import net.nnwsf.configuration.ServerConfiguration;
-import net.nnwsf.controller.Controller;
+import net.nnwsf.controller.annotation.Controller;
 import net.nnwsf.handler.HttpHandlerImpl;
 import net.nnwsf.persistence.PersistenceManager;
 import net.nnwsf.service.ServiceManager;

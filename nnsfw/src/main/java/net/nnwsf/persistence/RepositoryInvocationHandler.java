@@ -8,6 +8,7 @@ import java.util.Collection;
 import javax.persistence.Id;
 import javax.persistence.Query;
 
+import net.nnwsf.persistence.annotation.QueryParameter;
 import net.nnwsf.util.ReflectionHelper;
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
@@ -27,7 +28,7 @@ public class RepositoryInvocationHandler implements MethodInterceptor {
 
     @Override
     public Object intercept(Object obj, Method method, Object[] args, MethodProxy proxy) throws Throwable {
-        net.nnwsf.persistence.Query queryAnnotation = method.getAnnotation(net.nnwsf.persistence.Query.class);
+        net.nnwsf.persistence.annotation.Query queryAnnotation = method.getAnnotation(net.nnwsf.persistence.annotation.Query.class);
         if(queryAnnotation != null) {
             try(EntityManagerHolder entityManagerHolder = PersistenceManager.createEntityManager(datasourceName)) {
                 entityManagerHolder.beginTransaction();

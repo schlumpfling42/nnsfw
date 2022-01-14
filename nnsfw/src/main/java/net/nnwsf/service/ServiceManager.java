@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import net.nnwsf.service.annotation.Service;
 import net.nnwsf.util.ClassDiscovery;
 import net.nnwsf.util.ProxyUtil;
 import net.nnwsf.util.ReflectionHelper;

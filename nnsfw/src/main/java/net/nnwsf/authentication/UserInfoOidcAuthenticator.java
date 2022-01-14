@@ -1,4 +1,4 @@
-package net.nnwsf.authentication.internal;
+package net.nnwsf.authentication;
 
 import static java.util.Optional.ofNullable;
 
@@ -53,7 +53,7 @@ public class UserInfoOidcAuthenticator extends InitializableObject implements Au
     public void validate(TokenCredentials credentials, WebContext context) {
         init();
 
-        final OidcProfileDefinition profileDefinition = new OidcProfileDefinition();
+        final OidcProfileDefinition<OidcProfile> profileDefinition = new OidcProfileDefinition<OidcProfile>();
         final OidcProfile profile = (OidcProfile) profileDefinition.newProfile();
         final BearerAccessToken accessToken = new BearerAccessToken(credentials.getToken());
         profile.setAccessToken(accessToken);
