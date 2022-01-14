@@ -41,4 +41,9 @@ public class ExampleController {
     public String getRequest(@PathVariable("echo") String echo, String ignore) {
         return service.echo(echo);
     }
+
+    @Get("/log/{aString}")
+    public String getLog(@PathVariable("aString") String aString, String ignore) {
+        return service.log(aString);
+    }
 }

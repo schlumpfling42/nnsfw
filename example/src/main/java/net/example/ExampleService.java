@@ -9,4 +9,6 @@ public interface ExampleService {
     
     @Transactional
     String echo(String echo);
+
+    String log(String aString);
 }

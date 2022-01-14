@@ -172,11 +172,13 @@ public class PersistenceManager {
 		this.entityManagerFactoryMap = new HashMap<>();
 		this.datasourceConfigurationMap = new HashMap<>();
 		for(DatasourceConfiguration datasource : datasources.keySet()) {
-			this.datasourceConfigurationMap.put(datasource.name(), datasource);
-			initEntityManager(datasource);
+			DatasourceConfiguration hydratedDatasourceConfiguration = ConfigurationManager.apply(datasource);
+			this.datasourceConfigurationMap.put(hydratedDatasourceConfiguration.name(), hydratedDatasourceConfiguration);
+			initEntityManager(hydratedDatasourceConfiguration);
 		}
 		for(Entry<FlywayConfiguration, Class<Object>> entry : flywayConfigurationClasses.entrySet()) {
-			initFlyway(entry.getKey());
+			FlywayConfiguration hydratedFlywayConfiguration = ConfigurationManager.apply(entry.getKey());
+			initFlyway(hydratedFlywayConfiguration);
 		}
 		for(Entry<Repository, Class<Object>> entry : repositoryClasses.entrySet()) {
 			this.repositoryClassesMap.put(entry.getValue(), entry.getKey());
@@ -185,41 +187,40 @@ public class PersistenceManager {
 
 	@SuppressWarnings("unchecked")
     private void initEntityManager(DatasourceConfiguration datasourceConfiguration) {
-		DatasourceConfiguration datasourceConfigurationToUse = ConfigurationManager.apply(datasourceConfiguration);
 		try {
-			if(datasourceConfigurationToUse.providerClass() == null) {
+			if(datasourceConfiguration.providerClass() == null) {
 				log.log(Level.SEVERE, "Unable to discover repositories, no persistenceProviderClass found");
 				throw new RuntimeException("Unable to discover repositories, no persistenceProviderClass found");
 			}
-			if(datasourceConfigurationToUse.jdbcDriver() == null || datasourceConfigurationToUse.jdbcDriver().isEmpty()) {
+			if(datasourceConfiguration.jdbcDriver() == null || datasourceConfiguration.jdbcDriver().isEmpty()) {
 				log.log(Level.SEVERE, "Unable to discover repositories, no jdbcDriver found");
 				throw new RuntimeException("Unable to discover repositories, no jdbcDriver found");
 			}
-			if(datasourceConfigurationToUse.jdbcUrl() == null || datasourceConfigurationToUse.jdbcUrl().isEmpty()) {
+			if(datasourceConfiguration.jdbcUrl() == null || datasourceConfiguration.jdbcUrl().isEmpty()) {
 				log.log(Level.SEVERE, "Unable to discover repositories, no jdbcUrl found");
 				throw new RuntimeException("Unable to discover repositories, no jdbcUrl found");
 			}
-			Map<String, Object> properties = (Map<String, Object>)Optional.ofNullable(datasourceConfigurationToUse.properties())
+			Map<String, Object> properties = (Map<String, Object>)Optional.ofNullable(datasourceConfiguration.properties())
 					.map(p -> 
 						Arrays.stream(p)
 						.collect(Collectors.toMap(v -> v.name(), v -> v.value()))
 					).orElse(Collections.EMPTY_MAP);
 
-			EntityManagerFactory entityManagerFactory = datasourceConfigurationToUse.providerClass().getConstructor(new Class[0]).newInstance().createContainerEntityManagerFactory(
-				new PersistenceUnitInfoImplementation(datasourceConfigurationToUse.providerClass()),
+			EntityManagerFactory entityManagerFactory = datasourceConfiguration.providerClass().getConstructor(new Class[0]).newInstance().createContainerEntityManagerFactory(
+				new PersistenceUnitInfoImplementation(datasourceConfiguration.providerClass()),
 				ImmutableMap.<String, Object>builder()
-				.put("javax.persistence.jdbc.driver", datasourceConfigurationToUse.jdbcDriver())
-				.put("javax.persistence.jdbc.url", datasourceConfigurationToUse.jdbcUrl())
-				.put("javax.persistence.jdbc.user", datasourceConfigurationToUse.user() == null ? "" : datasourceConfigurationToUse.user())
-				.put("javax.persistence.jdbc.password", datasourceConfigurationToUse.password() == null ? "" : datasourceConfigurationToUse.password())
+				.put("javax.persistence.jdbc.driver", datasourceConfiguration.jdbcDriver())
+				.put("javax.persistence.jdbc.url", datasourceConfiguration.jdbcUrl())
+				.put("javax.persistence.jdbc.user", datasourceConfiguration.user() == null ? "" : datasourceConfiguration.user())
+				.put("javax.persistence.jdbc.password", datasourceConfiguration.password() == null ? "" : datasourceConfiguration.password())
 				.putAll(properties)
 				.build());
-			entityManagerFactoryMap.put(datasourceConfigurationToUse.name(), entityManagerFactory);
+			entityManagerFactoryMap.put(datasourceConfiguration.name(), entityManagerFactory);
 		} catch(Exception e) {
 			log.log(Level.SEVERE, "Unable to initialize persistence", e);
 			throw new RuntimeException(e);
 		}
-		this.entityManagerThreadLocalMap.put(datasourceConfigurationToUse.name(),new ThreadLocal<>());
+		this.entityManagerThreadLocalMap.put(datasourceConfiguration.name(),new ThreadLocal<>());
 
 	}
 	
@@ -230,7 +231,6 @@ public class PersistenceManager {
 			throw new RuntimeException("Unable to find datasource for FlywayConfiguration");
 		}
 		if(flywayConfiguration != null) {
-			flywayConfiguration = ConfigurationManager.apply(flywayConfiguration);
 			FluentConfiguration flywayFluentConfiguration = Flyway.configure()
 				.locations(flywayConfiguration.location())
 				.dataSource(

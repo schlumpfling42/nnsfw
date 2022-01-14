@@ -5,6 +5,7 @@ import net.nnwsf.application.annotation.AnnotationConfiguration;
 import net.nnwsf.application.annotation.AuthenticatedResourcePathConfiguration;
 import net.nnwsf.application.annotation.AuthenticationProviderConfiguration;
 import net.nnwsf.application.annotation.DatasourceConfiguration;
+import net.nnwsf.application.annotation.FlywayConfiguration;
 import net.nnwsf.application.annotation.ServerConfiguration;
 
 @ServerConfiguration
@@ -12,6 +13,7 @@ import net.nnwsf.application.annotation.ServerConfiguration;
 @AuthenticatedResourcePathConfiguration("/authenticated")
 @AuthenticationProviderConfiguration
 @DatasourceConfiguration
+@FlywayConfiguration
 public class Application {
     public static void main(String[] args) {
          ApplicationServer.start(Application.class);

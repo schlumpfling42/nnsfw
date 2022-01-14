@@ -1,5 +1,5 @@
 datasource:
-  #default:
+  default:
     providerClass: org.hibernate.jpa.HibernatePersistenceProvider
     jdbcDriver: org.h2.Driver
     jdbcUrl: jdbc:h2:./example/example
@@ -7,7 +7,9 @@ datasource:
     password:
     properties:
       hibernate.dialect: org.hibernate.dialect.H2Dialect
-      hibernate.hbm2ddl.auto: create-drop
+flyway:
+  default:
+    location: flyway
 authenticationProvider:
   jsonFileName: credentials.json
   openIdDiscoveryUri: https://accounts.google.com/.well-known/openid-configuration
