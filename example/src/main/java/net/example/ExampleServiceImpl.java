@@ -1,5 +1,8 @@
 package net.example;
 
+import java.util.Collection;
+import java.util.stream.Collectors;
+
 import javax.inject.Inject;
 
 import net.example.persistence.ExampleEntity;
@@ -35,6 +38,36 @@ public class ExampleServiceImpl implements ExampleService{
         log.append("After: ");
         log.append("Count: " + repository.findAll().size() + "\n");
         return log.toString();
+    }
+
+    public ExampleBean createExample(String name) {
+        ExampleEntity entity = new ExampleEntity();
+        entity.setName(name);
+        entity = repository.save(entity);
+        entity = repository.findById(entity.getId());
+        ExampleBean exampleBean = new ExampleBean();
+        exampleBean.setName(entity.getName());
+        exampleBean.setId(entity.getId());
+        return exampleBean;
+    }
+
+    public ExampleBean saveExample(int id, ExampleBean bean) {
+        ExampleEntity entity = repository.findById(id);
+        entity.setName(bean.getName());
+        entity = repository.save(entity);
+        ExampleBean exampleBean = new ExampleBean();
+        exampleBean.setName(entity.getName());
+        exampleBean.setId(entity.getId());
+        return exampleBean;
+    }
+    
+    public Collection<ExampleBean> getExamples() {
+        return repository.findAll().stream().map(entity -> {
+            ExampleBean exampleBean = new ExampleBean();
+            exampleBean.setName(entity.getName());
+            exampleBean.setId(entity.getId());
+            return exampleBean;
+        }).collect(Collectors.toList());
     }
 
 }

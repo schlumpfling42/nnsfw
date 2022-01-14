@@ -1,5 +1,7 @@
 package net.example.controller;
 
+import java.util.Collection;
+
 import javax.inject.Inject;
 
 import net.example.ExampleBean;
@@ -9,6 +11,7 @@ import net.nnwsf.controller.annotation.Controller;
 import net.nnwsf.controller.annotation.Get;
 import net.nnwsf.controller.annotation.PathVariable;
 import net.nnwsf.controller.annotation.Post;
+import net.nnwsf.controller.annotation.Put;
 import net.nnwsf.controller.annotation.RequestBody;
 import net.nnwsf.controller.annotation.RequestParameter;
 
@@ -37,13 +40,22 @@ public class ExampleController {
         return service2.echo(echo) + " ---" +  service.echo(echo);
     }
 
-    @Get("/{echo}")
-    public String getRequest(@PathVariable("echo") String echo, String ignore) {
-        return service.echo(echo);
-    }
-
     @Get("/log/{aString}")
     public String getLog(@PathVariable("aString") String aString, String ignore) {
         return service.log(aString);
+    }
+
+    @Put("/example/{aString}")
+    public ExampleBean createExampple(@PathVariable("aString") String aString) {
+        return service.createExample(aString);
+    }
+    @Post("/example/{id}")
+    public ExampleBean updateExampple(@PathVariable("id") int id, @RequestBody ExampleBean data) {
+        return service.saveExample(id, data );
+    }
+
+    @Get("/example/")
+    public Collection<ExampleBean> getExamples() {
+        return service.getExamples();
     }
 }

@@ -8,6 +8,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
 import java.util.Deque;
 import java.util.Map;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -52,11 +53,13 @@ public class ControllerHandlerImpl implements HttpHandler {
 					if (annotatedMethodParameter.getAnnotation().annotationType().isAssignableFrom(RequestParameter.class)) {
 						Deque<String> parameterValue = queryParameters.get(annotatedMethodParameter.getName());
 						if (parameterValue != null) {
-							parameters[i] = parameterValue.element();
+							String value = parameterValue.element();
+							parameters[i] = getValueForType(value, annotatedMethodParameter.getType());
 						}
 					} else if (annotatedMethodParameter.getAnnotation().annotationType().isAssignableFrom(PathVariable.class)) {
 						int index = controllerProxy.getPathElements().indexOf("{" + annotatedMethodParameter.getName() + "}");
-						parameters[i] = requestUrlMatcher.getPathElements()[index];
+						String value = requestUrlMatcher.getPathElements()[index];
+						parameters[i] = getValueForType(value, annotatedMethodParameter.getType());
 					}
 				}
 			}
@@ -119,6 +122,17 @@ public class ControllerHandlerImpl implements HttpHandler {
 	private boolean shouldProcessJson(HttpServerExchange exchange, HttpString header) {
 		String acceptHeadersCombined = exchange.getRequestHeaders().get(header).stream().collect(Collectors.joining());
 		return acceptHeadersCombined.contains("application/json");
+	}
+
+	private Object getValueForType(String value, Class aClass) {
+		if(int.class.equals(aClass)) {
+			return Integer.parseInt(value);
+		} else if(long.class.equals(aClass)) {
+			return Long.parseLong(value);
+		} else if(UUID.class.equals(aClass)) {
+			return UUID.fromString(value);
+		}
+		return value;
 	}
 
 }
