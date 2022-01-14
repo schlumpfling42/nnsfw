@@ -3,7 +3,6 @@ package net.example.controller;
 import net.example.ExampleBean;
 import net.nnwsf.authentication.annotation.Authenticated;
 import net.nnwsf.authentication.annotation.User;
-import net.nnwsf.controller.*;
 import net.nnwsf.controller.annotation.AuthenticatedUser;
 import net.nnwsf.controller.annotation.Controller;
 import net.nnwsf.controller.annotation.Get;
