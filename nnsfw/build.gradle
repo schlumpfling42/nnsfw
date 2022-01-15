@@ -7,6 +7,10 @@ plugins {
   id 'maven-publish'
 }
 
+test {
+    useJUnitPlatform()
+}
+
 sourceCompatibility = 1.11
 targetCompatibility = 1.11
 
@@ -37,6 +41,8 @@ dependencies {
             "org.flywaydb:flyway-core:6.1.1",
             "cglib:cglib-nodep:3.3.0",
             "org.yaml:snakeyaml:1.25"
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
 }
 
 task relocateShadowJar(type: ConfigureShadowRelocation) {

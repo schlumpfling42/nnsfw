@@ -2,6 +2,7 @@ package net.nnwsf.configuration;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Proxy;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -10,6 +11,7 @@ import java.util.regex.Pattern;
 
 import org.yaml.snakeyaml.Yaml;
 
+import net.nnwsf.util.MapUtil;
 import net.nnwsf.util.TransformerHelper;
 
 public class ConfigurationManager {
@@ -19,15 +21,14 @@ public class ConfigurationManager {
 
     public static void init(ClassLoader applicationClassLoader) {
         if(instance == null) {
-            Map<String, Object> config = new Yaml().load(ConfigurationManager.class.getClassLoader().getResourceAsStream("default.yaml"));
-            try {
-                Map<String, Object> customConfig = new Yaml().load(applicationClassLoader.getResourceAsStream("application.yaml"));
-                config.putAll(customConfig);
-            }catch(Exception e) {
-                log.info("No custom configuration found, using defaults");
-            }
-            instance = new ConfigurationManager(config);
+            instance = new ConfigurationManager();
+            instance.internalInit(applicationClassLoader);
         }
+    }
+
+    static void init(ConfigurationManager anInstance, ClassLoader applicationClassLoader) {
+            instance = anInstance;
+            instance.internalInit(applicationClassLoader);
     }
 
     public static  <T> T get(String key, Class<T> aClass) {
@@ -57,11 +58,32 @@ public class ConfigurationManager {
 
     }
 
-    private final Map<String, Object> configuration;
+    private Map<String, Object> configuration;
     private final Pattern configurationParameterPattern = Pattern.compile("^\\$\\{([a-zA-Z0-9\\.]*)\\}$");
 
-    private ConfigurationManager(Map<String, Object> configuration) {
-        this.configuration = configuration;
+    protected ConfigurationManager() {
+    }
+
+    protected final void internalInit(ClassLoader applicationClassLoader) {
+        configuration = MapUtil.deepCopy(loadDefaultConfiguration());
+        try {
+            Map<String, Object> customConfig = loadApplicationConfiguration(applicationClassLoader);
+            MapUtil.mergeInto(configuration, customConfig);
+        }catch(Exception e) {
+            log.log(Level.INFO, "No custom configuration found, using defaults", e);
+        }
+    }
+
+    Map<String, Object> loadDefaultConfiguration() {
+        return new Yaml().load(ConfigurationManager.class.getClassLoader().getResourceAsStream("default.yaml"));
+    }
+
+    Map<String, Object> loadApplicationConfiguration(ClassLoader applicationClassLoader) {
+        try {
+            return new Yaml().load(applicationClassLoader.getResourceAsStream("application.yaml"));
+        } catch(Exception e) {
+            return Map.of();
+        }
     }
 
     private Object internalGet(String[] keys) {

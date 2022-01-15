@@ -104,6 +104,7 @@ public class ControllerHandlerImpl implements HttpHandler {
 					} else if (result != null) {
 						body.append(result.toString());
 					}
+					exchange.getResponseHeaders().add(Headers.CONTENT_TYPE, exchange.getRequestHeaders().get(Headers.CONTENT_TYPE).element());
 					exchange.setStatusCode(200).getResponseSender().send(body.toString());
 				}
 			} catch(InvocationTargetException ite) {

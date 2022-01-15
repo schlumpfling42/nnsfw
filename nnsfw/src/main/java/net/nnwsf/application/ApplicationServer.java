@@ -50,7 +50,6 @@ public class ApplicationServer {
                     .readConfiguration(applicationClass.getClassLoader().getResourceAsStream("logging.properties"));
         } catch (Exception e) {
             System.err.println("Unable to read log configuration");
-            e.printStackTrace();
         }
         log.log(Level.INFO, "Starting server application {0}", applicationClass);
         instance = new ApplicationServer(applicationClass);
@@ -62,7 +61,7 @@ public class ApplicationServer {
         ServerConfiguration serverConfiguration = ReflectionHelper.findAnnotation(applicationClass,
                 ServerConfiguration.class);
         if (serverConfiguration == null) {
-            throw new IllegalStateException("Server annotation required to start the server");
+            throw new IllegalStateException("ServerConfiguration annotation required to start the server");
         }
         serverConfiguration = ConfigurationManager.apply(serverConfiguration);
 
@@ -72,8 +71,11 @@ public class ApplicationServer {
 
         AnnotationConfiguration annotationConfiguration = ReflectionHelper.findAnnotation(applicationClass,
                 AnnotationConfiguration.class);
-
-        ClassDiscovery.init(applicationClass.getClassLoader(), annotationConfiguration.value());
+        if(annotationConfiguration != null) {
+            ClassDiscovery.init(applicationClass.getClassLoader(), annotationConfiguration.value());
+        } else {
+            ClassDiscovery.init(applicationClass.getClassLoader(), applicationClass.getPackageName().split("\\.")[0]);
+        }
 
         initServices();
 
