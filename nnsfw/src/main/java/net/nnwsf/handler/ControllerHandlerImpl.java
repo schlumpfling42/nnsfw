@@ -8,7 +8,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
 import java.util.Deque;
 import java.util.Map;
-import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -25,6 +24,7 @@ import net.nnwsf.controller.annotation.AuthenticatedUser;
 import net.nnwsf.controller.annotation.PathVariable;
 import net.nnwsf.controller.annotation.RequestBody;
 import net.nnwsf.controller.annotation.RequestParameter;
+import net.nnwsf.util.TypeUtil;
 import net.nnwsf.authentication.annotation.User;
 
 public class ControllerHandlerImpl implements HttpHandler {
@@ -54,12 +54,12 @@ public class ControllerHandlerImpl implements HttpHandler {
 						Deque<String> parameterValue = queryParameters.get(annotatedMethodParameter.getName());
 						if (parameterValue != null) {
 							String value = parameterValue.element();
-							parameters[i] = getValueForType(value, annotatedMethodParameter.getType());
+							parameters[i] = TypeUtil.toType(value, annotatedMethodParameter.getType());
 						}
 					} else if (annotatedMethodParameter.getAnnotation().annotationType().isAssignableFrom(PathVariable.class)) {
 						int index = controllerProxy.getPathElements().indexOf("{" + annotatedMethodParameter.getName() + "}");
 						String value = requestUrlMatcher.getPathElements()[index];
-						parameters[i] = getValueForType(value, annotatedMethodParameter.getType());
+						parameters[i] = TypeUtil.toType(value, annotatedMethodParameter.getType());
 					}
 				}
 			}
@@ -124,16 +124,4 @@ public class ControllerHandlerImpl implements HttpHandler {
 		String acceptHeadersCombined = exchange.getRequestHeaders().get(header).stream().collect(Collectors.joining());
 		return acceptHeadersCombined.contains("application/json");
 	}
-
-	private Object getValueForType(String value, Class aClass) {
-		if(int.class.equals(aClass)) {
-			return Integer.parseInt(value);
-		} else if(long.class.equals(aClass)) {
-			return Long.parseLong(value);
-		} else if(UUID.class.equals(aClass)) {
-			return UUID.fromString(value);
-		}
-		return value;
-	}
-
 }

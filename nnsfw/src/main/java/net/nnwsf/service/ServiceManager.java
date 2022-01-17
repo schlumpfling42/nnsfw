@@ -18,11 +18,11 @@ public class ServiceManager {
 
     private static ServiceManager instance;
 
-    public static void init(Collection<Package> packagesToScan) {
+    public static void init() {
         if(instance == null) {
             try {
                 Map<Service, Class<Object>> serviceClasses = ClassDiscovery.discoverAnnotatedClasses(Object.class, Service.class);
-                instance = new ServiceManager(serviceClasses, packagesToScan);
+                instance = new ServiceManager(serviceClasses);
             } catch (Exception e) {
                 log.log(Level.SEVERE, "Unable to discover services", e);
                 throw new RuntimeException("Unable to discover services", e);
@@ -35,13 +35,13 @@ public class ServiceManager {
 
     private final Map<String, Object> serviceSingletons;
 
-    private ServiceManager(Map<Service, Class<Object>> annotationServiceClasses, Collection<Package> packagesToScan) {
+    private ServiceManager(Map<Service, Class<Object>> annotationServiceClasses) {
         this.serviceClasses = new HashSet<>();
         this.serviceImplementation = new HashMap<>();
         for(Map.Entry<Service, Class<Object>> annotationClass : annotationServiceClasses.entrySet()) {
             if(!annotationClass.getValue().isInterface()) {
                 Class<?> anImplementationClass = annotationClass.getValue();
-                Collection<Class<?>> allClasses = ReflectionHelper.getAllClassesAndInterfaces(anImplementationClass, packagesToScan);
+                Collection<Class<?>> allClasses = ReflectionHelper.getAllClassesAndInterfaces(anImplementationClass);
                 for(Class<?> aSubClass : allClasses) {
                     String serviceName = aSubClass + ":";
                     if(!aSubClass.equals(anImplementationClass)) {

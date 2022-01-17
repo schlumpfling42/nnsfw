@@ -2,7 +2,6 @@ package net.nnwsf.configuration;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Proxy;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;

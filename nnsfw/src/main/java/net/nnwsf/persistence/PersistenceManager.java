@@ -145,7 +145,7 @@ public class PersistenceManager {
 
         if(instance == null) {
 			try {
-				Map<Repository, Class<Object>> repositoryClasses = ClassDiscovery.discoverAnnotatedClasses(Object.class, Repository.class);
+				var repositoryClasses = ClassDiscovery.discoverAnnotatedClasses(PersistenceRepository.class, Repository.class);
 				Map<DatasourceConfiguration, Class<Object>> datasourceClasses = ClassDiscovery.discoverAnnotatedClasses(Object.class, DatasourceConfiguration.class);
 				Map<FlywayConfiguration, Class<Object>> flywayConfigurationClasses = ClassDiscovery.discoverAnnotatedClasses(Object.class, FlywayConfiguration.class);
 				instance = new PersistenceManager(datasourceClasses, repositoryClasses, flywayConfigurationClasses);
@@ -165,7 +165,7 @@ public class PersistenceManager {
 
 	private PersistenceManager(
 		Map<DatasourceConfiguration, Class<Object>> datasources, 
-		Map<Repository, Class<Object>> repositoryClasses,
+		Map<Repository, Class<PersistenceRepository>> repositoryClasses,
 		Map<FlywayConfiguration, Class<Object>> flywayConfigurationClasses) {
 		this.entityManagerThreadLocalMap = new HashMap<>();
 		this.repositoryClassesMap = new HashMap<>();
@@ -180,7 +180,7 @@ public class PersistenceManager {
 			FlywayConfiguration hydratedFlywayConfiguration = ConfigurationManager.apply(entry.getKey());
 			initFlyway(hydratedFlywayConfiguration);
 		}
-		for(Entry<Repository, Class<Object>> entry : repositoryClasses.entrySet()) {
+		for(Entry<Repository, Class<PersistenceRepository>> entry : repositoryClasses.entrySet()) {
 			this.repositoryClassesMap.put(entry.getValue(), entry.getKey());
 		}
 	}

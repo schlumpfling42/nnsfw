@@ -23,6 +23,7 @@ import net.nnwsf.persistence.PersistenceManager;
 import net.nnwsf.service.ServiceManager;
 import net.nnwsf.util.ClassDiscovery;
 import net.nnwsf.util.ReflectionHelper;
+import net.nnwsf.util.TypeUtil;
 
 public class ApplicationServer {
 
@@ -72,10 +73,12 @@ public class ApplicationServer {
         AnnotationConfiguration annotationConfiguration = ReflectionHelper.findAnnotation(applicationClass,
                 AnnotationConfiguration.class);
         if(annotationConfiguration != null) {
-            ClassDiscovery.init(applicationClass.getClassLoader(), annotationConfiguration.value());
+            ClassDiscovery.init(annotationConfiguration.value());
         } else {
-            ClassDiscovery.init(applicationClass.getClassLoader(), applicationClass.getPackageName().split("\\.")[0]);
+            ClassDiscovery.init(applicationClass.getPackageName().split("\\.")[0]);
         }
+
+        TypeUtil.init();
 
         initServices();
 
@@ -115,7 +118,7 @@ public class ApplicationServer {
     }
 
     private void initServices() {
-        ServiceManager.init(ClassDiscovery.getPackagesToScan());
+        ServiceManager.init();
     }
 
 }

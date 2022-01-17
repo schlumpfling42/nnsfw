@@ -19,7 +19,7 @@ public class ReflectionHelper {
 
     public static Map<Annotation, Method> findAnnotationMethods(Class<?> aRootClass, Class<?>... annotationClasses) {
         Map<Annotation, Method> annotationMethodMap = new IdentityHashMap<>();
-        Collection<Class<?>> classes = ReflectionHelper.getAllClassesAndInterfaces(aRootClass, ClassDiscovery.getPackagesToScan());
+        Collection<Class<?>> classes = getAllClassesAndInterfaces(aRootClass);
         for(Class<?> aClass : classes){
             Method[] methods = aClass.getMethods();
             for(Method method : methods) {
@@ -38,7 +38,7 @@ public class ReflectionHelper {
 
     public static Collection<Field> findAnnotationFields(Class<?> aClass, Class<?> annotationClass) {
         Collection<Field> annotatedFields = new ArrayList<>();
-        Collection<Class<?>> classes = ReflectionHelper.getAllClassesAndInterfaces(aClass, ClassDiscovery.getPackagesToScan());
+        Collection<Class<?>> classes = getAllClassesAndInterfaces(aClass);
         for(Class<?> aClassToCheck : classes) {
             Field[] fields = aClassToCheck.getDeclaredFields();
             for(Field field : fields) {
@@ -114,27 +114,24 @@ public class ReflectionHelper {
             throw new RuntimeException("Unable to get value from annotation " + methodAnnotation, e);
         }
     }
-	public static Collection<Class<?>>  getAllClassesAndInterfaces(Class<?> aClass, Collection<Package> packagesToScan) {
+
+    public static Collection<Class<?>>  getAllClassesAndInterfaces(Class<?> aClass) {
 		Collection<Class<?>> allClassesAndInterfaces = new HashSet<>();
-		if(aClass != null && !Object.class.equals(aClass) && (Proxy.isProxyClass(aClass) || isContainedIn(packagesToScan, aClass.getPackage()))) {
+		if(aClass != null && !Object.class.equals(aClass) && (Proxy.isProxyClass(aClass) || isContainedIn(aClass.getPackage()))) {
 			allClassesAndInterfaces.add(aClass);
 			for(Class<?> anInterface: aClass.getInterfaces()) {
 				allClassesAndInterfaces.add(anInterface);
-				allClassesAndInterfaces.addAll(getAllClassesAndInterfaces(anInterface.getSuperclass(), packagesToScan));
+				allClassesAndInterfaces.addAll(getAllClassesAndInterfaces(anInterface.getSuperclass()));
 			}
-			allClassesAndInterfaces.addAll(getAllClassesAndInterfaces(aClass.getSuperclass(), packagesToScan));
+			allClassesAndInterfaces.addAll(getAllClassesAndInterfaces(aClass.getSuperclass()));
 		}
 		return allClassesAndInterfaces;
     }
-    
-    private static boolean isContainedIn(Collection<Package> packagesToScan, Package aPackage) {
+
+    private static boolean isContainedIn(Package aPackage) {
         if(aPackage == null) {
             return false;
         }
-        if(packagesToScan == null) {
-            return !aPackage.getName().startsWith("java");
-        }
-        return packagesToScan.stream().map(p -> p.getName()).anyMatch(name -> aPackage.getName().contains(name));
+        return !aPackage.getName().startsWith("java");
     } 
-    
 }
