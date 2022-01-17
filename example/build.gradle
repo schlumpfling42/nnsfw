@@ -1,25 +1,37 @@
-apply plugin: 'java'
-apply plugin: 'application'
+plugins {
+  id "java"
+  id "application"
+}
 
 sourceCompatibility = 1.11
 targetCompatibility = 1.11
 
-version = '0.0.2'
+version = "0.0.2"
 
-mainClassName = 'net.nnwsf.Application'
+mainClassName = "net.nnwsf.Application"
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation project(':nnsfw')
+    implementation project(":nnsfw")
     implementation "org.hibernate:hibernate-core:5.4.9.Final",
             "postgresql:postgresql:9.1-901-1.jdbc4",
             "com.h2database:h2:1.4.200"
 }
+
+mainClassName = "net.example.Application"
+
 jar {
-    manifest {
-        attributes 'Main-Class': 'net.example.Application'
-    }
+  duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+  manifest { 
+    attributes "Main-Class": "$mainClassName"
+  }  
+
+  from {
+    configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+  }
 }
+
+jar.dependsOn ":nnsfw:jar"

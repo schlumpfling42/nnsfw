@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import javax.persistence.Entity;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.SharedCacheMode;
@@ -103,7 +105,9 @@ public class PersistenceManager {
 
 		@Override
 		public List<String> getManagedClassNames() {
-		    return Collections.emptyList();
+		    return entityClasses.stream().map(entityClass ->
+				entityClass.getName())
+				.collect(Collectors.toList());
 		}
 
 		@Override
@@ -116,7 +120,7 @@ public class PersistenceManager {
 		    try {
 		        return Collections.list(this.getClass()
 		                                    .getClassLoader()
-		                                    .getResources(""));
+		                                    .getResources("*"));
 		    } catch (IOException e) {
 		        throw new UncheckedIOException(e);
 		    }
@@ -124,7 +128,7 @@ public class PersistenceManager {
 
 		@Override
 		public ClassLoader getClassLoader() {
-		    return null;
+			return getClass().getClassLoader();
 		}
 
 		@Override
@@ -148,7 +152,9 @@ public class PersistenceManager {
 				var repositoryClasses = ClassDiscovery.discoverAnnotatedClasses(PersistenceRepository.class, Repository.class);
 				Map<DatasourceConfiguration, Class<Object>> datasourceClasses = ClassDiscovery.discoverAnnotatedClasses(Object.class, DatasourceConfiguration.class);
 				Map<FlywayConfiguration, Class<Object>> flywayConfigurationClasses = ClassDiscovery.discoverAnnotatedClasses(Object.class, FlywayConfiguration.class);
-				instance = new PersistenceManager(datasourceClasses, repositoryClasses, flywayConfigurationClasses);
+				Map<Entity, Class<Object>> entityClassAnnotations = ClassDiscovery.discoverAnnotatedClasses(Object.class, Entity.class);
+				Collection<Class<Object>> entityClasses = entityClassAnnotations.values();
+				instance = new PersistenceManager(datasourceClasses, repositoryClasses, entityClasses, flywayConfigurationClasses);
 			} catch (Exception e) {
                 log.log(Level.SEVERE, "Unable to discover repositories or datasources", e);
                 throw new RuntimeException("Unable to discover repositories or datasources", e);
@@ -159,6 +165,7 @@ public class PersistenceManager {
     }
 
 	private final Map<Class<?>, Repository> repositoryClassesMap;
+	private final Collection<Class<Object>> entityClasses;
     private final Map<String, EntityManagerFactory> entityManagerFactoryMap;
     private final Map<String, ThreadLocal<EntityManager>> entityManagerThreadLocalMap;
 	private final Map<String, DatasourceConfiguration> datasourceConfigurationMap;
@@ -166,9 +173,11 @@ public class PersistenceManager {
 	private PersistenceManager(
 		Map<DatasourceConfiguration, Class<Object>> datasources, 
 		Map<Repository, Class<PersistenceRepository>> repositoryClasses,
+		Collection<Class<Object>> entityClasses,
 		Map<FlywayConfiguration, Class<Object>> flywayConfigurationClasses) {
 		this.entityManagerThreadLocalMap = new HashMap<>();
 		this.repositoryClassesMap = new HashMap<>();
+		this.entityClasses = entityClasses;
 		this.entityManagerFactoryMap = new HashMap<>();
 		this.datasourceConfigurationMap = new HashMap<>();
 		for(DatasourceConfiguration datasource : datasources.keySet()) {
@@ -213,6 +222,7 @@ public class PersistenceManager {
 				.put("javax.persistence.jdbc.url", datasourceConfiguration.jdbcUrl())
 				.put("javax.persistence.jdbc.user", datasourceConfiguration.user() == null ? "" : datasourceConfiguration.user())
 				.put("javax.persistence.jdbc.password", datasourceConfiguration.password() == null ? "" : datasourceConfiguration.password())
+				.put("hibernate.archive.autodetection", "class")
 				.putAll(properties)
 				.build());
 			entityManagerFactoryMap.put(datasourceConfiguration.name(), entityManagerFactory);
