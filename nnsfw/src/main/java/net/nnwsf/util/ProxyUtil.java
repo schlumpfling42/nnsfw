@@ -1,14 +1,40 @@
 package net.nnwsf.util;
 
-import net.sf.cglib.proxy.Callback;
-import net.sf.cglib.proxy.Enhancer;
+import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.implementation.MethodDelegation;
+import net.bytebuddy.matcher.ElementMatchers;
 
 public class ProxyUtil {
 
-    public static Object createProxy(Class<?> aClass, Callback callback) {
-        Enhancer enhancer = new Enhancer();
-        enhancer.setSuperclass(aClass);
-        enhancer.setCallback(callback);
-        return enhancer.create();
+    public static <T> T createProxy(Class<T> aClass, Class<?> interceptor) {
+        try {
+        return new ByteBuddy()
+        .subclass(aClass)
+        .method(ElementMatchers.isDeclaredBy(aClass))
+        .intercept(MethodDelegation.to(interceptor))
+        .make()
+        .load(aClass.getClassLoader()).getLoaded()
+        .getDeclaredConstructor(new Class[0])
+        .newInstance(new Object[0]);
+        } catch(Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static <T> T createProxy(Class<T> aClass, Object interceptor) {
+        try {
+        return new ByteBuddy()
+        .subclass(aClass)
+        .method(ElementMatchers.any())
+        .intercept(MethodDelegation.to(interceptor))
+        .make()
+        .load(aClass.getClassLoader()).getLoaded()
+        .getDeclaredConstructor(new Class[0])
+        .newInstance(new Object[0]);
+        } catch(Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }

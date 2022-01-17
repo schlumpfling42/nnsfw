@@ -270,7 +270,13 @@ public class PersistenceManager {
 	}
 
 	public static Object createRepository(Class<?> aClass) {
-		return ProxyUtil.createProxy(aClass, new RepositoryInvocationHandler(instance.repositoryClassesMap.get(aClass).entityClass(), instance.repositoryClassesMap.get(aClass).datasource()));
+		return ProxyUtil.createProxy(
+			aClass, 
+			new RespositoryInterceptor(
+				instance.repositoryClassesMap.get(aClass).entityClass(), 
+				instance.repositoryClassesMap.get(aClass).datasource()
+			)
+		);
 	}
 
 }

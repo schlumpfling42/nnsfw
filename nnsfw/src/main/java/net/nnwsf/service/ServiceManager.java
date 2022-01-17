@@ -75,7 +75,7 @@ public class ServiceManager {
         T service = serviceClass.cast(serviceSingletons.get(serviceName));
         if(service == null) {
             try {
-                service = serviceClass.cast(ProxyUtil.createProxy(implementationClass, new ServiceInvocationHandler()));
+                service = serviceClass.cast(ProxyUtil.createProxy(implementationClass, ServiceInterceptor.class));
                 serviceSingletons.put(serviceName, service);
             } catch (Exception e) {
                 log.log(Level.SEVERE, "Unable to create service {0} with implementation {1}", new Object[]{serviceClass, implementationClass});

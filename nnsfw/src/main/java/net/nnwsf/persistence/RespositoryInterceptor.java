@@ -8,26 +8,28 @@ import java.util.Collection;
 import javax.persistence.Id;
 import javax.persistence.Query;
 
+import net.bytebuddy.implementation.bind.annotation.AllArguments;
+import net.bytebuddy.implementation.bind.annotation.Origin;
+import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 import net.nnwsf.persistence.annotation.QueryParameter;
 import net.nnwsf.util.ReflectionHelper;
-import net.sf.cglib.proxy.MethodInterceptor;
-import net.sf.cglib.proxy.MethodProxy;
 
-public class RepositoryInvocationHandler implements MethodInterceptor {
-
+public class RespositoryInterceptor {
     private final Class<?> entityClass;
     private final Class<?> idClass;
     private final String datasourceName;
 
-    public RepositoryInvocationHandler(Class<?> entityClass, String datasourceName) {
+    public RespositoryInterceptor(Class<?> entityClass, String datasourceName) {
         this.entityClass = entityClass;
         Collection<Field> idFields = ReflectionHelper.findAnnotationFields(entityClass, Id.class);
         idClass = idFields.iterator().next().getType();
         this.datasourceName = datasourceName;
     }
-
-    @Override
-    public Object intercept(Object obj, Method method, Object[] args, MethodProxy proxy) throws Throwable {
+    @RuntimeType
+    public Object intercept(
+        @Origin Method method,
+        @AllArguments Object[] args
+    ) throws Exception {
         net.nnwsf.persistence.annotation.Query queryAnnotation = method.getAnnotation(net.nnwsf.persistence.annotation.Query.class);
         if(queryAnnotation != null) {
             try(EntityManagerHolder entityManagerHolder = PersistenceManager.createEntityManager(datasourceName)) {
@@ -108,5 +110,4 @@ public class RepositoryInvocationHandler implements MethodInterceptor {
         }
         return null;
     }
-
 }
