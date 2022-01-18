@@ -10,7 +10,6 @@ import javax.persistence.spi.PersistenceProvider;
 
 import net.nnwsf.configuration.Default;
 import net.nnwsf.configuration.annotation.ConfigurationKey;
-import net.nnwsf.persistence.annotation.Property;
 
 @Documented
 @Target(ElementType.TYPE)

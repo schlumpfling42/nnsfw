@@ -14,8 +14,8 @@ import org.junit.jupiter.api.Test;
 
 import net.nnwsf.configuration.ConfigurationManagerForTesting;
 import net.nnwsf.application.annotation.DatasourceConfiguration;
+import net.nnwsf.application.annotation.Property;
 import net.nnwsf.configuration.ConfigurationManager;
-import net.nnwsf.persistence.annotation.Property;
 import net.nnwsf.service.ServiceManager;
 import net.nnwsf.service.annotation.Service;
 import net.nnwsf.util.ClassDiscovery;

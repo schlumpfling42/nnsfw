@@ -46,7 +46,7 @@ public class ExampleController {
     }
 
     @Put("/example/{aString}")
-    public ExampleBean createExampple(@PathVariable("aString") String aString) {
+    public ExampleBean createExample(@PathVariable("aString") String aString) {
         return service.createExample(aString);
     }
     @Post("/example/{id}")

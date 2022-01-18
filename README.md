@@ -37,7 +37,7 @@ The help minimizing the number of files/folder that need to be parsed and speed 
 You can do that by adding an annotation to the Application:
 ```@AnnotationConfiguration("net.example")```
 This will limit the annotation lookup to this package and it's sub-packages.
-### Package net.nnwsf.application.annotation.* 
+### Package net.nnwsf.application.annotation.* / Application configuration
 These annotations can only be applied to the application class, more precisely the class that has the code to start the application server.
 - AnnotationConfiguration - defines the root package for annotation lookup
 - AuthenticatedResourcePathConfiguration - defines the relative root path for resources only authenticated users have access to
@@ -62,7 +62,7 @@ These annotations can only be applied to the application class, more precisely t
   - hostname: the hostname the server listens on
   - resourcePath: relative path for the static resources
 
-### Package net.nnwsf.controller.annotation
+### Package net.nnwsf.controller.annotation / Define Controllers and Endpoints
 The annotations in this package help defining REST endpoints.
 
 Class annotations:
@@ -98,7 +98,7 @@ Here are the supported types of parameters for the methods
 - RequestBody - the body of the http request
 - AuthenticatedUser - the user for authenticated requests
 
-### Package net.nnwsf.session.annotation
+### Package net.nnwsf.service.annotation / Define Services
 The annotations in this package help defining services.
 
 - Service - defines that the class contains a service that can be injected and used in controllers or other services. The Jaca class can be either an interface or a class. If it's an interface there needs to be one implementation
@@ -133,6 +133,58 @@ public class ExampleController {
 }
 ```
 
+### Package net.nnwsf.persistence.annotation / Define Entities and Repositories
+Entities are defined using the default JPA annotations (like @Entity and @Table).
+You can access an Entity with a Repository. Every main entity will have it's own repository. To create a repository you will have to define an interface that implements  PersistenceRepository<{Entity Class}, {Primary Key Class}> and anotate it with @Repository.
+The frameork will supply the implementation for all the oprations. Basic operations like findAll, findById, save and delete are there by default. You can add additional finder method definitions by annotating them with @Query.
+- Repository - defines the repository for the given entity.
+- Query - defines the query for the finder method
+- Query - defines parameters for the query
+
+Example:
+```
+@Entity
+@Table(name="test")
+public class TestEntity {
+    
+    @Id()
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @Column(name="name")
+    private String name;
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}
+
+@Repository(entityClass = ExampleEntity.class)
+public interface ExampleRepository extends PersistenceRepository<ExampleEntity, Integer>{
+    @Query("select e from ExampleEntity e")
+    Collection<ExampleEntity> getAllWithQuery();
+
+    @Query("select e from ExampleEntity e where e.id = :id")
+    ExampleEntity findById(@QueryParameter("id") Integer id);
+}
+```
+Repositories can be injected into services or (not recommended) controllers.
+```
+    @Inject
+    private ExampleRepository repository;
+```
 
 ## Example
 Have a look at [example](example/README.md)
