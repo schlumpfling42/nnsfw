@@ -19,12 +19,13 @@ public class InjectionHelper {
     private InjectionHelper() {
     }
 
-    public static Object getInjectable(Class<?> aClass, String name) throws Exception {
+    public static <T> T getInjectable(Class<T> aClass, String name) throws Exception {
         return instance.internalGetInjectable(aClass, name);
     }
 
-    private synchronized Object internalGetInjectable(Class<?> aClass, String name) throws Exception {
-        Object injectable = injectables.get(aClass.getName());
+    private synchronized <T> T internalGetInjectable(Class<T> aClass, String name) throws Exception {
+        String classKey = aClass.getName() + (name == null ? "" : ":" + name);
+        Object injectable = injectables.get(classKey);
         if(injectable == null) {
             Collection<Field> annotationFields = null;
             if(ServiceManager.isService(aClass)) {
@@ -35,7 +36,7 @@ public class InjectionHelper {
                 Class<?> implementationClass = ClassDiscovery.getImplementation(aClass);
                 injectable = implementationClass.getConstructor().newInstance();
             }
-            injectables.put(aClass.getName(), injectable);
+            injectables.put(classKey, injectable);
             
             if(injectable != null) {
                 annotationFields = ReflectionHelper.findAnnotationFields(injectable.getClass(), Inject.class);
@@ -45,6 +46,6 @@ public class InjectionHelper {
                 }
             }
         }
-        return injectable;
+        return (T)injectable;
     }
 }

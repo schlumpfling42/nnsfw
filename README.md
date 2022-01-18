@@ -4,7 +4,7 @@
 - controllers (api) defined via annotations, resources via the resource folder
 - basic authentication using openId
 - services injected via dependency injection
-- basic jpa support, data object and mapping defined via annotations4
+- basic jpa support, data object and mapping defined via annotations
 - transaction support in service calls
 
 ## Create an application
