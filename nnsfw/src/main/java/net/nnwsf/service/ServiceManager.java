@@ -21,7 +21,7 @@ public class ServiceManager {
     public static void init() {
         if(instance == null) {
             try {
-                Map<Service, Class<Object>> serviceClasses = ClassDiscovery.discoverAnnotatedClasses(Object.class, Service.class);
+                Map<Service, Class<Object>> serviceClasses = ClassDiscovery.discoverAnnotatedClasses(Service.class);
                 instance = new ServiceManager(serviceClasses);
             } catch (Exception e) {
                 log.log(Level.SEVERE, "Unable to discover services", e);
@@ -39,23 +39,24 @@ public class ServiceManager {
         this.serviceClasses = new HashSet<>();
         this.serviceImplementation = new HashMap<>();
         for(Map.Entry<Service, Class<Object>> annotationClass : annotationServiceClasses.entrySet()) {
-            if(!annotationClass.getValue().isInterface()) {
-                Class<?> anImplementationClass = annotationClass.getValue();
-                Collection<Class<?>> allClasses = ReflectionHelper.getAllClassesAndInterfaces(anImplementationClass);
-                for(Class<?> aSubClass : allClasses) {
-                    String serviceName = aSubClass + ":";
-                    if(!aSubClass.equals(anImplementationClass)) {
-                        serviceName +=  annotationClass.getKey().value();
-                    }
-                    if(!anImplementationClass.isInterface()) {
-                        if (serviceImplementation.containsKey(serviceName)) {
-                            throw new RuntimeException("Duplicate implementation for service: " + serviceName);
-                        } else {
-                            serviceImplementation.put(serviceName, anImplementationClass);
-                        }
-                    }
-                    this.serviceClasses.add(aSubClass);
+            Class<?> anImplementationClass = annotationClass.getValue();
+            if(anImplementationClass.isInterface()) {
+                anImplementationClass = ClassDiscovery.getImplementation(anImplementationClass, Service.class, annotationClass.getKey().value());
+            }
+            Collection<Class<?>> allClasses = ReflectionHelper.getAllClassesAndInterfaces(anImplementationClass);
+            for(Class<?> aSubClass : allClasses) {
+                String serviceName = aSubClass + ":";
+                if(!aSubClass.equals(anImplementationClass)) {
+                    serviceName +=  annotationClass.getKey().value();
                 }
+                if(!anImplementationClass.isInterface()) {
+                    if (serviceImplementation.containsKey(serviceName)) {
+                        throw new RuntimeException("Duplicate implementation for service: " + serviceName);
+                    } else {
+                        serviceImplementation.put(serviceName, anImplementationClass);
+                    }
+                }
+                this.serviceClasses.add(aSubClass);
             }
         }
         this.serviceSingletons = new HashMap<>();

@@ -75,6 +75,51 @@ public class ClassDiscovery {
 	}
 
 	@SuppressWarnings("unchecked")
+	public static <T, A extends Annotation> Map<A, Class<T>> discoverAnnotatedClasses(Class<A> annotationClass) throws Exception {
+		Map<A, Class<T>> allAnnotatedClasses = new IdentityHashMap<>();
+		for (ClassInfo classInfo : instance.scanResult.getClassesWithAnnotation(annotationClass)) {
+			AnnotationInfo annotationInfo = classInfo.getAnnotationInfo(annotationClass);
+			allAnnotatedClasses.put((A)annotationInfo.loadClassAndInstantiate(), (Class<T>)classInfo.loadClass());
+		}
+		return allAnnotatedClasses;
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T> Class<T> getImplementation(Class<T> aClass, Class<? extends Annotation> annotationClass, String value) {
+		if (aClass.isInterface()) {
+			Class<T> implementation = (Class<T>) instance.implementations.get(aClass);
+			if (implementation == null) {
+				Optional<ClassInfo> firstImplementation = null;
+				if(value != null && !"".equals(value)) {
+					firstImplementation = instance.scanResult.getClassesImplementing(aClass).stream()
+					.filter(classInfo -> {
+						if(!classInfo.isInterface()) {
+							AnnotationInfo annotationInfo = classInfo.getAnnotationInfo(annotationClass);
+							if(annotationInfo != null 
+								&& annotationInfo.getParameterValues().get("value") != null
+								&& value.equals(annotationInfo.getParameterValues().get("value").getValue())) {
+								return true;
+							}
+						}
+						return false;
+					}).findFirst();
+				} else {
+					firstImplementation = instance.scanResult.getClassesImplementing(aClass).stream()
+					.filter(classInfo -> !classInfo.isInterface() && classInfo.getAnnotationInfo(annotationClass) == null).findFirst();
+				}
+				implementation = firstImplementation.map(classInfo -> {
+					Class<T> foundImplemention = (Class<T>)classInfo.loadClass();
+						instance.implementations.put(aClass, foundImplemention);
+						return foundImplemention;
+				}).orElse(null);
+			}
+			return implementation;
+		} else {
+			return aClass;
+		}
+	}
+
+	@SuppressWarnings("unchecked")
 	public static <T> Class<T> getImplementation(Class<T> aClass) {
 		if (aClass.isInterface()) {
 			Class<T> implementation = (Class<T>) instance.implementations.get(aClass);

@@ -7,9 +7,7 @@ import javax.inject.Inject;
 
 import net.example.persistence.ExampleEntity;
 import net.example.persistence.ExampleRepository;
-import net.nnwsf.service.annotation.Service;
 
-@Service
 public class ExampleServiceImpl implements ExampleService{
 
     @Inject

@@ -75,12 +75,15 @@ You can also define request parameters.
 
 Example URL http://lhv.me/bar?var2=foo:
 ```    
+@Controller("/")
+public class ExampleController {
     @Get("/{var1}")
     public String getRequest(
       @PathVariable("var1") String echo, 
       @RequestParameter("var2")) {
         return var1 + ":" + var2;
     }
+}
 ```
 The values for the parameters: var1 = bar, var2 = foo
 Here are the annotations for the supported HTTP methods: 
@@ -94,6 +97,42 @@ Here are the supported types of parameters for the methods
 - RequestParameter
 - RequestBody - the body of the http request
 - AuthenticatedUser - the user for authenticated requests
+
+### Package net.nnwsf.session.annotation
+The annotations in this package help defining services.
+
+- Service - defines that the class contains a service that can be injected and used in controllers or other services. The Jaca class can be either an interface or a class. If it's an interface there needs to be one implementation
+
+Example:
+```
+@Service
+public interface ExampleService {
+    String echo(String echo);
+}
+
+public class ExampleServiceImpl implements ExampleService {
+    String echo(String echo) {
+      return echo;
+    }
+}
+```
+You can now use the service in a controller by using the @Inject annotation and the implementation wil be determined and injected into the controller,
+```    
+@Controller("/test")
+public class ExampleController {
+
+    @Inject
+    private ExampleService service;
+
+    @Get("/{var1}")
+    public String getRequest(
+      @PathVariable("var1") String echo, 
+      @RequestParameter("var2")) {
+        return service.echo(echo);
+    }
+}
+```
+
 
 ## Example
 Have a look at [example](example/README.md)
