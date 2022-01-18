@@ -1,4 +1,4 @@
-package net.example.persistence;
+package net.nnwsf.persistence;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -8,8 +8,9 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table(name="example")
-public class ExampleEntity {
+@Table(name="test")
+public class TestEntity {
+    
     @Id()
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -17,19 +18,19 @@ public class ExampleEntity {
     @Column(name="name")
     private String name;
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public Integer getId() {
         return id;
     }
 
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }

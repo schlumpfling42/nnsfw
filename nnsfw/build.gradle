@@ -34,7 +34,9 @@ dependencies {
             "org.yaml:snakeyaml:1.25",
             "io.github.classgraph:classgraph:4.8.138",
             "net.bytebuddy:byte-buddy-dep:1.12.7"
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1',
+            "org.hibernate:hibernate-core:5.4.9.Final",
+            "com.h2database:h2:1.4.200"
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
 }
 

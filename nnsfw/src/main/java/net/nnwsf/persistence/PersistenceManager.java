@@ -222,7 +222,6 @@ public class PersistenceManager {
 				.put("javax.persistence.jdbc.url", datasourceConfiguration.jdbcUrl())
 				.put("javax.persistence.jdbc.user", datasourceConfiguration.user() == null ? "" : datasourceConfiguration.user())
 				.put("javax.persistence.jdbc.password", datasourceConfiguration.password() == null ? "" : datasourceConfiguration.password())
-				.put("hibernate.archive.autodetection", "class")
 				.putAll(properties)
 				.build());
 			entityManagerFactoryMap.put(datasourceConfiguration.name(), entityManagerFactory);
