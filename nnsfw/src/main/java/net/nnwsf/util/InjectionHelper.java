@@ -23,6 +23,7 @@ public class InjectionHelper {
         return instance.internalGetInjectable(aClass, name);
     }
 
+    @SuppressWarnings("unchecked")
     private synchronized <T> T internalGetInjectable(Class<T> aClass, String name) throws Exception {
         String classKey = aClass.getName() + (name == null ? "" : ":" + name);
         Object injectable = injectables.get(classKey);

@@ -40,8 +40,7 @@ public class ClassDiscovery {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
-	public static Map<Annotation, Class<?>> discoverAnnotatedClasses(Class<? extends Annotation>... annotationClasses) throws Exception {
+	public static Map<Annotation, Class<?>> discoverAnnotatedClasses(Class<? extends Annotation>[] annotationClasses) throws Exception {
 		Map<Annotation, Class<?>> allAnnotatedClasses = new HashMap<>();
 		Arrays.stream(annotationClasses).forEach(annotationClass -> {
 			instance.scanResult.getClassesWithAnnotation(annotationClass).stream().forEach(classInfo -> {
@@ -51,7 +50,7 @@ public class ClassDiscovery {
 		return allAnnotatedClasses;
 	}
 
-	public static Collection<Class<?>> discoverFieldAnnotatedClasses(Class<? extends Annotation>... annotationClasses) throws Exception {
+	public static Collection<Class<?>> discoverFieldAnnotatedClasses(Class<? extends Annotation>[] annotationClasses) throws Exception {
 		Collection<Class<?>> allAnnotatedClasses = new HashSet<>();
 		Arrays.stream(annotationClasses).forEach(annotationClass -> {
 			instance.scanResult.getClassesWithFieldAnnotation(annotationClass).stream().forEach(classInfo -> {

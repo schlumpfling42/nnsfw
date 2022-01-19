@@ -22,7 +22,7 @@ public class Application {
     }
 }
 ```
-This class defines, that the webservce will start on the lvh.me(localhost) at port 8080. That's all you need to start up the webserver. The configuration can be also read from a confgiuration file application.yaml.
+This class defines, that the server will listening on lvh.me(localhost) at port 8080. That's all you need to start up the webserver. The configuration can be also read from a configuration file application.yaml.
 In this case you only have to add the annotation ```@ServerConfiguration``` without parameters and have the application.yaml contain the following:
 ```
 server:
@@ -33,12 +33,12 @@ Both configuration options are valid. The configuration file will override the c
 
 ## Annotations
 There are quite a few annotations that will help with dependency injections, setting up controller endpoints and data source.
-The help minimizing the number of files/folder that need to be parsed and speed up the startup, you should specify the root package for your code.
+To minimize the number of files/folder that have to be parsed and speed up the startup, you should specify the root package for your code.
 You can do that by adding an annotation to the Application:
 ```@AnnotationConfiguration("net.example")```
 This will limit the annotation lookup to this package and it's sub-packages.
 ### Package net.nnwsf.application.annotation.* / Application configuration
-These annotations can only be applied to the application class, more precisely the class that has the code to start the application server.
+These annotations have be applied to the application class, more precisely the class that is passed as the parameter when the application server is started.
 - AnnotationConfiguration - defines the root package for annotation lookup
 - AuthenticatedResourcePathConfiguration - defines the relative root path for resources only authenticated users have access to
 - AuthenticationProviderConfiguration - defines the properties that are being used to authenticate users
@@ -52,7 +52,7 @@ These annotations can only be applied to the application class, more precisely t
   - jdbcUrl: jdbc url for your database
   - schema: database schema
   - user: database user
-  - password: databas passowrd
+  - password: database password
   - properties: additional properties
 - FlywayConfiguration - see https://flywaydb.org/ for more information
   - datasource: name of the data source
@@ -70,7 +70,7 @@ Class annotations:
 - Get - defines that this method will be called on an HTTP GET request, the value will be appended to the path defined by the Controller annotation 
 
 Method annotations
-The value defined for the annoations define the path (appended to the controller path) and can contain path variables. The convention for path variables is ```{variable name}```. 
+The value defined for the annotations define the path (appended to the controller path) and can contain path variables. The convention for path variables is ```{variable name}```. 
 You can also define request parameters.
 
 Example URL http://lhv.me/bar?var2=foo:
@@ -101,7 +101,7 @@ Here are the supported types of parameters for the methods
 ### Package net.nnwsf.service.annotation / Define Services
 The annotations in this package help defining services.
 
-- Service - defines that the class contains a service that can be injected and used in controllers or other services. The Jaca class can be either an interface or a class. If it's an interface there needs to be one implementation
+- Service - defines that the class contains a service that can be injected and used in controllers or other services. The Java class can be either an interface or a class. If it's an interface there needs to be one implementation
 
 Example:
 ```
@@ -135,8 +135,8 @@ public class ExampleController {
 
 ### Package net.nnwsf.persistence.annotation / Define Entities and Repositories
 Entities are defined using the default JPA annotations (like @Entity and @Table).
-You can access an Entity with a Repository. Every main entity will have it's own repository. To create a repository you will have to define an interface that implements  PersistenceRepository<{Entity Class}, {Primary Key Class}> and anotate it with @Repository.
-The frameork will supply the implementation for all the oprations. Basic operations like findAll, findById, save and delete are there by default. You can add additional finder method definitions by annotating them with @Query.
+You can access an Entity with a Repository. Every main entity will have it's own repository. To create a repository you will have to define an interface that implements  PersistenceRepository<{Entity Class}, {Primary Key Class}> and annotate it with @Repository.
+The framework will supply the implementation for all the operations. Basic operations like findAll, findById, save and delete are there by default. You can add additional finder method definitions by annotating them with @Query.
 - Repository - defines the repository for the given entity.
 - Query - defines the query for the finder method
 - Query - defines parameters for the query
@@ -186,7 +186,18 @@ Repositories can be injected into services or (not recommended) controllers.
     private ExampleRepository repository;
 ```
 
+### Flyway integration
+The Flyway integration is very straightforward. With the annotation @FlywayConfiguration you can defined the datasource that it will use and where to to find the flyway files to run. For the files you need to use the conventions defined here: https://flywaydb.org/documentation/concepts/migrations#sql-based-migrations .
+The framework will run flyway to ensure that the database is up to date on every startup.
+
 ## Example
 Have a look at [example](example/README.md)
 
 ## Test
+The test coverage is only very basic right now, but the besides the example it it a good place to give you an idea on how to use the framework:
+
+[Configuration](nnsfw\src\test\java\net\nnwsf\configuration\TestConfigurationManager.java)
+
+[Services](nnsfw\src\test\java\net\nnwsf\service\TestServiceManager.java)
+
+[Persistence](nnsfw\src\test\java\net\nnwsf\persistence\TestPersistenceManager.java)
