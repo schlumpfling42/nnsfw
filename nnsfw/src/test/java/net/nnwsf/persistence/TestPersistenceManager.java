@@ -2,6 +2,7 @@ package net.nnwsf.persistence;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -61,11 +62,19 @@ public class TestPersistenceManager {
         TestEntity newTestEnity = new TestEntity();
         newTestEnity.setId(1);
         newTestEnity.setName(UUID.randomUUID().toString());
+        TestEntity2 newTestEnity2 = new TestEntity2();
+        newTestEnity2.setId(1);
+        newTestEnity2.setName(UUID.randomUUID().toString());
+        newTestEnity.setTest2List(List.of(newTestEnity2));
         try {
-            injectionService.testRepository.save(newTestEnity);
+            newTestEnity = injectionService.testRepository.save(newTestEnity);
             Optional<TestEntity> findFirst = injectionService.testRepository.findAll().stream().findFirst();
             assertEquals(true, findFirst.isPresent());
             assertEquals(newTestEnity.getName(), findFirst.get().getName());
+            assertEquals(1, findFirst.get().getTest2List().size());
+            assertEquals(newTestEnity2.getName(), findFirst.get().getTest2List().get(0).getName());
+        } catch(Exception e) {
+            e.printStackTrace();
         } finally {
             injectionService.testRepository.delete(newTestEnity);
         }
