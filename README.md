@@ -46,7 +46,7 @@ These annotations can only be applied to the application class, more precisely t
   - callbackPath: path that has been registered with the authentication provider for callback after the user has been authenticated
   - openIdDiscoveryUri: uri that will be used to discover the user profile
 - DatasourceConfiguration - defines the data source for accessing a database
-  - name: name of the data source, the name will be using in other annotations to reference the data source
+  - name: name of the data source, the name will be used in other annotations to reference the data source
   - providerClass: class name of the JPA persistence provider, e.g. org.hibernate.jpa.HibernatePersistenceProvider
   - jdbcDriver: class name of the JDBC driver
   - jdbcUrl: jdbc url for your database
