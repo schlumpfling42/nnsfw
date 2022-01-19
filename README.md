@@ -196,8 +196,8 @@ Have a look at [example](example/README.md)
 ## Test
 The test coverage is only very basic right now, but the besides the example it it a good place to give you an idea on how to use the framework:
 
-[Configuration](nnsfw\src\test\java\net\nnwsf\configuration\TestConfigurationManager.java)
+[Configuration](nnsfw/src/test/java/net/nnwsf/configuration/TestConfigurationManager.java)
 
-[Services](nnsfw\src\test\java\net\nnwsf\service\TestServiceManager.java)
+[Services](nnsfw/src/test/java/net/nnwsf/service/TestServiceManager.java)
 
-[Persistence](nnsfw\src\test\java\net\nnwsf\persistence\TestPersistenceManager.java)
+[Persistence](nnsfw/src/test/java/net/nnwsf/persistence/TestPersistenceManager.java)
