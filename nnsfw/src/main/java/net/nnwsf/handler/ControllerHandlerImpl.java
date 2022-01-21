@@ -6,6 +6,7 @@ import static net.nnwsf.handler.URLMatcher.URL_MATCHER_ATTACHMENT_KEY;
 import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.Map;
 import java.util.logging.Level;
@@ -97,15 +98,19 @@ public class ControllerHandlerImpl implements HttpHandler {
 				
 				Object result = controllerProxy.getMethod().invoke(controllerProxy.getInstance(), parameters);
 				if(!exchange.isComplete()) {
-					StringBuilder body = new StringBuilder();
-					
-					if (shouldProcessJson(exchange, Headers.ACCEPT)) {
-						body.append(mapper.writeValueAsString(result));
-					} else if (result != null) {
-						body.append(result.toString());
+					if(result == null) {
+						exchange.setStatusCode(200).getResponseSender().send("");
+					} else {
+						StringBuilder body = new StringBuilder();
+						
+						if (shouldProcessJson(exchange, Headers.ACCEPT, Headers.CONTENT_TYPE)) {
+							body.append(mapper.writeValueAsString(result));
+						} else if (result != null) {
+							body.append(result.toString());
+						}
+						exchange.getResponseHeaders().add(Headers.CONTENT_TYPE, exchange.getRequestHeaders().get(Headers.CONTENT_TYPE).element());
+						exchange.setStatusCode(200).getResponseSender().send(body.toString());
 					}
-					exchange.getResponseHeaders().add(Headers.CONTENT_TYPE, exchange.getRequestHeaders().get(Headers.CONTENT_TYPE).element());
-					exchange.setStatusCode(200).getResponseSender().send(body.toString());
 				}
 			} catch(InvocationTargetException ite) {
 				if(ite.getCause() != null) {
@@ -120,8 +125,13 @@ public class ControllerHandlerImpl implements HttpHandler {
 		log.log(Level.INFO, "Controller request: end");
 	}
 
-	private boolean shouldProcessJson(HttpServerExchange exchange, HttpString header) {
-		String acceptHeadersCombined = exchange.getRequestHeaders().get(header).stream().collect(Collectors.joining());
-		return acceptHeadersCombined.contains("application/json");
+	private boolean shouldProcessJson(HttpServerExchange exchange, HttpString... headers) {
+		return Arrays.stream(headers).anyMatch(header -> {
+			if(exchange.getRequestHeaders().get(header) != null) {
+				String acceptHeadersCombined = exchange.getRequestHeaders().get(header).stream().collect(Collectors.joining());
+				return acceptHeadersCombined.contains("application/json");
+			}
+			return false;
+		});
 	}
 }

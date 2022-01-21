@@ -30,4 +30,7 @@ public class ExampleService2Impl implements ExampleService {
         newBean.setName("Test");
         return List.of(newBean);
     }
+
+    public void deleteExample(int id) {
+    }
 }

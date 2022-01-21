@@ -20,5 +20,8 @@ public interface ExampleService {
     @Transactional
     ExampleBean saveExample(int id, ExampleBean exampleBean);
 
+    @Transactional
+    void deleteExample(int id);
+
     public Collection<ExampleBean> getExamples();
 }

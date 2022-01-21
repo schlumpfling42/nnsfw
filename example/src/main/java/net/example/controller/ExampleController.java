@@ -8,6 +8,7 @@ import net.example.ExampleBean;
 import net.example.ExampleService;
 import net.example.ExampleService2Impl;
 import net.nnwsf.controller.annotation.Controller;
+import net.nnwsf.controller.annotation.Delete;
 import net.nnwsf.controller.annotation.Get;
 import net.nnwsf.controller.annotation.PathVariable;
 import net.nnwsf.controller.annotation.Post;
@@ -52,6 +53,11 @@ public class ExampleController {
     @Post("/example/{id}")
     public ExampleBean updateExampple(@PathVariable("id") int id, @RequestBody ExampleBean data) {
         return service.saveExample(id, data );
+    }
+
+    @Delete("/example/{id}")
+    public void deleteExampple(@PathVariable("id") int id) {
+        service.deleteExample(id );
     }
 
     @Get("/example/")

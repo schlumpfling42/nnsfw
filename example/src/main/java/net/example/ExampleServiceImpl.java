@@ -58,6 +58,11 @@ public class ExampleServiceImpl implements ExampleService{
         exampleBean.setId(entity.getId());
         return exampleBean;
     }
+
+    public void deleteExample(int id) {
+        ExampleEntity entity = repository.findById(id);
+        repository.delete(entity);
+    }
     
     public Collection<ExampleBean> getExamples() {
         return repository.findAll().stream().map(entity -> {
