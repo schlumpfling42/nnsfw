@@ -203,8 +203,18 @@ The test coverage is only very basic right now, but the besides the example it i
 [Persistence](nnsfw/src/test/java/net/nnwsf/persistence/TestPersistenceManager.java)
 
 ## Performance Test
-It's a little early to really talk about performance, but it's good to start early. The example project contains a [simple JMeter test case](example/jmeter-test.jmx) to runs the 4 basic HTTP requests the framework supports PUT, POST, GET and DELETE. The test runs several of these operations with 20 parallel threads.
-On an 8 core machine the server is able to more than 10 requests per second on requests doing a lookup and write operation, more than 20 requests per second on a simple write and more then 100 requests per second on a read operation. Memory consumption is quite high, but the GC seems to be able to clean up very nicely.
-The response times are quite good the median is less than 150ms and the 99% is less than 450ms.
+It's a little early to really talk about performance, but it's good to start early. 
+
+The example project contains a [simple JMeter test case](example/jmeter-test.jmx) thatw runs the 4 basic HTTP requests the framework supports PUT, POST, GET and DELETE. The test runs several of these operations with 20 parallel threads.
+
+On an 8 core machine the server is able to 
+- more than 10 requests per second on requests doing a lookup and write operation, 
+- more than 20 requests per second on a simple write and 
+- more then 100 requests per second on a read operation. 
+Memory consumption is quite high during the test, but the GC seems to be able to clean up very nicely.
+
+The response times are quite good
+- median is less than 150ms and 
+- 99% is less than 450ms.
 
 Running the garbage collector after the test, the heap size dropped to about 70 MByte.
