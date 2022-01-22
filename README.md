@@ -207,7 +207,7 @@ It's a little early to really talk about performance, but it's good to start ear
 
 The example project contains a [simple JMeter test case](example/jmeter-test.jmx) thatw runs the 4 basic HTTP requests the framework supports PUT, POST, GET and DELETE. The test runs several of these operations with 20 parallel threads.
 
-On an 8 core machine the server is able to 
+On an 8 core machine the server is able to execute
 - more than 10 requests per second on requests doing a lookup and write operation, 
 - more than 20 requests per second on a simple write and 
 - more then 100 requests per second on a read operation. 
