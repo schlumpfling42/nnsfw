@@ -25,6 +25,9 @@ import net.nnwsf.controller.annotation.AuthenticatedUser;
 import net.nnwsf.controller.annotation.PathVariable;
 import net.nnwsf.controller.annotation.RequestBody;
 import net.nnwsf.controller.annotation.RequestParameter;
+import net.nnwsf.handler.converter.ContentTypeConverter;
+import net.nnwsf.handler.converter.JsonContentTypeConverter;
+import net.nnwsf.handler.converter.TextContentTypeConverter;
 import net.nnwsf.util.TypeUtil;
 import net.nnwsf.authentication.annotation.User;
 
@@ -34,8 +37,12 @@ public class ControllerHandlerImpl implements HttpHandler {
 
 	private final ObjectMapper mapper;
 
+	private final Map<String, ContentTypeConverter> contentTypeConverters;
+	private final ContentTypeConverter defaultContentTypeConverter = new TextContentTypeConverter();
+
 	public ControllerHandlerImpl() {
 		this.mapper = new ObjectMapper();
+		this.contentTypeConverters = Map.of("application/json", new JsonContentTypeConverter());
 	}
 
 	@Override
@@ -64,26 +71,16 @@ public class ControllerHandlerImpl implements HttpHandler {
 					}
 				}
 			}
+			ContentTypeConverter contentTypeConverter = getContentTypeConverter(controllerProxy.getContentType());
+
 			for(int i = 0; i<controllerProxy.getSpecialMethodParameters().length; i++) {
 				MethodParameter specialMethodParameter = controllerProxy.getSpecialMethodParameters()[i];
 				if(specialMethodParameter != null) {
 					if(specialMethodParameter instanceof AnnotatedMethodParameter) {
 						AnnotatedMethodParameter annotatedSpecialMethodParameter = (AnnotatedMethodParameter)specialMethodParameter;
 						if(annotatedSpecialMethodParameter.getAnnotation().annotationType().isAssignableFrom(RequestBody.class)) {
-							StringBuilder body = new StringBuilder();
 							exchange.startBlocking();
-							try (InputStreamReader reader = new InputStreamReader(exchange.getInputStream(), Charset.defaultCharset())) {
-								char[] buffer = new char[256];
-								int read;
-								while ((read = reader.read(buffer)) != -1) {
-									body.append(buffer, 0, read);
-								}
-							}
-							if (shouldProcessJson(exchange, Headers.CONTENT_TYPE)) {
-								parameters[i] = mapper.readValue(body.toString(), specialMethodParameter.getType());
-							} else if (specialMethodParameter.getType().isAssignableFrom(String.class)) {
-								parameters[i] = body.toString();
-							}
+							parameters[i] = contentTypeConverter.readFrom(exchange.getInputStream(), specialMethodParameter.getType());
 						} else if(annotatedSpecialMethodParameter.getAnnotation().annotationType().isAssignableFrom(AuthenticatedUser.class)) {
 							if(exchange.getSecurityContext() != null && exchange.getSecurityContext().getAuthenticatedAccount() != null) {
 								parameters[i] = new User((Pac4jAccount)exchange.getSecurityContext().getAuthenticatedAccount());
@@ -95,21 +92,15 @@ public class ControllerHandlerImpl implements HttpHandler {
 				}
 			}
 			try {
-				
 				Object result = controllerProxy.getMethod().invoke(controllerProxy.getInstance(), parameters);
 				if(!exchange.isComplete()) {
 					if(result == null) {
 						exchange.setStatusCode(200).getResponseSender().send("");
 					} else {
-						StringBuilder body = new StringBuilder();
-						
-						if (shouldProcessJson(exchange, Headers.ACCEPT, Headers.CONTENT_TYPE)) {
-							body.append(mapper.writeValueAsString(result));
-						} else if (result != null) {
-							body.append(result.toString());
-						}
-						exchange.getResponseHeaders().add(Headers.CONTENT_TYPE, exchange.getRequestHeaders().get(Headers.CONTENT_TYPE).element());
-						exchange.setStatusCode(200).getResponseSender().send(body.toString());
+						exchange.getResponseHeaders().add(Headers.CONTENT_TYPE, controllerProxy.getContentType());
+						exchange.setStatusCode(200);
+						exchange.startBlocking();
+						contentTypeConverter.writeTo(result, exchange.getOutputStream());
 					}
 				}
 			} catch(InvocationTargetException ite) {
@@ -125,13 +116,11 @@ public class ControllerHandlerImpl implements HttpHandler {
 		log.log(Level.INFO, "Controller request: end");
 	}
 
-	private boolean shouldProcessJson(HttpServerExchange exchange, HttpString... headers) {
-		return Arrays.stream(headers).anyMatch(header -> {
-			if(exchange.getRequestHeaders().get(header) != null) {
-				String acceptHeadersCombined = exchange.getRequestHeaders().get(header).stream().collect(Collectors.joining());
-				return acceptHeadersCombined.contains("application/json");
-			}
-			return false;
-		});
+	private ContentTypeConverter getContentTypeConverter(String contentType) {
+		ContentTypeConverter converter = contentTypeConverters.get(contentType);
+		if(converter == null) {
+			converter = defaultContentTypeConverter;
+		}
+		return converter;
 	}
 }

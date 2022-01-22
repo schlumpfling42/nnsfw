@@ -14,14 +14,16 @@ public class ControllerProxy {
 
     private final Collection<Annotation> annotations;
     private final Method method;
+    private final String contentType;
     private final Object instance;
     private final AnnotatedMethodParameter[] annotatedMethodParameters;
     private final MethodParameter[] specialMethodParameters;
     private final List<String> pathElements;
 
-    ControllerProxy(Object instance, Collection<Annotation> annotations, Method method, AnnotatedMethodParameter[] annotatedMethodParameters, MethodParameter[] specialMethodParameters, List<String> pathElements) {
+    ControllerProxy(Object instance, Collection<Annotation> annotations, Method method, String contentType, AnnotatedMethodParameter[] annotatedMethodParameters, MethodParameter[] specialMethodParameters, List<String> pathElements) {
         this.instance = instance;
         this.method = method;
+        this.contentType = contentType;
         this.annotatedMethodParameters = annotatedMethodParameters;
         this.specialMethodParameters = specialMethodParameters;
         this.pathElements = pathElements;
@@ -34,6 +36,10 @@ public class ControllerProxy {
 
     public Method getMethod() {
         return method;
+    }
+
+    public String getContentType() {
+        return contentType;
     }
 
     public Object getInstance() {

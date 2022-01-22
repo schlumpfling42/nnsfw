@@ -8,4 +8,5 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Delete {
     String value() default "/";
+    String contentType() default "application/json";
 }

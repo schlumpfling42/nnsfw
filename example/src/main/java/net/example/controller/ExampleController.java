@@ -51,12 +51,12 @@ public class ExampleController {
         return service.createExample(aString);
     }
     @Post("/example/{id}")
-    public ExampleBean updateExampple(@PathVariable("id") int id, @RequestBody ExampleBean data) {
+    public ExampleBean updateExample(@PathVariable("id") int id, @RequestBody ExampleBean data) {
         return service.saveExample(id, data );
     }
 
     @Delete("/example/{id}")
-    public void deleteExampple(@PathVariable("id") int id) {
+    public void deleteExample(@PathVariable("id") int id) {
         service.deleteExample(id );
     }
 

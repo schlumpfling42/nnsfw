@@ -26,6 +26,8 @@ import org.pac4j.undertow.handler.SecurityHandler;
 import io.undertow.security.api.AuthenticationMechanism;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.util.HeaderValues;
+import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
 import net.nnwsf.application.annotation.AuthenticationProviderConfiguration;
 import net.nnwsf.authentication.OpenIdConfiguration;
@@ -186,6 +188,7 @@ public class HttpHandlerImpl implements HttpHandler {
 					throw new RuntimeException("Invalid controller");
 				}
 				for (Annotation methodAnnotation : annotatedMethods.keySet()) {
+					String contentType = getContentType(methodAnnotation, exchange);
 					Method annotatedMethod = annotatedMethods.get(methodAnnotation);
 					if (annotatedMethod == null) {
 						throw new RuntimeException("Invalid controller");
@@ -204,7 +207,7 @@ public class HttpHandlerImpl implements HttpHandler {
 					}
 
 					matchingProxies
-							.add(new ControllerProxy(object, annotations, annotatedMethod, annotatedMethodParameters,
+							.add(new ControllerProxy(object, annotations, annotatedMethod, contentType, annotatedMethodParameters,
 									specialMethodParameters, Arrays.asList(proxyUrlMatcher.getPathElements())));
 				}
 
@@ -324,5 +327,22 @@ public class HttpHandlerImpl implements HttpHandler {
 			}
 		}
 		return false;
+	}
+
+	private String getContentType(Annotation annotation, HttpServerExchange exchange) {
+		if(annotation instanceof Get) {
+			return ((Get)annotation).contentType();
+		} else if(annotation instanceof Post) {
+			return ((Post)annotation).contentType();
+		} else if(annotation instanceof Put) {
+			return ((Put)annotation).contentType();
+		} else if(annotation instanceof Delete) {
+			return ((Delete)annotation).contentType();
+		}
+		HeaderValues headerValues = exchange.getRequestHeaders().get(Headers.CONTENT_TYPE);
+		if(headerValues != null) {
+			return headerValues.stream().collect(Collectors.joining());
+		}
+		return "text/html; charset=UTF-8";
 	}
 }
