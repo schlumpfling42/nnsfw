@@ -1,12 +1,14 @@
-package net.nnwsf.handler.converter;
+package net.nnwsf.controller.converter;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import net.nnwsf.controller.converter.annotation.Converter;
+
+@Converter(contentType = "application/json")
 public class JsonContentTypeConverter implements ContentTypeConverter{
 
     private final ObjectMapper mapper = new ObjectMapper();

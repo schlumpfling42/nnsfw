@@ -18,6 +18,8 @@ import net.nnwsf.application.annotation.AuthenticationProviderConfiguration;
 import net.nnwsf.application.annotation.ServerConfiguration;
 import net.nnwsf.configuration.ConfigurationManager;
 import net.nnwsf.controller.annotation.Controller;
+import net.nnwsf.controller.converter.ContentTypeConverter;
+import net.nnwsf.controller.converter.annotation.Converter;
 import net.nnwsf.handler.HttpHandlerImpl;
 import net.nnwsf.persistence.PersistenceManager;
 import net.nnwsf.service.ServiceManager;
@@ -98,8 +100,13 @@ public class ApplicationServer {
         try {
             Collection<Class<Object>> controllerClasses = ClassDiscovery
                     .discoverAnnotatedClasses(Object.class, Controller.class).values();
-            httpHandler = new HttpHandlerImpl(applicationClass.getClassLoader(), resourcePath,
-                    authenticatedResourcePaths, controllerClasses, Collections.emptyList(),
+            Collection<Class<ContentTypeConverter>> contentTypeConverterClasses = ClassDiscovery
+                    .discoverAnnotatedClasses(ContentTypeConverter.class, Converter.class).values();
+            httpHandler = new HttpHandlerImpl(
+                applicationClass.getClassLoader(), resourcePath,
+                    authenticatedResourcePaths, controllerClasses, 
+                    contentTypeConverterClasses,
+                    Collections.emptyList(),
                     authenticationProviderConfiguration);
         } catch (Exception e) {
             throw new RuntimeException("Unable to discover annotated classes", e);

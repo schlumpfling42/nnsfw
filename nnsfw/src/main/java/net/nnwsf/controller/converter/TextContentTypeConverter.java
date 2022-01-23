@@ -1,10 +1,13 @@
-package net.nnwsf.handler.converter;
+package net.nnwsf.controller.converter;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 
+import net.nnwsf.controller.converter.annotation.Converter;
+
+@Converter(contentType = "text/html; charset=urf-8")
 public class TextContentTypeConverter implements ContentTypeConverter{
 
     @Override

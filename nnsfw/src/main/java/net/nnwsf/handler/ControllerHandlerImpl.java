@@ -3,31 +3,27 @@ package net.nnwsf.handler;
 import static net.nnwsf.handler.ControllerProxy.CONTROLLER_PROXY_ATTACHMENT_KEY;
 import static net.nnwsf.handler.URLMatcher.URL_MATCHER_ATTACHMENT_KEY;
 
-import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.charset.Charset;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.Deque;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.pac4j.undertow.account.Pac4jAccount;
 
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
-import io.undertow.util.HttpString;
 import net.nnwsf.controller.annotation.AuthenticatedUser;
 import net.nnwsf.controller.annotation.PathVariable;
 import net.nnwsf.controller.annotation.RequestBody;
 import net.nnwsf.controller.annotation.RequestParameter;
-import net.nnwsf.handler.converter.ContentTypeConverter;
-import net.nnwsf.handler.converter.JsonContentTypeConverter;
-import net.nnwsf.handler.converter.TextContentTypeConverter;
+import net.nnwsf.controller.converter.ContentTypeConverter;
+import net.nnwsf.controller.converter.TextContentTypeConverter;
+import net.nnwsf.controller.converter.annotation.Converter;
+import net.nnwsf.util.ReflectionHelper;
 import net.nnwsf.util.TypeUtil;
 import net.nnwsf.authentication.annotation.User;
 
@@ -35,14 +31,17 @@ public class ControllerHandlerImpl implements HttpHandler {
 
 	private final static Logger log = Logger.getLogger(ControllerHandlerImpl.class.getName());
 
-	private final ObjectMapper mapper;
-
 	private final Map<String, ContentTypeConverter> contentTypeConverters;
 	private final ContentTypeConverter defaultContentTypeConverter = new TextContentTypeConverter();
 
-	public ControllerHandlerImpl() {
-		this.mapper = new ObjectMapper();
-		this.contentTypeConverters = Map.of("application/json", new JsonContentTypeConverter());
+	public ControllerHandlerImpl(Collection<Class<ContentTypeConverter>> converterClasses) {
+		this.contentTypeConverters = converterClasses.stream()
+			.map(converterClass -> {
+				ContentTypeConverter converter = ReflectionHelper.getInstance(converterClass);
+				Converter annotation = ReflectionHelper.findAnnotation(converterClass, Converter.class);
+				return Map.entry(annotation.contentType(), converter);
+			})
+			.collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue(), (first, second) -> first));
 	}
 
 	@Override

@@ -41,6 +41,7 @@ import net.nnwsf.controller.annotation.Post;
 import net.nnwsf.controller.annotation.Put;
 import net.nnwsf.controller.annotation.RequestBody;
 import net.nnwsf.controller.annotation.RequestParameter;
+import net.nnwsf.controller.converter.ContentTypeConverter;
 import net.nnwsf.util.InjectionHelper;
 import net.nnwsf.util.ReflectionHelper;
 
@@ -62,10 +63,11 @@ public class HttpHandlerImpl implements HttpHandler {
 
 	public HttpHandlerImpl(ClassLoader applicationClassLoader, String resourcePath,
 			Collection<String> authenticatedResourcePaths, Collection<Class<Object>> controllerClasses,
+			Collection<Class<ContentTypeConverter>> converterClasses,
 			Collection<Class<AuthenticationMechanism>> authenticationMechanisms,
 			AuthenticationProviderConfiguration authenticationProviderConfiguration) {
 		this.controllerClasses = controllerClasses;
-		this.controllerHandler = new ControllerHandlerImpl();
+		this.controllerHandler = new ControllerHandlerImpl(converterClasses);
 		this.authenticatedResourcePaths = authenticatedResourcePaths;
 		String cleanedResourcePath = "";
 		if (resourcePath.startsWith("/")) {
@@ -75,7 +77,7 @@ public class HttpHandlerImpl implements HttpHandler {
 		}
 		resourceHandler = new ResourceHandlerImpl(applicationClassLoader, cleanedResourcePath);
 		HttpHandler aCallbackHandler = null;
-		if(authenticationProviderConfiguration == null || authenticationProviderConfiguration.jsonFileName() == null) {
+		if (authenticationProviderConfiguration == null || authenticationProviderConfiguration.jsonFileName() == null) {
 			this.apiSecurityHandler = null;
 			this.resourceSecurityHandler = null;
 			this.callbackHandler = null;
@@ -85,8 +87,8 @@ public class HttpHandlerImpl implements HttpHandler {
 			HttpHandler aResourceSercurityHandler = null;
 			try {
 				OpenIdConfiguration authConfig = new OpenIdConfiguration(
-					authenticationProviderConfiguration.jsonFileName(), 
-					authenticationProviderConfiguration.openIdDiscoveryUri());
+						authenticationProviderConfiguration.jsonFileName(),
+						authenticationProviderConfiguration.openIdDiscoveryUri());
 				aCallbackHandler = CallbackHandler.build(authConfig.getControllerConfig(), null, true);
 				anApiSercurityHandler = SecurityHandler.build(controllerHandler,
 						authConfig.getApiConfig());
@@ -124,13 +126,14 @@ public class HttpHandlerImpl implements HttpHandler {
 
 				if (needsAuthentication(proxy)) {
 					try {
-						if(apiSecurityHandler == null) {
+						if (apiSecurityHandler == null) {
 							log.log(Level.SEVERE, "No valid authentication provider configuration");
-							exchange.setStatusCode(500).getResponseSender().send("Invalid authentication configuration");
+							exchange.setStatusCode(500).getResponseSender()
+									.send("Invalid authentication configuration");
 						} else {
 							apiSecurityHandler.handleRequest(exchange);
 						}
-					} catch(TechnicalException te) {
+					} catch (TechnicalException te) {
 						log.log(Level.SEVERE, "Invalid auth token");
 						exchange.setStatusCode(401).getResponseSender().send("Invalid auth token");
 					}
@@ -150,9 +153,10 @@ public class HttpHandlerImpl implements HttpHandler {
 						}
 					}
 					if (authenticate) {
-						if(resourceSecurityHandler == null) {
+						if (resourceSecurityHandler == null) {
 							log.log(Level.SEVERE, "No valid authentication provider configuration");
-							exchange.setStatusCode(500).getResponseSender().send("Invalid authentication configuration");
+							exchange.setStatusCode(500).getResponseSender()
+									.send("Invalid authentication configuration");
 						} else {
 							resourceSecurityHandler.handleRequest(exchange);
 						}
@@ -207,7 +211,8 @@ public class HttpHandlerImpl implements HttpHandler {
 					}
 
 					matchingProxies
-							.add(new ControllerProxy(object, annotations, annotatedMethod, contentType, annotatedMethodParameters,
+							.add(new ControllerProxy(object, annotations, annotatedMethod, contentType,
+									annotatedMethodParameters,
 									specialMethodParameters, Arrays.asList(proxyUrlMatcher.getPathElements())));
 				}
 
@@ -330,19 +335,19 @@ public class HttpHandlerImpl implements HttpHandler {
 	}
 
 	private String getContentType(Annotation annotation, HttpServerExchange exchange) {
-		if(annotation instanceof Get) {
-			return ((Get)annotation).contentType();
-		} else if(annotation instanceof Post) {
-			return ((Post)annotation).contentType();
-		} else if(annotation instanceof Put) {
-			return ((Put)annotation).contentType();
-		} else if(annotation instanceof Delete) {
-			return ((Delete)annotation).contentType();
+		if (annotation instanceof Get) {
+			return ((Get) annotation).contentType();
+		} else if (annotation instanceof Post) {
+			return ((Post) annotation).contentType();
+		} else if (annotation instanceof Put) {
+			return ((Put) annotation).contentType();
+		} else if (annotation instanceof Delete) {
+			return ((Delete) annotation).contentType();
 		}
 		HeaderValues headerValues = exchange.getRequestHeaders().get(Headers.CONTENT_TYPE);
-		if(headerValues != null) {
+		if (headerValues != null) {
 			return headerValues.stream().collect(Collectors.joining());
 		}
-		return "text/html; charset=UTF-8";
+		return "text/html; charset=urf-8";
 	}
 }

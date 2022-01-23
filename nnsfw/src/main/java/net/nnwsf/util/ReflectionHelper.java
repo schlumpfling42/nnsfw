@@ -106,6 +106,16 @@ public class ReflectionHelper {
         }
         return instances;
     }
+    public static <T> T getInstance(Class<T> aClass) {
+        if(aClass != null) {
+            try {
+                return aClass.getConstructor().newInstance();
+            } catch(Exception e) {
+                log.log(Level.SEVERE, "Unable to create instance of " + aClass);
+            }
+        }
+        return null;
+    }
 
     public static String getValue(Annotation methodAnnotation, String value) {
         try {
