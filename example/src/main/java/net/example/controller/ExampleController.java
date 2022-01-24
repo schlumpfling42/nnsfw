@@ -7,6 +7,7 @@ import javax.inject.Inject;
 import net.example.ExampleBean;
 import net.example.ExampleService;
 import net.example.ExampleService2Impl;
+import net.nnwsf.controller.annotation.ContentType;
 import net.nnwsf.controller.annotation.Controller;
 import net.nnwsf.controller.annotation.Delete;
 import net.nnwsf.controller.annotation.Get;
@@ -53,23 +54,27 @@ public class ExampleController {
     }
 
     @Put("/example/{aString}")
+    @ContentType("application/json")
     @ApiDoc("Example put to create a new entry in the database, to show how the persistence integration works")
     public ExampleBean createExample(@PathVariable("aString") String aString) {
         return service.createExample(aString);
     }
     @Post("/example/{id}")
+    @ContentType("application/json")
     @ApiDoc("Example post to update an entry in the database, to show how the persistence integration works")
     public ExampleBean updateExample(@PathVariable("id") int id, @RequestBody ExampleBean data) {
         return service.saveExample(id, data );
     }
-
+    
     @Delete("/example/{id}")
+    @ContentType("application/json")
     @ApiDoc("Example delete to delete an entry in the database, to show how the persistence integration works")
     public void deleteExample(@PathVariable("id") int id) {
         service.deleteExample(id );
     }
-
+    
     @Get("/example/")
+    @ContentType("application/json")
     @ApiDoc("Example get all entries from the database, to show how the persistence integration works")
     public Collection<ExampleBean> getExamples() {
         return service.getExamples();
