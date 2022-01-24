@@ -67,6 +67,7 @@ The annotations in this package help defining REST endpoints.
 
 Class annotations:
 - Controller - defines that the class contains endpoints that can be called and specifies the common path for all the endpoints in the class
+- ContentType - defines the content type for the (Get, Put, Post, Delete) endpoint, this will override the Content-Type header in the request
 - Get - defines that this method will be called on an HTTP GET request, the value will be appended to the path defined by the Controller annotation 
 
 Method annotations
@@ -97,6 +98,9 @@ Here are the supported types of parameters for the methods
 - RequestParameter
 - RequestBody - the body of the http request
 - AuthenticatedUser - the user for authenticated requests
+
+### Package net.nnwsf.controller.documentation.annotation / Document the Controller and Endpoints
+With the annotation ApiDoc you can add a description to the Controller class and the endpoint methods. With annotating the controller class it will show up in the documentation that is provided on the documentation endpoint. You can find the documentation endpoint at /api-doc.
 
 ### Package net.nnwsf.service.annotation / Define Services
 The annotations in this package help defining services.
@@ -192,6 +196,7 @@ The framework will run flyway to ensure that the database is up to date on every
 
 ## Example
 Have a look at [example](example/README.md)
+
 
 ## Test
 The test coverage is only very basic right now, but the besides the example it it a good place to give you an idea on how to use the framework:
