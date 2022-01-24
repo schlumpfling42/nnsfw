@@ -33,6 +33,7 @@ import net.nnwsf.application.annotation.AuthenticationProviderConfiguration;
 import net.nnwsf.authentication.OpenIdConfiguration;
 import net.nnwsf.authentication.annotation.Authenticated;
 import net.nnwsf.controller.annotation.AuthenticatedUser;
+import net.nnwsf.controller.annotation.ContentType;
 import net.nnwsf.controller.annotation.Controller;
 import net.nnwsf.controller.annotation.Delete;
 import net.nnwsf.controller.annotation.Get;
@@ -192,8 +193,9 @@ public class HttpHandlerImpl implements HttpHandler {
 					throw new RuntimeException("Invalid controller");
 				}
 				for (Annotation methodAnnotation : annotatedMethods.keySet()) {
-					String contentType = getContentType(methodAnnotation, exchange);
 					Method annotatedMethod = annotatedMethods.get(methodAnnotation);
+					ContentType contentTypeAnnotation = ReflectionHelper.findAnnotation(annotatedMethod, ContentType.class);
+					String contentType = getContentType(contentTypeAnnotation, exchange);
 					if (annotatedMethod == null) {
 						throw new RuntimeException("Invalid controller");
 					}
@@ -334,15 +336,9 @@ public class HttpHandlerImpl implements HttpHandler {
 		return false;
 	}
 
-	private String getContentType(Annotation annotation, HttpServerExchange exchange) {
-		if (annotation instanceof Get) {
-			return ((Get) annotation).contentType();
-		} else if (annotation instanceof Post) {
-			return ((Post) annotation).contentType();
-		} else if (annotation instanceof Put) {
-			return ((Put) annotation).contentType();
-		} else if (annotation instanceof Delete) {
-			return ((Delete) annotation).contentType();
+	private String getContentType(ContentType annotation, HttpServerExchange exchange) {
+		if (annotation != null && !"".equals(annotation.value())) {
+			return annotation.value();
 		}
 		HeaderValues headerValues = exchange.getRequestHeaders().get(Headers.CONTENT_TYPE);
 		if (headerValues != null) {

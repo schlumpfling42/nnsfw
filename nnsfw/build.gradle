@@ -11,7 +11,7 @@ test {
 sourceCompatibility = 1.11
 targetCompatibility = 1.11
 
-version = '0.0.33'
+version = '0.0.34'
 
 def undertowVersion = '2.1.0.Final'
 

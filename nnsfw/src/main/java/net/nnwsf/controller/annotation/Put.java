@@ -8,5 +8,4 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Put {
     String value() default "/";
-    String contentType() default "application/json";
 }

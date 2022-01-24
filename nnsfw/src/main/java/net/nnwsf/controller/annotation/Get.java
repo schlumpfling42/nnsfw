@@ -8,5 +8,4 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Get {
     String value() default "/";
-    String contentType() default "application/json";
 }

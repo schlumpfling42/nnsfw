@@ -4,14 +4,20 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import net.nnwsf.controller.annotation.PathVariable;
+import net.nnwsf.controller.annotation.RequestParameter;
 
 public class ReflectionHelper {
 
@@ -143,5 +149,24 @@ public class ReflectionHelper {
             return false;
         }
         return !aPackage.getName().startsWith("java");
+    }
+
+    public static Map<Annotation, Parameter> findParameterAnnotations(Method method, Class<?>... annotationClasses) {
+        Map<Annotation, Parameter> annotations = new LinkedHashMap<>();
+        Annotation[][] parameterAnnotations = method.getParameterAnnotations();
+        Parameter[] parameters = method.getParameters();
+		for (int i = 0; i < parameterAnnotations.length; i++) {
+			if (parameterAnnotations[i] != null) {
+                Parameter parameter = parameters[i];
+                for (Annotation aParameterAnnotation : parameterAnnotations[i]) {
+                    Arrays.stream(annotationClasses).forEach(annotationClass -> {
+                        if (aParameterAnnotation.annotationType().isAssignableFrom(annotationClass)) {
+                            annotations.put(aParameterAnnotation, parameter);
+                        }
+                    });
+                }
+			}
+		}
+		return annotations;
     } 
 }
