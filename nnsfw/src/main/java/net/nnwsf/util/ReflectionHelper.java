@@ -168,5 +168,20 @@ public class ReflectionHelper {
 			}
 		}
 		return annotations;
+    }
+    public static Parameter findParameter(Method method, Class<?> annotationClass) {
+        Annotation[][] parameterAnnotations = method.getParameterAnnotations();
+        Parameter[] parameters = method.getParameters();
+		for (int i = 0; i < parameterAnnotations.length; i++) {
+			if (parameterAnnotations[i] != null) {
+                Parameter parameter = parameters[i];
+                for (Annotation aParameterAnnotation : parameterAnnotations[i]) {
+                        if (aParameterAnnotation.annotationType().isAssignableFrom(annotationClass)) {
+                            return parameter;
+                        }
+                }
+			}
+		}
+		return null;
     } 
 }
