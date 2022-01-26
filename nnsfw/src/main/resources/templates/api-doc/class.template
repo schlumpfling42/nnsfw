@@ -1,4 +1,0 @@
-<div>
-  <p>{className}</p>
-  <ul>{parameters}</ul>
-</div>

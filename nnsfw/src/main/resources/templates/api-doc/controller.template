@@ -1,5 +1,0 @@
-<div>
-  <h2>{className}</h2>
-  <p>{description}</p>
-  <ul>{endpoints}</ul>
-</div>

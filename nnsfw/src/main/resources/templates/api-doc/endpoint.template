@@ -1,9 +1,0 @@
-<li>
-  <h3>{method}: {path}</h3>
-  <p>{description}</p>
-  <h4>Content-Type: {contentType}</h4>
-  <h4>Request</h4>
-  <p>{request}</p>
-  <h4>Response</h4>
-  <p>{response}</p>
-</li>
