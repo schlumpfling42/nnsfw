@@ -6,9 +6,10 @@ import java.io.OutputStream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import net.nnwsf.application.Constants;
 import net.nnwsf.controller.converter.annotation.Converter;
 
-@Converter(contentType = "application/json")
+@Converter(contentType = Constants.CONTENT_TYPE_APPLICATION_JSON)
 public class JsonContentTypeConverter implements ContentTypeConverter{
 
     private final ObjectMapper mapper = new ObjectMapper();

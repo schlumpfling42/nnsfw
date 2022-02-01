@@ -7,10 +7,12 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import net.nnwsf.application.Constants;
+
 @Documented
 @Target(ElementType.METHOD)
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ContentType {
-    String value() default "application/json";
+    String value() default Constants.CONTENT_TYPE_APPLICATION_JSON;
 }

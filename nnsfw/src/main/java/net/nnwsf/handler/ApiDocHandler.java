@@ -3,6 +3,7 @@ package net.nnwsf.handler;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
+import net.nnwsf.application.Constants;
 import net.nnwsf.controller.annotation.ContentType;
 import net.nnwsf.controller.annotation.Controller;
 import net.nnwsf.controller.annotation.Delete;
@@ -97,7 +98,7 @@ public class ApiDocHandler implements HttpHandler {
                     endpointDoc.setContentType(aMethodContentType == null ? "n/a" : aMethodContentType.value());
                     Map<Annotation, Parameter> annotatedParameters = ReflectionHelper.findParameterAnnotations(method, RequestParameter.class);
                     Parameter requestBodyParameter = ReflectionHelper.findParameter(method, RequestBody.class);
-                    endpointDoc.setResponseBodyType(getClassDescription(method.getReturnType()));
+                    endpointDoc.setResponseBodyType(getClassDescription(method.getReturnType(), ReflectionHelper.getGenericTypes(method)));
                     endpointDoc.setParameters(annotatedParameters.entrySet().stream()
                         .collect(Collectors.toMap(anEntry ->  ((RequestParameter)anEntry.getKey()).value(), anEntry -> anEntry.getValue().getType().getName())));
                     endpointDoc.setRequestBodyType(requestBodyParameter == null ? null : getClassDescription(requestBodyParameter.getType()));
@@ -132,25 +133,27 @@ public class ApiDocHandler implements HttpHandler {
             .collect(Collectors.toMap(
                         Entry::getKey,
                         Entry::getValue)));
+    }   
+	
+	private ClassDescription getClassDescription(Class<?> aClass, Class<?>... genericClasses) {
+        if(aClass.isAssignableFrom(Collection.class)) {
+            return CollectionClassDescription.of(getClassDescription(genericClasses[0]));
+        } else if(aClass.isAssignableFrom(Map.class)) {
+            return MapClassDescription.of(getClassDescription(genericClasses[0]), getClassDescription(genericClasses[1]));
+        } else if(simpleTypes.contains(aClass)) {
+            return SimpleClassDescription.of(aClass);
+        } else {
+            return getClassDescription(aClass);
+        }
     }
 
     private Map.Entry<String, ClassDescription> getClassDescription(Field aField) {
-        if(aField.getType().isAssignableFrom(Collection.class)) {
-            Class<?> genericClass = ReflectionHelper.getGenericType(aField);
-            return Map.entry(aField.getName(), CollectionClassDescription.of(getClassDescription(genericClass)));
-        } else if(aField.getType().isAssignableFrom(Map.class)) {
-            Class<?>[] genericClasses = ReflectionHelper.getGenericTypes(aField);
-            return Map.entry(aField.getName(), MapClassDescription.of(getClassDescription(genericClasses[0]), getClassDescription(genericClasses[1])));
-        } else if(simpleTypes.contains(aField.getType())) {
-            return Map.entry(aField.getName(), SimpleClassDescription.of(aField.getType()));
-        } else {
-            return Map.entry(aField.getName(), getClassDescription(aField.getType()));
-        }
+        return Map.entry(aField.getName(), getClassDescription(aField.getType(), ReflectionHelper.getGenericTypes(aField)));
     }
 
 	@Override
 	public void handleRequest(final HttpServerExchange exchange) throws Exception {
-		exchange.getResponseHeaders().add(Headers.CONTENT_TYPE, "text/html; charset=utf-8");
+		exchange.getResponseHeaders().add(Headers.CONTENT_TYPE, Constants.CONTENT_TYPE_TEXT_HTML);
 		TemplateOutput output = new StringOutput();
         templateEngine.render(HTML_TEMPLATE_NAME, controllers, output);
         exchange.getResponseSender().send(output.toString());

@@ -18,9 +18,6 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import net.nnwsf.controller.annotation.PathVariable;
-import net.nnwsf.controller.annotation.RequestParameter;
-
 public class ReflectionHelper {
 
     private static Logger log = Logger.getLogger(ReflectionHelper.class.getName());
@@ -212,7 +209,32 @@ public class ReflectionHelper {
 
             Class<?>[] classes = new Class[types.length];
             for (int i=0; i<types.length; i++) {
-                classes[i] = (Class<?>)types[i];
+                try {
+                    classes[i] = (Class<?>)types[i];
+                } catch(ClassCastException ce) {
+
+                }
+            }
+            return classes;
+        }
+        return new Class[0];
+    }
+
+    public static Class<?>[] getGenericTypes(Method aMethod) {
+        Type type = aMethod.getGenericReturnType();
+
+        if (type instanceof ParameterizedType) {
+
+            ParameterizedType pType = (ParameterizedType)type;
+            Type[] types = pType.getActualTypeArguments();
+
+            Class<?>[] classes = new Class[types.length];
+            for (int i=0; i<types.length; i++) {
+                try {
+                    classes[i] = (Class<?>)types[i];
+                } catch(ClassCastException ce) {
+
+                }
             }
             return classes;
         }
