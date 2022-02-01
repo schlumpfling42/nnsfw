@@ -9,8 +9,8 @@ public class EndpointDoc {
     private String description;
     private String contentType;
     private Map<String, String> parameters;
-    private Class<?> requestBodyType;
-    private Class<?> responseBodyType;
+    private ClassDescription requestBodyType;
+    private ClassDescription responseBodyType;
 
     public String getMethod() {
         return method;
@@ -42,16 +42,16 @@ public class EndpointDoc {
     public void setParameters(Map<String, String> parameters) {
         this.parameters = parameters;
     }
-    public Class<?> getRequestBodyType() {
+    public ClassDescription getRequestBodyType() {
         return requestBodyType;
     }
-    public void setRequestBodyType(Class<?> requestBodyType) {
+    public void setRequestBodyType(ClassDescription requestBodyType) {
         this.requestBodyType = requestBodyType;
     }
-    public Class<?> getResponseBodyType() {
+    public ClassDescription getResponseBodyType() {
         return responseBodyType;
     }
-    public void setResponseBodyType(Class<?> responseBodyType) {
+    public void setResponseBodyType(ClassDescription responseBodyType) {
         this.responseBodyType = responseBodyType;
     }
 }

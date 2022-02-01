@@ -32,14 +32,14 @@
                       </li>
                     @endif
                     @if(anEndpoint.getRequestBodyType() != null)
-                      <li>Body: ${anEndpoint.getRequestBodyType().getName()}</li>
+                      <li>Body:  @tag.class(anEndpoint.getRequestBodyType())</li>
                     @endif
                   </ul>
                   @endif
                    @if(anEndpoint.getResponseBodyType() != null)
                     <h4>Response</h4>
                     <ul>
-                      <li>Body: ${anEndpoint.getResponseBodyType().getName()}</li>
+                      <li>Body: @tag.class(anEndpoint.getResponseBodyType())</li>
                     </ul>
                   @endif
                 </li>

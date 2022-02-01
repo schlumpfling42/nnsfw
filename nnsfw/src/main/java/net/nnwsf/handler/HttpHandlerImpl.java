@@ -29,6 +29,7 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HeaderValues;
 import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
+import net.nnwsf.application.annotation.ApiDocConfiguration;
 import net.nnwsf.application.annotation.AuthenticationProviderConfiguration;
 import net.nnwsf.authentication.OpenIdConfiguration;
 import net.nnwsf.authentication.annotation.Authenticated;
@@ -60,13 +61,16 @@ public class HttpHandlerImpl implements HttpHandler {
 	private final HttpHandler resourceSecurityHandler;
 	private final HttpHandler resourceHandler;
 	private final HttpHandler callbackHandler;
+	private final HttpHandler apiDocHandler;
+	private final String apiDocPath;
 	private final Collection<String> authenticatedResourcePaths;
 
 	public HttpHandlerImpl(ClassLoader applicationClassLoader, String resourcePath,
 			Collection<String> authenticatedResourcePaths, Collection<Class<Object>> controllerClasses,
 			Collection<Class<ContentTypeConverter>> converterClasses,
 			Collection<Class<AuthenticationMechanism>> authenticationMechanisms,
-			AuthenticationProviderConfiguration authenticationProviderConfiguration) {
+			AuthenticationProviderConfiguration authenticationProviderConfiguration,
+			ApiDocConfiguration apiDocConfiguration) {
 		this.controllerClasses = controllerClasses;
 		this.controllerHandler = new ControllerHandlerImpl(converterClasses);
 		this.authenticatedResourcePaths = authenticatedResourcePaths;
@@ -104,7 +108,13 @@ public class HttpHandlerImpl implements HttpHandler {
 			this.callbackHandler = aCallbackHandler;
 			this.callbackPath = authenticationProviderConfiguration.callbackPath();
 		}
-
+		if(apiDocConfiguration != null) {
+			apiDocHandler = new ApiDocHandler();
+			apiDocPath = apiDocConfiguration.value();
+		} else {
+			apiDocHandler = null;
+			apiDocPath = null;
+		}
 	}
 
 	@Override
@@ -118,51 +128,55 @@ public class HttpHandlerImpl implements HttpHandler {
 					new Object[] { exchange.getRequestMethod(), exchange.getRequestPath() });
 			HttpString method = exchange.getRequestMethod();
 
-			URLMatcher requestUrlMatcher = new URLMatcher(method.toString(), exchange.getRequestPath());
-			exchange.putAttachment(URL_MATCHER_ATTACHMENT_KEY, requestUrlMatcher);
-
-			ControllerProxy proxy = findController(exchange, requestUrlMatcher);
-			if (proxy != null) {
-				exchange.putAttachment(CONTROLLER_PROXY_ATTACHMENT_KEY, proxy);
-
-				if (needsAuthentication(proxy)) {
-					try {
-						if (apiSecurityHandler == null) {
-							log.log(Level.SEVERE, "No valid authentication provider configuration");
-							exchange.setStatusCode(500).getResponseSender()
-									.send("Invalid authentication configuration");
-						} else {
-							apiSecurityHandler.handleRequest(exchange);
-						}
-					} catch (TechnicalException te) {
-						log.log(Level.SEVERE, "Invalid auth token");
-						exchange.setStatusCode(401).getResponseSender().send("Invalid auth token");
-					}
-				} else {
-					controllerHandler.handleRequest(exchange);
-				}
+			if(apiDocPath != null && apiDocPath.equals(exchange.getRequestPath())) {
+				apiDocHandler.handleRequest(exchange);
 			} else {
-				if (callbackPath != null && callbackPath.equals(exchange.getRequestPath()) && callbackHandler != null) {
-					callbackHandler.handleRequest(exchange);
-				} else {
-					boolean authenticate = false;
-					String requestPath = exchange.getRequestPath();
-					for (String aPath : authenticatedResourcePaths) {
-						if (requestPath.startsWith(aPath)) {
-							authenticate = true;
-							break;
-						}
-					}
-					if (authenticate) {
-						if (resourceSecurityHandler == null) {
-							log.log(Level.SEVERE, "No valid authentication provider configuration");
-							exchange.setStatusCode(500).getResponseSender()
-									.send("Invalid authentication configuration");
-						} else {
-							resourceSecurityHandler.handleRequest(exchange);
+				URLMatcher requestUrlMatcher = new URLMatcher(method.toString(), exchange.getRequestPath());
+				exchange.putAttachment(URL_MATCHER_ATTACHMENT_KEY, requestUrlMatcher);
+
+				ControllerProxy proxy = findController(exchange, requestUrlMatcher);
+				if (proxy != null) {
+					exchange.putAttachment(CONTROLLER_PROXY_ATTACHMENT_KEY, proxy);
+
+					if (needsAuthentication(proxy)) {
+						try {
+							if (apiSecurityHandler == null) {
+								log.log(Level.SEVERE, "No valid authentication provider configuration");
+								exchange.setStatusCode(500).getResponseSender()
+										.send("Invalid authentication configuration");
+							} else {
+								apiSecurityHandler.handleRequest(exchange);
+							}
+						} catch (TechnicalException te) {
+							log.log(Level.SEVERE, "Invalid auth token");
+							exchange.setStatusCode(401).getResponseSender().send("Invalid auth token");
 						}
 					} else {
-						resourceHandler.handleRequest(exchange);
+						controllerHandler.handleRequest(exchange);
+					}
+				} else {
+					if (callbackPath != null && callbackPath.equals(exchange.getRequestPath()) && callbackHandler != null) {
+						callbackHandler.handleRequest(exchange);
+					} else {
+						boolean authenticate = false;
+						String requestPath = exchange.getRequestPath();
+						for (String aPath : authenticatedResourcePaths) {
+							if (requestPath.startsWith(aPath)) {
+								authenticate = true;
+								break;
+							}
+						}
+						if (authenticate) {
+							if (resourceSecurityHandler == null) {
+								log.log(Level.SEVERE, "No valid authentication provider configuration");
+								exchange.setStatusCode(500).getResponseSender()
+										.send("Invalid authentication configuration");
+							} else {
+								resourceSecurityHandler.handleRequest(exchange);
+							}
+						} else {
+							resourceHandler.handleRequest(exchange);
+						}
 					}
 				}
 			}

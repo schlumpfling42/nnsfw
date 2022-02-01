@@ -13,6 +13,7 @@ import io.undertow.server.session.InMemorySessionManager;
 import io.undertow.server.session.SessionAttachmentHandler;
 import io.undertow.server.session.SessionCookieConfig;
 import net.nnwsf.application.annotation.AnnotationConfiguration;
+import net.nnwsf.application.annotation.ApiDocConfiguration;
 import net.nnwsf.application.annotation.AuthenticatedResourcePathConfiguration;
 import net.nnwsf.application.annotation.AuthenticationProviderConfiguration;
 import net.nnwsf.application.annotation.ServerConfiguration;
@@ -91,6 +92,11 @@ public class ApplicationServer {
             AuthenticationProviderConfiguration.class
         );
 
+        ApiDocConfiguration apiDocConfiguration = ReflectionHelper.findAnnotation(
+            applicationClass,
+            ApiDocConfiguration.class
+        );
+
         authenticationProviderConfiguration = ConfigurationManager.apply(authenticationProviderConfiguration);
 
         Collection<String> authenticatedResourcePaths = ReflectionHelper
@@ -107,7 +113,8 @@ public class ApplicationServer {
                     authenticatedResourcePaths, controllerClasses, 
                     contentTypeConverterClasses,
                     Collections.emptyList(),
-                    authenticationProviderConfiguration);
+                    authenticationProviderConfiguration,
+                    apiDocConfiguration);
         } catch (Exception e) {
             throw new RuntimeException("Unable to discover annotated classes", e);
         }

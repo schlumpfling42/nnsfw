@@ -5,7 +5,9 @@ import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -184,4 +186,36 @@ public class ReflectionHelper {
 		}
 		return null;
     } 
+
+    public static Class<?> getGenericType(Field aField) {
+        Type type = aField.getGenericType();
+
+        if (type instanceof ParameterizedType) {
+
+            ParameterizedType pType = (ParameterizedType)type;
+            Type[] types = pType.getActualTypeArguments();
+
+            for (Type tp: types) {
+                return (Class<?>)tp;
+            }
+        }
+        return null;
+    }
+
+    public static Class<?>[] getGenericTypes(Field aField) {
+        Type type = aField.getGenericType();
+
+        if (type instanceof ParameterizedType) {
+
+            ParameterizedType pType = (ParameterizedType)type;
+            Type[] types = pType.getActualTypeArguments();
+
+            Class<?>[] classes = new Class[types.length];
+            for (int i=0; i<types.length; i++) {
+                classes[i] = (Class<?>)types[i];
+            }
+            return classes;
+        }
+        return new Class[0];
+    }
 }

@@ -49,6 +49,7 @@ build {
 }
 
 jte {
+    trimControlStructures=true
     generate()
 }
 

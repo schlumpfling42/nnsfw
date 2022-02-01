@@ -1,28 +1,8 @@
-package net.nnwsf.controller.documentation;
+package net.nnwsf.handler;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map    ;
-import java.util.Set;
-import java.util.Map.Entry;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.stream.Collectors;
-
-import gg.jte.TemplateEngine;
-import gg.jte.TemplateException;
-import gg.jte.TemplateOutput;
-import gg.jte.output.StringOutput;
+import io.undertow.server.HttpHandler;
+import io.undertow.server.HttpServerExchange;
+import io.undertow.util.Headers;
 import net.nnwsf.controller.annotation.ContentType;
 import net.nnwsf.controller.annotation.Controller;
 import net.nnwsf.controller.annotation.Delete;
@@ -42,11 +22,34 @@ import net.nnwsf.controller.documentation.model.SimpleClassDescription;
 import net.nnwsf.util.ClassDiscovery;
 import net.nnwsf.util.ReflectionHelper;
 
-public class ApiDocController {
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
-    private static Logger logger = Logger.getLogger(ApiDocController.class.getSimpleName());
+import gg.jte.TemplateEngine;
+import gg.jte.TemplateOutput;
+import gg.jte.output.StringOutput;
 
-    private static List<String> methodSortOrder = List.of("Put", "Get", "Post", "Delete");
+public class ApiDocHandler implements HttpHandler {
+
+	private final static Logger logger = Logger.getLogger(ApiDocHandler.class.getName());
+
+	private static List<String> methodSortOrder = List.of("Put", "Get", "Post", "Delete");
 
     static final Collection<Class<?>> simpleTypes = Set.of(String.class, Integer.class, Long.class, Double.class, Float.class, BigDecimal.class, BigInteger.class, int.class, long.class, float.class, double.class, Character.class, char.class, CharSequence.class);
 
@@ -55,7 +58,7 @@ public class ApiDocController {
     private final List<ControllerDoc> controllers;
     private final TemplateEngine templateEngine;
 
-    public ApiDocController() {
+	public ApiDocHandler() {
         controllers = new ArrayList<>();
         templateEngine = TemplateEngine.createPrecompiled(gg.jte.ContentType.Html);
         try {
@@ -145,11 +148,12 @@ public class ApiDocController {
         }
     }
 
-    @Get("/")
-    @ContentType("text/html; charset=UTF-8")
-    public String getApiDoc() throws TemplateException {
-        TemplateOutput output = new StringOutput();
+	@Override
+	public void handleRequest(final HttpServerExchange exchange) throws Exception {
+		exchange.getResponseHeaders().add(Headers.CONTENT_TYPE, "text/html; charset=utf-8");
+		TemplateOutput output = new StringOutput();
         templateEngine.render(HTML_TEMPLATE_NAME, controllers, output);
-        return output.toString();
-    }
+        exchange.getResponseSender().send(output.toString());
+	}
+
 }

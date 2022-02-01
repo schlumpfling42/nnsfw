@@ -6,7 +6,7 @@ plugins {
 sourceCompatibility = 1.11
 targetCompatibility = 1.11
 
-version = "0.0.5"
+version = "0.0.6"
 
 mainClassName = "net.nnwsf.Application"
 
@@ -23,6 +23,7 @@ dependencies {
 mainClassName = "net.example.Application"
 
 jar {
+  dependsOn ":nnsfw:jar"
   duplicatesStrategy = DuplicatesStrategy.EXCLUDE
   manifest { 
     attributes "Main-Class": "$mainClassName"
@@ -32,5 +33,3 @@ jar {
     configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
   }
 }
-
-jar.dependsOn ":nnsfw:jar"
