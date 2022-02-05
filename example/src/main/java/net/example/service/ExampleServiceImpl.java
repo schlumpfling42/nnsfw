@@ -8,6 +8,8 @@ import javax.inject.Inject;
 import net.example.persistence.ExampleEntity;
 import net.example.persistence.ExampleRepository;
 import net.example.resource.ExampleBean;
+import net.nnwsf.resource.Page;
+import net.nnwsf.resource.PageRequest;
 
 public class ExampleServiceImpl implements ExampleService{
 
@@ -65,13 +67,15 @@ public class ExampleServiceImpl implements ExampleService{
         repository.delete(entity);
     }
     
-    public Collection<ExampleBean> getExamples() {
-        return repository.findAll().stream().map(entity -> {
+    public Page<ExampleBean> getExamples(PageRequest pageRequest) {
+        Page<ExampleEntity> resultPage = repository.find(pageRequest);
+        Collection<ExampleBean> exampleBeans = resultPage.getElements().stream().map(entity -> {
             ExampleBean exampleBean = new ExampleBean();
             exampleBean.setName(entity.getName());
             exampleBean.setId(entity.getId());
             return exampleBean;
         }).collect(Collectors.toList());
+        return new Page<ExampleBean>(resultPage.getTotalNumber(), pageRequest, exampleBeans);
     }
 
 }

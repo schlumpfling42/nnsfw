@@ -18,6 +18,8 @@ import net.nnwsf.controller.annotation.Put;
 import net.nnwsf.controller.annotation.RequestBody;
 import net.nnwsf.controller.annotation.RequestParameter;
 import net.nnwsf.controller.documentation.annotation.ApiDoc;
+import net.nnwsf.resource.Page;
+import net.nnwsf.resource.PageRequest;
 
 @Controller("/test")
 @ApiDoc("Example controller for showing the abilities of NNSFW")
@@ -81,7 +83,7 @@ public class ExampleController {
     @Get("/example/")
     @ContentType(Constants.CONTENT_TYPE_APPLICATION_JSON)
     @ApiDoc("Example get all entries from the database, to show how the persistence integration works")
-    public Collection<ExampleBean> getExamples() {
-        return service.getExamples();
+    public Page<ExampleBean> getExamples(@RequestParameter("page") int page, @RequestParameter("size") int size) {
+        return service.getExamples(PageRequest.of(page, size));
     }
 }

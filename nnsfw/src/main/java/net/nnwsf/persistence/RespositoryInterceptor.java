@@ -4,6 +4,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Collection;
+import java.util.List;
 
 import javax.persistence.Id;
 import javax.persistence.Query;
@@ -12,6 +13,8 @@ import net.bytebuddy.implementation.bind.annotation.AllArguments;
 import net.bytebuddy.implementation.bind.annotation.Origin;
 import net.bytebuddy.implementation.bind.annotation.RuntimeType;
 import net.nnwsf.persistence.annotation.QueryParameter;
+import net.nnwsf.resource.Page;
+import net.nnwsf.resource.PageRequest;
 import net.nnwsf.util.ReflectionHelper;
 
 public class RespositoryInterceptor {
@@ -105,6 +108,22 @@ public class RespositoryInterceptor {
                     Object result = entityManagerHolder.getEntityManager().createQuery("select e from " + entityClass.getSimpleName() + " e").getResultList();
                     entityManagerHolder.commitTransaction();
                     return result;
+                }
+            }
+            if("find".equals(method.getName()) && method.getParameterTypes().length == 1) {
+                if(PageRequest.class.isInstance(args[0])) {
+                    PageRequest pageRequest = (PageRequest)args[0];
+                    int start = pageRequest.getPage() * pageRequest.getSize();
+                    try(EntityManagerHolder entityManagerHolder = PersistenceManager.createEntityManager(datasourceName)) {
+                        entityManagerHolder.beginTransaction();
+                        long totalCount = (Long)entityManagerHolder.getEntityManager().createQuery("select Count(e) from " + entityClass.getSimpleName() + " e").getSingleResult();
+                        Query query = entityManagerHolder.getEntityManager().createQuery("select e from " + entityClass.getSimpleName() + " e");
+                        query.setFirstResult(start);
+                        query.setMaxResults(pageRequest.getSize());
+                        List<?> resultList = query.getResultList();
+                        entityManagerHolder.commitTransaction();
+                        return new Page<>(totalCount, pageRequest, resultList);
+                    }
                 }
             }
         }

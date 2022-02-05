@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.List;
 
 import net.example.resource.ExampleBean;
+import net.nnwsf.resource.Page;
+import net.nnwsf.resource.PageRequest;
 import net.nnwsf.service.annotation.Service;
 
 @Service("2")
@@ -26,10 +28,10 @@ public class ExampleService2Impl implements ExampleService {
         return bean;
     }
 
-    public Collection<ExampleBean> getExamples() {
+    public Page<ExampleBean> getExamples(PageRequest pageRequest) {
         ExampleBean newBean = new ExampleBean();
         newBean.setName("Test");
-        return List.of(newBean);
+        return new Page<ExampleBean>(1, pageRequest, List.of(newBean));
     }
 
     public void deleteExample(int id) {

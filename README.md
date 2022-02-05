@@ -210,16 +210,16 @@ The test coverage is only very basic right now, but the besides the example it i
 ## Performance Test
 It's a little early to really talk about performance, but it's good to start early. 
 
-The example project contains a [simple JMeter test case](example/jmeter-test.jmx) that runs the 4 basic HTTP requests the framework supports PUT, POST, GET and DELETE. The test runs several of these operations with 20 parallel threads.
+The example project contains a [simple JMeter test case](example/jmeter-test.jmx) that runs the 4 basic HTTP requests the framework supports PUT, POST, GET and DELETE. The test runs several of these operations with 20 parallel threads. The test runs a total of 1,000,000 requests.
 
-On an 8 core machine the server is able to execute
-- more than 10 requests per second on requests doing a lookup and write operation, 
-- more than 20 requests per second on a simple write and 
-- more then 100 requests per second on a read operation. 
-Memory consumption is quite high during the test, but the GC seems to be able to clean up very nicely.
+On an 8 core machine the test is running about 2 minutes. The server is able to execute
+- more than 850 requests per second on requests doing a lookup and write operation, 
+- more than 1700 requests per second on a simple write and 
+- more then 5000 requests per second on a read operation. 
+Memory consumption jumped to approx. 330MB, but the GC seems to be able to clean up very nicely.
 
 The response times are quite good
-- median is less than 150ms and 
-- 99% is less than 450ms.
+- median is 2ms and 
+- 99% is 4ms for write operations and 25ms of read (return 100 results).
 
-Running the garbage collector after the test, the heap size dropped to about 70 MByte.
+Running the garbage collector after the test, the heap size dropped to about 40 MByte.

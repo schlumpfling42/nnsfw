@@ -5,6 +5,8 @@ import java.util.Collection;
 import javax.transaction.Transactional;
 
 import net.example.resource.ExampleBean;
+import net.nnwsf.resource.Page;
+import net.nnwsf.resource.PageRequest;
 import net.nnwsf.service.annotation.Service;
 
 @Service
@@ -24,5 +26,5 @@ public interface ExampleService {
     @Transactional
     void deleteExample(int id);
 
-    public Collection<ExampleBean> getExamples();
+    public Page<ExampleBean> getExamples(PageRequest pageRequest);
 }
