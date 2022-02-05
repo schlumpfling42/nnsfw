@@ -16,6 +16,7 @@ import net.nnwsf.application.annotation.AnnotationConfiguration;
 import net.nnwsf.application.annotation.ApiDocConfiguration;
 import net.nnwsf.application.annotation.AuthenticatedResourcePathConfiguration;
 import net.nnwsf.application.annotation.AuthenticationProviderConfiguration;
+import net.nnwsf.application.annotation.NocodeConfiguration;
 import net.nnwsf.application.annotation.ServerConfiguration;
 import net.nnwsf.configuration.ConfigurationManager;
 import net.nnwsf.controller.annotation.Controller;
@@ -97,6 +98,11 @@ public class ApplicationServer {
             ApiDocConfiguration.class
         );
 
+        NocodeConfiguration nocodeConfiguration = ReflectionHelper.findAnnotation(
+            applicationClass,
+            NocodeConfiguration.class
+        );
+
         authenticationProviderConfiguration = ConfigurationManager.apply(authenticationProviderConfiguration);
 
         Collection<String> authenticatedResourcePaths = ReflectionHelper
@@ -114,7 +120,8 @@ public class ApplicationServer {
                     contentTypeConverterClasses,
                     Collections.emptyList(),
                     authenticationProviderConfiguration,
-                    apiDocConfiguration);
+                    apiDocConfiguration,
+                    nocodeConfiguration);
         } catch (Exception e) {
             throw new RuntimeException("Unable to discover annotated classes", e);
         }

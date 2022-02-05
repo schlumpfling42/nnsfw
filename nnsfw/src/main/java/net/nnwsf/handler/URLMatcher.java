@@ -4,14 +4,14 @@ import io.undertow.util.AttachmentKey;
 
 import java.util.*;
 
-class URLMatcher {
+public class URLMatcher {
 
     public static final AttachmentKey<URLMatcher> URL_MATCHER_ATTACHMENT_KEY = AttachmentKey.create(URLMatcher.class);
 
     private final String httpMethod;
     private final String[] pathElements;
 
-    URLMatcher(String httpMethod, String path) {
+    public URLMatcher(String httpMethod, String path) {
         this.httpMethod = httpMethod.toUpperCase();
         Collection<String> pathElementCollection = new ArrayList<>();
         StringTokenizer pathTokenizer = new StringTokenizer(path, "/");

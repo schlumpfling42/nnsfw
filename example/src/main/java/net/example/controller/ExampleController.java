@@ -4,9 +4,9 @@ import java.util.Collection;
 
 import javax.inject.Inject;
 
-import net.example.ExampleBean;
-import net.example.ExampleService;
-import net.example.ExampleService2Impl;
+import net.example.resource.ExampleBean;
+import net.example.service.ExampleService;
+import net.example.service.ExampleService2Impl;
 import net.nnwsf.application.Constants;
 import net.nnwsf.controller.annotation.ContentType;
 import net.nnwsf.controller.annotation.Controller;

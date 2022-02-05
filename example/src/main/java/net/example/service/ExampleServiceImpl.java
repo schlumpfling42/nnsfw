@@ -1,4 +1,4 @@
-package net.example;
+package net.example.service;
 
 import java.util.Collection;
 import java.util.stream.Collectors;
@@ -7,6 +7,7 @@ import javax.inject.Inject;
 
 import net.example.persistence.ExampleEntity;
 import net.example.persistence.ExampleRepository;
+import net.example.resource.ExampleBean;
 
 public class ExampleServiceImpl implements ExampleService{
 

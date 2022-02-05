@@ -2,12 +2,12 @@ package net.nnwsf.handler;
 
 import java.lang.annotation.Annotation;
 
-class AnnotatedMethodParameter extends MethodParameter {
+public class AnnotatedMethodParameter extends MethodParameter {
 
     private final Annotation annotation;
 
-    AnnotatedMethodParameter(Annotation annotation, String name, Class<?> type) {
-        super(name, type);
+    public AnnotatedMethodParameter(Annotation annotation, String name, Class<?> type, int index) {
+        super(name, type, index);
         this.annotation = annotation;
     }
 

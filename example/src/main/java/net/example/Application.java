@@ -5,6 +5,7 @@ import net.nnwsf.application.annotation.AnnotationConfiguration;
 import net.nnwsf.application.annotation.ApiDocConfiguration;
 import net.nnwsf.application.annotation.AuthenticatedResourcePathConfiguration;
 import net.nnwsf.application.annotation.AuthenticationProviderConfiguration;
+import net.nnwsf.application.annotation.NocodeConfiguration;
 import net.nnwsf.application.annotation.DatasourceConfiguration;
 import net.nnwsf.application.annotation.FlywayConfiguration;
 import net.nnwsf.application.annotation.ServerConfiguration;
@@ -16,6 +17,7 @@ import net.nnwsf.application.annotation.ServerConfiguration;
 @DatasourceConfiguration
 @FlywayConfiguration
 @ApiDocConfiguration
+@NocodeConfiguration(schemas = "/nocode/product.json", controllerPath = "/nocode")
 public class Application {
     public static void main(String[] args) {
          ApplicationServer.start(Application.class);

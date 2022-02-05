@@ -1,6 +1,6 @@
 package net.nnwsf.handler;
 
-import static net.nnwsf.handler.ControllerProxy.CONTROLLER_PROXY_ATTACHMENT_KEY;
+import static net.nnwsf.handler.EndpointProxy.ENDPOINT_PROXY_ATTACHMENT_KEY;
 import static net.nnwsf.handler.URLMatcher.URL_MATCHER_ATTACHMENT_KEY;
 
 import java.lang.reflect.InvocationTargetException;
@@ -27,14 +27,14 @@ import net.nnwsf.util.ReflectionHelper;
 import net.nnwsf.util.TypeUtil;
 import net.nnwsf.authentication.annotation.User;
 
-public class ControllerHandlerImpl implements HttpHandler {
+public class EndpointHandlerImpl implements HttpHandler {
 
-	private final static Logger log = Logger.getLogger(ControllerHandlerImpl.class.getName());
+	private final static Logger log = Logger.getLogger(EndpointHandlerImpl.class.getName());
 
 	private final Map<String, ContentTypeConverter> contentTypeConverters;
 	private final ContentTypeConverter defaultContentTypeConverter = new TextContentTypeConverter();
 
-	public ControllerHandlerImpl(Collection<Class<ContentTypeConverter>> converterClasses) {
+	public EndpointHandlerImpl(Collection<Class<ContentTypeConverter>> converterClasses) {
 		this.contentTypeConverters = converterClasses.stream()
 			.map(converterClass -> {
 				ContentTypeConverter converter = ReflectionHelper.getInstance(converterClass);
@@ -46,16 +46,16 @@ public class ControllerHandlerImpl implements HttpHandler {
 
 	@Override
 	public void handleRequest(final HttpServerExchange exchange) throws Exception {
-		log.log(Level.INFO, "Controller request: start");
-		ControllerProxy controllerProxy = exchange.getAttachment(CONTROLLER_PROXY_ATTACHMENT_KEY);
+		log.log(Level.FINEST, "Endpoint request: start");
+		EndpointProxy endpointProxy = exchange.getAttachment(ENDPOINT_PROXY_ATTACHMENT_KEY);
 		URLMatcher requestUrlMatcher = exchange.getAttachment(URL_MATCHER_ATTACHMENT_KEY);
 
 		Map<String, Deque<String>> queryParameters = exchange.getQueryParameters();
 
-		if(controllerProxy != null) {
-			Object[] parameters = new Object[controllerProxy.getMethod().getParameterTypes().length];
-			for(int i = 0; i<controllerProxy.getAnnotatedMethodParameters().length; i++) {
-				AnnotatedMethodParameter annotatedMethodParameter = controllerProxy.getAnnotatedMethodParameters()[i];
+		if(endpointProxy != null) {
+			Object[] parameters = new Object[endpointProxy.getParametersCount()];
+			for(int i = 0; i<endpointProxy.getParameters().length; i++) {
+				AnnotatedMethodParameter annotatedMethodParameter = endpointProxy.getParameters()[i];
 				if (annotatedMethodParameter != null) {
 					if (annotatedMethodParameter.getAnnotation().annotationType().isAssignableFrom(RequestParameter.class)) {
 						Deque<String> parameterValue = queryParameters.get(annotatedMethodParameter.getName());
@@ -64,39 +64,36 @@ public class ControllerHandlerImpl implements HttpHandler {
 							parameters[i] = TypeUtil.toType(value, annotatedMethodParameter.getType());
 						}
 					} else if (annotatedMethodParameter.getAnnotation().annotationType().isAssignableFrom(PathVariable.class)) {
-						int index = controllerProxy.getPathElements().indexOf("{" + annotatedMethodParameter.getName() + "}");
+						int index = endpointProxy.getPathElements().indexOf("{" + annotatedMethodParameter.getName() + "}");
 						String value = requestUrlMatcher.getPathElements()[index];
 						parameters[i] = TypeUtil.toType(value, annotatedMethodParameter.getType());
 					}
 				}
 			}
-			ContentTypeConverter contentTypeConverter = getContentTypeConverter(controllerProxy.getContentType());
+			ContentTypeConverter contentTypeConverter = getContentTypeConverter(endpointProxy.getContentType());
 
-			for(int i = 0; i<controllerProxy.getSpecialMethodParameters().length; i++) {
-				MethodParameter specialMethodParameter = controllerProxy.getSpecialMethodParameters()[i];
-				if(specialMethodParameter != null) {
-					if(specialMethodParameter instanceof AnnotatedMethodParameter) {
-						AnnotatedMethodParameter annotatedSpecialMethodParameter = (AnnotatedMethodParameter)specialMethodParameter;
-						if(annotatedSpecialMethodParameter.getAnnotation().annotationType().isAssignableFrom(RequestBody.class)) {
-							exchange.startBlocking();
-							parameters[i] = contentTypeConverter.readFrom(exchange.getInputStream(), specialMethodParameter.getType());
-						} else if(annotatedSpecialMethodParameter.getAnnotation().annotationType().isAssignableFrom(AuthenticatedUser.class)) {
-							if(exchange.getSecurityContext() != null && exchange.getSecurityContext().getAuthenticatedAccount() != null) {
-								parameters[i] = new User((Pac4jAccount)exchange.getSecurityContext().getAuthenticatedAccount());
-							}
-						}
-					} else if(specialMethodParameter.getType().isAssignableFrom(HttpServerExchange.class)) {
-						parameters[i] = exchange;
-					}
+			if(endpointProxy.getSpecialRequestParameter(RequestBody.class) != null) {
+				MethodParameter parameter = endpointProxy.getSpecialRequestParameter(RequestBody.class);
+				exchange.startBlocking();
+				parameters[parameter.getIndex()] = contentTypeConverter.readFrom(exchange.getInputStream(), parameter.getType());
+			}
+			if(endpointProxy.getSpecialRequestParameter(AuthenticatedUser.class) != null) {
+				MethodParameter parameter = endpointProxy.getSpecialRequestParameter(AuthenticatedUser.class);
+				if(exchange.getSecurityContext() != null && exchange.getSecurityContext().getAuthenticatedAccount() != null) {
+					parameters[parameter.getIndex()] = new User((Pac4jAccount)exchange.getSecurityContext().getAuthenticatedAccount());
 				}
 			}
+			if(endpointProxy.getSpecialRequestParameter(HttpServerExchange.class) != null) {
+				MethodParameter parameter = endpointProxy.getSpecialRequestParameter(RequestBody.class);
+				parameters[parameter.getIndex()] = exchange;
+			}
 			try {
-				Object result = controllerProxy.getMethod().invoke(controllerProxy.getInstance(), parameters);
+				Object result = endpointProxy.invoke(parameters);
 				if(!exchange.isComplete()) {
 					if(result == null) {
 						exchange.setStatusCode(200).getResponseSender().send("");
 					} else {
-						exchange.getResponseHeaders().add(Headers.CONTENT_TYPE, controllerProxy.getContentType());
+						exchange.getResponseHeaders().add(Headers.CONTENT_TYPE, endpointProxy.getContentType());
 						exchange.setStatusCode(200);
 						exchange.startBlocking();
 						contentTypeConverter.writeTo(result, exchange.getOutputStream());
@@ -109,10 +106,10 @@ public class ControllerHandlerImpl implements HttpHandler {
 				throw ite;
 			}
 		} else {
-			log.log(Level.SEVERE, "Unable to find controller for " + exchange.getRequestPath() + exchange.getQueryString());
+			log.log(Level.SEVERE, "Unable to find endpoint for " + exchange.getRequestPath() + exchange.getQueryString());
 			exchange.setStatusCode(404);
 		}
-		log.log(Level.INFO, "Controller request: end");
+		log.log(Level.FINEST, "Endpoint request: end");
 	}
 
 	private ContentTypeConverter getContentTypeConverter(String contentType) {

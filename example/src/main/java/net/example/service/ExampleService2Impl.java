@@ -1,8 +1,9 @@
-package net.example;
+package net.example.service;
 
 import java.util.Collection;
 import java.util.List;
 
+import net.example.resource.ExampleBean;
 import net.nnwsf.service.annotation.Service;
 
 @Service("2")

@@ -4,7 +4,14 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
 import net.nnwsf.application.Constants;
+import net.nnwsf.controller.annotation.ContentType;
+import net.nnwsf.controller.annotation.Controller;
+import net.nnwsf.controller.annotation.Delete;
+import net.nnwsf.controller.annotation.Get;
+import net.nnwsf.controller.annotation.Post;
+import net.nnwsf.controller.annotation.Put;
 import net.nnwsf.controller.annotation.RequestBody;
+import net.nnwsf.controller.annotation.RequestParameter;
 import net.nnwsf.controller.documentation.annotation.ApiDoc;
 import net.nnwsf.controller.documentation.model.BeanClassDescription;
 import net.nnwsf.controller.documentation.model.ClassDescription;
@@ -13,16 +20,20 @@ import net.nnwsf.controller.documentation.model.ControllerDoc;
 import net.nnwsf.controller.documentation.model.EndpointDoc;
 import net.nnwsf.controller.documentation.model.MapClassDescription;
 import net.nnwsf.controller.documentation.model.SimpleClassDescription;
+import net.nnwsf.util.ClassDiscovery;
 import net.nnwsf.util.ReflectionHelper;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,7 +46,7 @@ import gg.jte.TemplateEngine;
 import gg.jte.TemplateOutput;
 import gg.jte.output.StringOutput;
 
-public class ApiDocHandler implements HttpHandler {
+public class ApiDocHandler1 implements HttpHandler {
 
 	private final static Logger logger = Logger.getLogger(ApiDocHandler1.class.getName());
 
@@ -47,47 +58,21 @@ public class ApiDocHandler implements HttpHandler {
 
     private final List<ControllerDoc> controllers;
     private final TemplateEngine templateEngine;
-    private final Collection<EndpointProxy> proxies;
 
-	public ApiDocHandler(Collection<EndpointProxy> proxies) {
-        this.proxies = proxies;
+	public ApiDocHandler1() {
         controllers = new ArrayList<>();
         templateEngine = TemplateEngine.createPrecompiled(gg.jte.ContentType.Html);
         try {
-            Map<Class<?>, Collection<EndpointProxy>> proxyMap = new HashMap<>();
-            proxies.forEach(aProxy -> {
-                Collection<EndpointProxy> controllerProxies = proxyMap.get(aProxy.getControllerClass());
-                if(controllerProxies == null) {
-                    controllerProxies = new ArrayList<>();
-                    proxyMap.put(aProxy.getControllerClass(), controllerProxies);
-                }
-                controllerProxies.add(aProxy);
-            });
-            proxyMap.entrySet().forEach(anEntry -> {
-                ApiDoc aControllerApiDoc = ReflectionHelper.findAnnotation(anEntry.getKey(), ApiDoc.class);
+            Map<Controller, Class<Object>> discoverAnnotatedClasses = ClassDiscovery.discoverAnnotatedClasses(Object.class, Controller.class);
+            discoverAnnotatedClasses.entrySet().forEach(aControllerEntry -> {
+                Class<?> aControllerClass = aControllerEntry.getValue();
+                ApiDoc aControllerApiDoc = ReflectionHelper.findAnnotation(aControllerClass, ApiDoc.class);
                 if(aControllerApiDoc != null) {
+                    String controllerPath = aControllerEntry.getKey().value();
                     ControllerDoc aControllerDoc = new ControllerDoc();
                     aControllerDoc.setDescription(aControllerApiDoc.value());
-                    aControllerDoc.setClassName(anEntry.getKey().getSimpleName());
-                    List<EndpointDoc> endpoints = new ArrayList<>();
-                    anEntry.getValue().forEach(aProxy -> {
-                        aProxy.getAnnotations().stream().filter(anAnnotation -> ApiDoc.class.isInstance(anAnnotation)).findFirst().ifPresent(anAnnotation -> {
-                            ApiDoc endpointApiDoc = (ApiDoc)anAnnotation;
-                            EndpointDoc endpointDoc = new EndpointDoc();
-                            endpointDoc.setMethod(aProxy.getHttpMethod());
-                            endpointDoc.setPath(aProxy.getPath());
-                            endpointDoc.setDescription(endpointApiDoc.value());
-                            endpointDoc.setContentType(aProxy.getContentType() == null ? "n/a" : aProxy.getContentType());
-                            MethodParameter requestBodyParameter = aProxy.getSpecialRequestParameter(RequestBody.class);
-                            endpointDoc.setResponseBodyType(getClassDescription(aProxy.getReturnType(), aProxy.getGenericReturnTypes()));
-                            endpointDoc.setParameters(Arrays.stream(aProxy.getParameters())
-                                .filter(aParameter -> aParameter != null)
-                                .collect(Collectors.toMap(aParam ->  aParam.getName(), aParam -> aParam.getType().getName())));
-                            endpointDoc.setRequestBodyType(requestBodyParameter == null ? null : getClassDescription(requestBodyParameter.getType()));
-                            endpoints.add(endpointDoc);
-                        });
-                    });
-                    aControllerDoc.setEndpoints(endpoints);
+                    aControllerDoc.setClassName(aControllerClass.getSimpleName());
+                    aControllerDoc.setEndpoints(findApiDocEndpoints(controllerPath, aControllerEntry.getValue(), Put.class, Get.class, Post.class, Delete.class));
                     controllers.add(aControllerDoc);
                 }
             });
@@ -95,6 +80,45 @@ public class ApiDocHandler implements HttpHandler {
         } catch (Exception e) {
             logger.log(Level.WARNING, "Unable to initialize API Documentation endpoint", e);
         }
+    }
+
+    private List<EndpointDoc> findApiDocEndpoints(String rootPath, Class<?> aControllerClass, Class<?>... annotationClasses) {
+        List<EndpointDoc> endpointDocs = new ArrayList<>();
+        Arrays.stream(annotationClasses).forEach(annotationClass -> {
+            ReflectionHelper.findAnnotationMethods(aControllerClass, annotationClass).entrySet().forEach(anEndpointEntry -> {
+                ApiDoc aMethodApiDoc = ReflectionHelper.findAnnotation(anEndpointEntry.getValue(), ApiDoc.class);
+                ContentType aMethodContentType = ReflectionHelper.findAnnotation(anEndpointEntry.getValue(), ContentType.class);
+                if(aMethodApiDoc != null) {
+                    Annotation methodAnnotation = anEndpointEntry.getKey();
+                    Method method = anEndpointEntry.getValue();
+                    EndpointDoc endpointDoc = new EndpointDoc();
+                    endpointDoc.setMethod(annotationClass.getSimpleName());
+                    endpointDoc.setPath((rootPath + ReflectionHelper.getValue(methodAnnotation, "value")).replace("/+", "/"));
+                    endpointDoc.setDescription(aMethodApiDoc.value());
+                    endpointDoc.setContentType(aMethodContentType == null ? "n/a" : aMethodContentType.value());
+                    Map<Annotation, Parameter> annotatedParameters = ReflectionHelper.findParameterAnnotations(method, RequestParameter.class);
+                    Parameter requestBodyParameter = ReflectionHelper.findParameter(method, RequestBody.class);
+                    endpointDoc.setResponseBodyType(getClassDescription(method.getReturnType(), ReflectionHelper.getGenericTypes(method)));
+                    endpointDoc.setParameters(annotatedParameters.entrySet().stream()
+                        .collect(Collectors.toMap(anEntry ->  ((RequestParameter)anEntry.getKey()).value(), anEntry -> anEntry.getValue().getType().getName())));
+                    endpointDoc.setRequestBodyType(requestBodyParameter == null ? null : getClassDescription(requestBodyParameter.getType()));
+                    endpointDocs.add(endpointDoc);
+                }
+            });
+        });
+        Collections.sort(endpointDocs, new Comparator<EndpointDoc>() {
+
+            @Override
+            public int compare(EndpointDoc o1, EndpointDoc o2) {
+                int result = o1.getPath().compareTo(o2.getPath());
+                if(result == 0) {
+                    result = methodSortOrder.indexOf(o1.getMethod()) - methodSortOrder.indexOf(o2.getMethod());
+                }
+                return result;
+            }
+
+        });
+        return endpointDocs;
     }
 
     private ClassDescription getClassDescription(Class<?> aClass) {
@@ -112,9 +136,7 @@ public class ApiDocHandler implements HttpHandler {
     }   
 	
 	private ClassDescription getClassDescription(Class<?> aClass, Class<?>... genericClasses) {
-        if(aClass == null) {
-            return null;
-        } else if(aClass.isAssignableFrom(Collection.class)) {
+        if(aClass.isAssignableFrom(Collection.class)) {
             return CollectionClassDescription.of(getClassDescription(genericClasses[0]));
         } else if(aClass.isAssignableFrom(Map.class)) {
             return MapClassDescription.of(getClassDescription(genericClasses[0]), getClassDescription(genericClasses[1]));

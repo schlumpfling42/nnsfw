@@ -1,4 +1,4 @@
-package net.example;
+package net.example.resource;
 
 public class ExampleBean {
     private int id;
