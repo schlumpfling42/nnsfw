@@ -4,10 +4,8 @@ import io.undertow.util.AttachmentKey;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Parameter;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 public interface EndpointProxy {
 

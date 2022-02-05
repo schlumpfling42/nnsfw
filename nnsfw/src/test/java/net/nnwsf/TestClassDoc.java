@@ -1,26 +1,19 @@
 package net.nnwsf;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.Test;
 
-import gg.jte.TemplateEngine;
-import gg.jte.TemplateOutput;
-import gg.jte.output.StringOutput;
 import net.nnwsf.controller.documentation.model.BeanClassDescription;
 import net.nnwsf.controller.documentation.model.ClassDescription;
 import net.nnwsf.controller.documentation.model.CollectionClassDescription;
@@ -53,7 +46,7 @@ public class TestClassDoc {
         System.out.println(classRepresentation.asString());
     }
 
-    private ClassDescription getClassDescription(Class aClass) {
+    private ClassDescription getClassDescription(Class<?> aClass) {
         if(simpleTypes.contains(aClass)) {
             return SimpleClassDescription.of(aClass);
         }

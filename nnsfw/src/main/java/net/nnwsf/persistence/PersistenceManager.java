@@ -283,6 +283,7 @@ public class PersistenceManager {
 			aClass, 
 			new RespositoryInterceptor(
 				instance.repositoryClassesMap.get(aClass).entityClass(), 
+				aClass,
 				instance.repositoryClassesMap.get(aClass).datasource()
 			)
 		);

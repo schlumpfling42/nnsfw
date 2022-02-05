@@ -27,15 +27,12 @@ import net.nnwsf.controller.annotation.RequestParameter;
 import net.nnwsf.handler.AnnotatedMethodParameter;
 import net.nnwsf.handler.EndpointProxy;
 import net.nnwsf.handler.MethodParameter;
-import net.nnwsf.handler.URLMatcher;
 
 public class ControllerProxyFactory {
 
-	private final Collection<Class<Object>> controllerClasses;
 	private final Collection<EndpointProxy> proxies;
 
 	public ControllerProxyFactory(Collection<Class<Object>> controllerClasses) {
-		this.controllerClasses = controllerClasses;
 		proxies = new ArrayList<>();
 		for (Class<?> aClass : controllerClasses) {
 			Controller controllerAnnotation = ReflectionHelper.findAnnotation(aClass, Controller.class);

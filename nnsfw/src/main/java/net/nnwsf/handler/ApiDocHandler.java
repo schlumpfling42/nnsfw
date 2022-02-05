@@ -16,12 +16,13 @@ import net.nnwsf.controller.documentation.model.SimpleClassDescription;
 import net.nnwsf.util.ReflectionHelper;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Parameter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +38,7 @@ import gg.jte.output.StringOutput;
 
 public class ApiDocHandler implements HttpHandler {
 
-	private final static Logger logger = Logger.getLogger(ApiDocHandler1.class.getName());
+	private final static Logger logger = Logger.getLogger(ApiDocHandler.class.getName());
 
 	private static List<String> methodSortOrder = List.of("Put", "Get", "Post", "Delete");
 
@@ -47,10 +48,8 @@ public class ApiDocHandler implements HttpHandler {
 
     private final List<ControllerDoc> controllers;
     private final TemplateEngine templateEngine;
-    private final Collection<EndpointProxy> proxies;
 
 	public ApiDocHandler(Collection<EndpointProxy> proxies) {
-        this.proxies = proxies;
         controllers = new ArrayList<>();
         templateEngine = TemplateEngine.createPrecompiled(gg.jte.ContentType.Html);
         try {
@@ -86,6 +85,18 @@ public class ApiDocHandler implements HttpHandler {
                             endpointDoc.setRequestBodyType(requestBodyParameter == null ? null : getClassDescription(requestBodyParameter.getType()));
                             endpoints.add(endpointDoc);
                         });
+                    });
+                    Collections.sort(endpoints, new Comparator<EndpointDoc>() {
+
+                        @Override
+                        public int compare(EndpointDoc o1, EndpointDoc o2) {
+                            int result = o1.getPath().compareTo(o2.getPath());
+                            if(result == 0) {
+                                result = methodSortOrder.indexOf(o1.getMethod()) - methodSortOrder.indexOf(o2.getMethod());
+                            }
+                            return result;
+                        }
+            
                     });
                     aControllerDoc.setEndpoints(endpoints);
                     controllers.add(aControllerDoc);
