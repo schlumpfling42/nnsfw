@@ -58,14 +58,10 @@ public class ControllerProxyFactory {
 					}
 					AnnotatedMethodParameter[] annotatedMethodParameters = getMethodParameters(annotatedMethod);
 					MethodParameter[] specialMethodParameters = getSpecialMethodParameters(annotatedMethod);
-					URLMatcher proxyUrlMatcher = new URLMatcher(methodAnnotation.annotationType().getSimpleName(),
-							(controllerAnnotation.value() + "/"
-									+ ReflectionHelper.getValue(methodAnnotation, "value").replace("/+", "/")));
-
 					proxies.add(new ControllerProxyMethodCallImplementation(object, methodAnnotation.annotationType().getSimpleName(), annotations, annotatedMethod, contentType,
 									annotatedMethodParameters,
 									specialMethodParameters, 
-									(controllerAnnotation.value() + "/" + ReflectionHelper.getValue(methodAnnotation, "value")).toLowerCase().replace("/+", "/")));
+									(controllerAnnotation.value() + "/" + ReflectionHelper.getValue(methodAnnotation, "value")).replace("/+", "/")));
 				}
 			} catch (Exception e) {
 				throw new RuntimeException("Unable to create controller: " + aClass.getName());
