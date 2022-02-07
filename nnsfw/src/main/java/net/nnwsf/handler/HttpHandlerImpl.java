@@ -25,7 +25,6 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HttpString;
 import net.nnwsf.application.annotation.ApiDocConfiguration;
 import net.nnwsf.application.annotation.AuthenticationProviderConfiguration;
-import net.nnwsf.application.annotation.NocodeConfiguration;
 import net.nnwsf.authentication.OpenIdConfiguration;
 import net.nnwsf.authentication.annotation.Authenticated;
 import net.nnwsf.controller.annotation.RequestParameter;
@@ -56,8 +55,7 @@ public class HttpHandlerImpl implements HttpHandler {
 			Collection<Class<ContentTypeConverter>> converterClasses,
 			Collection<Class<AuthenticationMechanism>> authenticationMechanisms,
 			AuthenticationProviderConfiguration authenticationProviderConfiguration,
-			ApiDocConfiguration apiDocConfiguration,
-			NocodeConfiguration nocodeConfiguration) {
+			ApiDocConfiguration apiDocConfiguration) {
 
 		this.controllerHandler = new EndpointHandlerImpl(converterClasses);
 		this.authenticatedResourcePaths = authenticatedResourcePaths;
@@ -109,20 +107,18 @@ public class HttpHandlerImpl implements HttpHandler {
 			existingProxies.add(proxy);
 		});
 
-		if(nocodeConfiguration != null) {
-			NocodeProxyFactory nocodeProxyFactory = new NocodeProxyFactory(applicationClassLoader, Arrays.asList(nocodeConfiguration.schemas()), nocodeConfiguration.controllerPath());
+		NocodeProxyFactory nocodeProxyFactory = new NocodeProxyFactory();
+		
+		nocodeProxyFactory.getProxies().forEach(proxy -> {
+			Collection<EndpointProxy> existingProxies = proxies.get(proxy.getUrlMatcher());
+			if (existingProxies == null) {
+				existingProxies = new ArrayList<>();
+				proxies.put(proxy.getUrlMatcher(), existingProxies);
+				matchedProxies.put(proxy.getUrlMatcher(), new HashMap<>());
+			}
 			
-			nocodeProxyFactory.getProxies().forEach(proxy -> {
-				Collection<EndpointProxy> existingProxies = proxies.get(proxy.getUrlMatcher());
-				if (existingProxies == null) {
-					existingProxies = new ArrayList<>();
-					proxies.put(proxy.getUrlMatcher(), existingProxies);
-					matchedProxies.put(proxy.getUrlMatcher(), new HashMap<>());
-				}
-				
-				existingProxies.add(proxy);
-			});
-		}
+			existingProxies.add(proxy);
+		});
 
 		if(apiDocConfiguration != null) {
 			apiDocHandler = new ApiDocHandler(controllerProxyFactory.getProxies());

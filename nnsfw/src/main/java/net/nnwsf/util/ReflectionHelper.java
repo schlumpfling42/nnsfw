@@ -240,4 +240,7 @@ public class ReflectionHelper {
         }
         return new Class[0];
     }
+
+    public static void copy(Object entity, Object object) {
+    }
 }

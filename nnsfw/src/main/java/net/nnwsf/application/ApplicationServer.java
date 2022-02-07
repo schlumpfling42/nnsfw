@@ -23,6 +23,8 @@ import net.nnwsf.controller.annotation.Controller;
 import net.nnwsf.controller.converter.ContentTypeConverter;
 import net.nnwsf.controller.converter.annotation.Converter;
 import net.nnwsf.handler.HttpHandlerImpl;
+import net.nnwsf.nocode.NocodeManager;
+import net.nnwsf.persistence.DatasourceManager;
 import net.nnwsf.persistence.PersistenceManager;
 import net.nnwsf.service.ServiceManager;
 import net.nnwsf.util.ClassDiscovery;
@@ -82,11 +84,11 @@ public class ApplicationServer {
             ClassDiscovery.init(applicationClass.getPackageName().split("\\.")[0]);
         }
 
+        DatasourceManager.init();
+
         TypeUtil.init();
 
         initServices();
-
-        initPersistence(applicationClass);
 
         AuthenticationProviderConfiguration authenticationProviderConfiguration = ReflectionHelper.findAnnotation(
             applicationClass,
@@ -102,6 +104,10 @@ public class ApplicationServer {
             applicationClass,
             NocodeConfiguration.class
         );
+
+        NocodeManager.init(applicationClass.getClassLoader(), nocodeConfiguration);
+
+        initPersistence();
 
         authenticationProviderConfiguration = ConfigurationManager.apply(authenticationProviderConfiguration);
 
@@ -120,8 +126,7 @@ public class ApplicationServer {
                     contentTypeConverterClasses,
                     Collections.emptyList(),
                     authenticationProviderConfiguration,
-                    apiDocConfiguration,
-                    nocodeConfiguration);
+                    apiDocConfiguration);
         } catch (Exception e) {
             throw new RuntimeException("Unable to discover annotated classes", e);
         }
@@ -134,7 +139,7 @@ public class ApplicationServer {
         server.start();
     }
 
-    private void initPersistence(Class<?> applicationClass) {
+    private void initPersistence() {
         PersistenceManager.init();
     }
 

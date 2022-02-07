@@ -10,7 +10,7 @@ public class EntityManagerHolder implements AutoCloseable {
     private final EntityManager entityManager;
     private final Consumer<EntityManager> releaseFunction;
 
-    EntityManagerHolder(EntityManager entityManager, Consumer<EntityManager> releaseFunction, boolean created) {
+    public EntityManagerHolder(EntityManager entityManager, Consumer<EntityManager> releaseFunction, boolean created) {
         this.entityManager = entityManager;
         this.created = created;
         this.releaseFunction = releaseFunction;
