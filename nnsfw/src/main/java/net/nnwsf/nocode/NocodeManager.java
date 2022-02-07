@@ -165,11 +165,11 @@ public class NocodeManager {
         }
     }
 
-    private Class<? extends PersistenceRepository<? extends NocodeEntity, ?>> createEntityRepositoryClass(Pair<Class<? extends NocodeEntity>, Class<?>> entityIdClassPair) {
+    private Class<PersistenceRepository> createEntityRepositoryClass(Pair<Class<? extends NocodeEntity>, Class<?>> entityIdClassPair) {
         Builder<?> builder = new ByteBuddy()
             .makeInterface(TypeDescription.Generic.Builder.parameterizedType(PersistenceRepository.class, entityIdClassPair.getFirst(), entityIdClassPair.getSecond()).build());
 
-        return (Class<? extends PersistenceRepository<? extends NocodeEntity, ?>>) builder.make().load(entityIdClassPair.getFirst().getClassLoader()).getLoaded();
+        return (Class<PersistenceRepository>) builder.make().load(entityIdClassPair.getFirst().getClassLoader()).getLoaded();
     }
 
     private Class<?> getType(SchemaElement element) {

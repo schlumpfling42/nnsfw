@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import net.nnwsf.configuration.ConfigurationManagerForTesting;
+import net.nnwsf.nocode.NocodeManager;
 import net.nnwsf.application.annotation.DatasourceConfiguration;
 import net.nnwsf.application.annotation.Property;
 import net.nnwsf.configuration.ConfigurationManager;
@@ -49,6 +50,8 @@ public class TestPersistenceManager {
         ConfigurationManagerForTesting.init(configurationManager, TestPersistenceManager.class.getClassLoader());
         ClassDiscovery.init("net.nnwsf");
         ServiceManager.init();
+        DatasourceManager.init();
+        NocodeManager.init(TestPersistenceManager.class.getClassLoader(), null);
         PersistenceManager.init();
     }
 
