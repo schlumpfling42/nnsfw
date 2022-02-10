@@ -20,8 +20,8 @@ import net.nnwsf.persistence.PersistenceRepository;
 
 public abstract class ControllerProxyNocodeImplementation implements EndpointProxy {
 
-    protected class RequestParameterImpl implements RequestParameter{
-
+    static class RequestParameterImpl implements RequestParameter{
+    
         private final String value;
 
         RequestParameterImpl(String value) {

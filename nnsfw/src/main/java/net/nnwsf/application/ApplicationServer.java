@@ -26,6 +26,7 @@ import net.nnwsf.handler.HttpHandlerImpl;
 import net.nnwsf.nocode.NocodeManager;
 import net.nnwsf.persistence.DatasourceManager;
 import net.nnwsf.persistence.PersistenceManager;
+import net.nnwsf.query.QueryParser;
 import net.nnwsf.service.ServiceManager;
 import net.nnwsf.util.ClassDiscovery;
 import net.nnwsf.util.ReflectionHelper;
@@ -115,6 +116,7 @@ public class ApplicationServer {
                 .findAnnotations(applicationClass, AuthenticatedResourcePathConfiguration.class).stream()
                 .map(annotation -> annotation.value()).collect(Collectors.toList());
         HttpHandler httpHandler;
+        QueryParser.init();
         try {
             Collection<Class<Object>> controllerClasses = ClassDiscovery
                     .discoverAnnotatedClasses(Object.class, Controller.class).values();

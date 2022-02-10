@@ -212,6 +212,9 @@ public class HttpHandlerImpl implements HttpHandler {
 			return null;
 		}
 		Collection<String> requestParameters = new HashSet<>(exchange.getQueryParameters().keySet());
+		allMatchingProxies = allMatchingProxies.stream().filter(aProxy -> {
+			return aProxy.getParametersCount() >= requestParameters.size();
+		}).collect(Collectors.toSet());
 		EndpointProxy parameterMatchingProxy = matchedProxies.get(requestUrlMatcher).get(requestParameters);
 
 		if (parameterMatchingProxy != null) {
@@ -223,7 +226,7 @@ public class HttpHandlerImpl implements HttpHandler {
 					.filter(s -> s != null
 							&& s.getAnnotation().annotationType().isAssignableFrom(RequestParameter.class))
 					.map(m -> m.getName()).filter(s -> s != null).collect(Collectors.toList());
-			if (Objects.equals(new HashSet<>(methodParameters), new HashSet<>(requestParameters))) {
+			if (methodParameters.containsAll(requestParameters)) {
 				matchedProxies.get(requestUrlMatcher).put(requestParameters, aProxy);
 				return aProxy;
 			}

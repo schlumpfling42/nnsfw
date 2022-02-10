@@ -11,6 +11,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
@@ -242,5 +243,17 @@ public class ReflectionHelper {
     }
 
     public static void copy(Object entity, Object object) {
+    }
+
+    public static Map<String, Field> findFields(Class<?> entityClass) {
+        if(Object.class.equals(entityClass)) {
+            return new HashMap<>();
+        } else {
+            Map<String, Field> result = findFields(entityClass.getSuperclass());
+            Arrays.stream(entityClass.getDeclaredFields()).forEach(aField -> {
+                result.put(aField.getName(), aField);
+            });
+            return result;
+        }
     }
 }

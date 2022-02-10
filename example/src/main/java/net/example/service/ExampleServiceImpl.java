@@ -68,7 +68,7 @@ public class ExampleServiceImpl implements ExampleService{
     }
     
     public Page<ExampleBean> getExamples(PageRequest pageRequest) {
-        Page<ExampleEntity> resultPage = repository.find(pageRequest);
+        Page<ExampleEntity> resultPage = repository.find(pageRequest, null);
         Collection<ExampleBean> exampleBeans = resultPage.getElements().stream().map(entity -> {
             ExampleBean exampleBean = new ExampleBean();
             exampleBean.setName(entity.getName());

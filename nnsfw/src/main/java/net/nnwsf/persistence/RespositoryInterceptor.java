@@ -12,6 +12,7 @@ import javax.persistence.Id;
 import net.bytebuddy.implementation.bind.annotation.AllArguments;
 import net.bytebuddy.implementation.bind.annotation.Origin;
 import net.bytebuddy.implementation.bind.annotation.RuntimeType;
+import net.nnwsf.query.SearchTerm;
 import net.nnwsf.resource.PageRequest;
 import net.nnwsf.util.ReflectionHelper;
 
@@ -31,7 +32,7 @@ public class RespositoryInterceptor {
                 executors.put(aMethod, new FindByIdRequestExecutor(entityClass, idClass, aMethod));
             } else if("findAll".equals(aMethod.getName()) && aMethod.getParameterCount() == 0) {
                 executors.put(aMethod, new FindAllRequestExecutor(entityClass, idClass, aMethod));
-            } else if("find".equals(aMethod.getName()) && aMethod.getParameterCount() == 1 && PageRequest.class.equals(aMethod.getParameterTypes()[0])) {
+            } else if("find".equals(aMethod.getName()) && aMethod.getParameterCount() == 2 && PageRequest.class.equals(aMethod.getParameterTypes()[0]) && SearchTerm.class.equals(aMethod.getParameterTypes()[1])) {
                 executors.put(aMethod, new FindWithPageRequestExecutor(entityClass, idClass, aMethod));
             } else if("delete".equals(aMethod.getName()) && aMethod.getParameterCount() == 1) {
                 executors.put(aMethod, new DeleteRequestExecutor(entityClass, idClass, aMethod));
