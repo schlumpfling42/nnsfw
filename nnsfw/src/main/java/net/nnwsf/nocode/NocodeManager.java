@@ -2,9 +2,11 @@ package net.nnwsf.nocode;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Modifier;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.tool.hbm2ddl.SchemaExport;
+import org.hibernate.tool.hbm2ddl.SchemaUpdate;
 import org.hibernate.tool.schema.TargetType;
 
 import net.bytebuddy.ByteBuddy;
@@ -179,6 +182,26 @@ public class NocodeManager {
                     return String.class;
                 case "integer":
                     return Integer.class;
+                case "short":
+                    return Integer.class;
+                case "long":
+                    return Long.class;
+                case "float":
+                    return Float.class;
+                case "double":
+                    return Double.class;
+                case "char":
+                    return Character.class;
+                case "byte":
+                    return Byte.class;
+                case "boolean":
+                    return Boolean.class;
+                case "date":
+                    return Date.class;
+                case "timestamp":
+                    return Timestamp.class;
+                default:
+                    throw new RuntimeException("Unsupported type: " + ((SchemaPrimitive)element).getType());
             }
         }
         return Object.class;
@@ -191,7 +214,7 @@ public class NocodeManager {
         settings.put("hibernate.connection.url", datasourceConfiguration.jdbcUrl());
         settings.put("hibernate.connection.username", datasourceConfiguration.user() == null ? "" : datasourceConfiguration.user());
         settings.put("hibernate.connection.password", datasourceConfiguration.password() == null ? "" : datasourceConfiguration.password());
-        settings.put("hibernate.hbm2ddl.auto", "create");
+        settings.put("hibernate.hbm2ddl.auto", "update");
         Optional.ofNullable(DatasourceManager.getDatasourceConfiguration("default").properties())
             .ifPresent(properties -> Arrays.stream(properties).forEach(property -> settings.put(property.name(), property.value())));
 
@@ -201,10 +224,10 @@ public class NocodeManager {
                         .build());
         entityIdClasses.values().forEach(anEntityIdPair -> metadata.addAnnotatedClass(anEntityIdPair.getFirst()));
         Thread.currentThread().setContextClassLoader(classLoader);
-        SchemaExport schemaExport = new SchemaExport();
-        schemaExport.setHaltOnError(false);
-        schemaExport.setFormat(true);
-        schemaExport.setDelimiter(";");
-        schemaExport.createOnly(EnumSet.of(TargetType.DATABASE), metadata.buildMetadata());
+        SchemaUpdate schemaUpdate = new SchemaUpdate();
+        schemaUpdate.setHaltOnError(false);
+        schemaUpdate.setFormat(true);
+        schemaUpdate.setDelimiter(";");
+        schemaUpdate.execute(EnumSet.of(TargetType.DATABASE), metadata.buildMetadata());
     }
 }

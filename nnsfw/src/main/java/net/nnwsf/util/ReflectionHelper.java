@@ -242,7 +242,15 @@ public class ReflectionHelper {
         return new Class[0];
     }
 
-    public static void copy(Object entity, Object object) {
+    public static void copy(Object entity, Object object, Map<String, Field> fields) {
+        fields.values().forEach(aField -> {
+            try {
+                aField.setAccessible(true);
+                aField.set(entity, aField.get(object));
+            } catch(Exception e) {
+                log.log(Level.WARNING, "Unable to set value for field");
+            }
+        });
     }
 
     public static Map<String, Field> findFields(Class<?> entityClass) {

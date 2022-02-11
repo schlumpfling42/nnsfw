@@ -11,6 +11,26 @@
         "name": {
             "description": "Name of the product",
             "type": "string"
+        },
+        "count": {
+            "description": "Number in stock",
+            "type": "integer"
+        },
+        "price": {
+            "description": "Price",
+            "type": "double"
+        },
+        "isAvailable": {
+            "description": "Availability",
+            "type": "boolean"
+        },
+        "addedDate": {
+            "description": "Date the product was added",
+            "type": "date"
+        },
+        "updatedDate": {
+            "description": "Date the product was updated",
+            "type": "date"
         }
     },
     "required": ["id", "name"]

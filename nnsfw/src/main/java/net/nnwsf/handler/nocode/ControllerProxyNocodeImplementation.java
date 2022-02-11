@@ -1,10 +1,12 @@
 package net.nnwsf.handler.nocode;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import net.nnwsf.application.Constants;
 import net.nnwsf.controller.annotation.RequestParameter;
@@ -17,6 +19,7 @@ import net.nnwsf.nocode.NocodeManager;
 import net.nnwsf.nocode.SchemaObject;
 import net.nnwsf.persistence.PersistenceManager;
 import net.nnwsf.persistence.PersistenceRepository;
+import net.nnwsf.util.ReflectionHelper;
 
 public abstract class ControllerProxyNocodeImplementation implements EndpointProxy {
 
@@ -39,7 +42,7 @@ public abstract class ControllerProxyNocodeImplementation implements EndpointPro
         
     }
 
-    protected class PathVariableImpl implements PathVariable{
+    protected static class PathVariableImpl implements PathVariable{
 
         private final String value;
 
@@ -58,12 +61,13 @@ public abstract class ControllerProxyNocodeImplementation implements EndpointPro
         
     }
 
-    private final SchemaObject schemaObject;
+    protected final SchemaObject schemaObject;
     private final URLMatcher urlMatcher;
     private final String rootPath;
     private final String httpMethod;
     protected final Class<?> entityClass;
     protected final PersistenceRepository repository;
+    protected final Map<String, Field> fields;
 
     ControllerProxyNocodeImplementation(String rootPath, String pathPostFix, String method, SchemaObject schemaObject) {
         this.schemaObject = schemaObject;
@@ -73,6 +77,7 @@ public abstract class ControllerProxyNocodeImplementation implements EndpointPro
         this.entityClass = NocodeManager.getEntityClass(schemaObject).getFirst();
         Class<PersistenceRepository> repositoryClass = NocodeManager.getRepositoryClass(schemaObject);
         repository = (PersistenceRepository)PersistenceManager.createRepository(repositoryClass);
+        this.fields = ReflectionHelper.findFields(entityClass);
     }
 
     public Collection<Annotation> getAnnotations() {

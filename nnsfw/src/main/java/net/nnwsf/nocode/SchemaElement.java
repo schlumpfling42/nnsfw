@@ -8,7 +8,14 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
     @JsonSubTypes.Type(value=SchemaObject.class, name="object"),
     @JsonSubTypes.Type(value=SchemaPrimitive.class, name="string"),
     @JsonSubTypes.Type(value=SchemaPrimitive.class, name="integer"),
-    @JsonSubTypes.Type(value=SchemaPrimitive.class, name="number"),
+    @JsonSubTypes.Type(value=SchemaPrimitive.class, name="long"),
+    @JsonSubTypes.Type(value=SchemaPrimitive.class, name="short"),
+    @JsonSubTypes.Type(value=SchemaPrimitive.class, name="float"),
+    @JsonSubTypes.Type(value=SchemaPrimitive.class, name="double"),
+    @JsonSubTypes.Type(value=SchemaPrimitive.class, name="char"),
+    @JsonSubTypes.Type(value=SchemaPrimitive.class, name="byte"),
+    @JsonSubTypes.Type(value=SchemaPrimitive.class, name="boolean"),
+    @JsonSubTypes.Type(value=SchemaPrimitive.class, name="date"),
     @JsonSubTypes.Type(value=SchemaArray.class, name="array")
 })
 public abstract class SchemaElement {

@@ -372,7 +372,10 @@
               <elementProp name="" elementType="HTTPArgument">
                 <boolProp name="HTTPArgument.always_encode">false</boolProp>
                 <stringProp name="Argument.value">{&#xd;
-&quot;name&quot;: &quot;Test body&quot;&#xd;
+	&quot;name&quot;: &quot;product&quot;,&#xd;
+	&quot;count&quot;: 1,&#xd;
+	&quot;isAvailable&quot;: true,&#xd;
+	&quot;addedDate&quot;: &quot;2022-02-10T22:18:26.625+07:00&quot;&#xd;
 }</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
@@ -410,7 +413,10 @@
               <elementProp name="" elementType="HTTPArgument">
                 <boolProp name="HTTPArgument.always_encode">false</boolProp>
                 <stringProp name="Argument.value">{&#xd;
-&quot;name&quot;: &quot;Test body&quot;&#xd;
+	&quot;name&quot;: &quot;product&quot;,&#xd;
+	&quot;count&quot;: 1,&#xd;
+	&quot;isAvailable&quot;: true,&#xd;
+	&quot;addedDate&quot;: &quot;2022-02-10T22:18:26.625+07:00&quot;&#xd;
 }</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
@@ -628,8 +634,11 @@
               <elementProp name="" elementType="HTTPArgument">
                 <boolProp name="HTTPArgument.always_encode">false</boolProp>
                 <stringProp name="Argument.value">{&#xd;
-&quot;id&quot;: ${id},&#xd;
-&quot;name&quot;: &quot;Test body&quot;&#xd;
+	&quot;id&quot;: ${id},&#xd;
+	&quot;name&quot;: &quot;product&quot;,&#xd;
+	&quot;count&quot;: 1,&#xd;
+	&quot;isAvailable&quot;: true,&#xd;
+	&quot;addedDate&quot;: &quot;2022-02-10T22:18:26.625+07:00&quot;&#xd;
 }</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
