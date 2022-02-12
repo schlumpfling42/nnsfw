@@ -6,7 +6,6 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -19,32 +18,31 @@ import java.util.stream.Collectors;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.MapsId;
-import javax.persistence.OneToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.hibernate.boot.Metadata;
 import org.hibernate.boot.MetadataBuilder;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.BootstrapServiceRegistry;
 import org.hibernate.boot.registry.BootstrapServiceRegistryBuilder;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.hibernate.tool.hbm2ddl.SchemaExport;
 import org.hibernate.tool.hbm2ddl.SchemaUpdate;
 import org.hibernate.tool.schema.TargetType;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeDescription.Generic;
 import net.bytebuddy.dynamic.DynamicType.Builder;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.nnwsf.application.annotation.DatasourceConfiguration;
@@ -190,6 +188,21 @@ public class NocodeManager {
                                 .build())
                             .annotateField(AnnotationDescription.Builder.ofType(JoinColumn.class)
                                 .define("name", attributeName + "_id")
+                                .define("nullable", true)
+                                .build());
+                    } else if(schemaElement instanceof SchemaArray) {
+                        SchemaArray schemaArray = (SchemaArray)schemaElement;
+                        Pair<Class<? extends NocodeEntity>, Class<?>> attributeClass = createEntityClass(schemaArray.getItems().getTitle(), (SchemaObject)schemaArray.getItems());
+                        dependentClasses.add(attributeClass.getFirst());
+                        Generic generic = TypeDescription.Generic.Builder.parameterizedType(Collection.class, attributeClass.getFirst()).build();
+                        builder = builder
+                            .defineField(attributeName, generic , Modifier.PUBLIC)
+                            .annotateField(AnnotationDescription.Builder.ofType(OneToMany.class)
+                                .defineEnumerationArray("cascade", CascadeType.class, CascadeType.ALL)
+                                .define("fetch", FetchType.EAGER)
+                                .build())
+                            .annotateField(AnnotationDescription.Builder.ofType(JoinColumn.class)
+                                .define("name", name + "_id")
                                 .define("nullable", true)
                                 .build());
                     }

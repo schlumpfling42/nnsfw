@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import io.github.classgraph.AnnotationInfo;
+import io.github.classgraph.AnnotationInfoList;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassGraphException;
 import io.github.classgraph.ClassInfo;
@@ -67,7 +68,13 @@ public class ClassDiscovery {
 		for (ClassInfo classInfo : instance.scanResult.getClassesWithAnnotation(annotationClass)) {
 			if(classInfo.extendsSuperclass(type) || (type.isInterface() && classInfo.implementsInterface(type))) {
 				AnnotationInfo annotationInfo = classInfo.getAnnotationInfo(annotationClass);
-				allAnnotatedClasses.put((A)annotationInfo.loadClassAndInstantiate(), (Class<T>)classInfo.loadClass());
+				if(annotationInfo != null) {
+					allAnnotatedClasses.put((A)annotationInfo.loadClassAndInstantiate(), (Class<T>)classInfo.loadClass());
+				}
+				AnnotationInfoList annotationInfoList = classInfo.getAnnotationInfoRepeatable(annotationClass);
+				if(annotationInfoList != null) {
+					annotationInfoList.forEach(anAnnotationInfo -> allAnnotatedClasses.put((A)anAnnotationInfo.loadClassAndInstantiate(), (Class<T>)classInfo.loadClass()));
+				}
 			}
 		}
 		return allAnnotatedClasses;

@@ -45,6 +45,24 @@
                     "type": "string"
                 }
             }
+        },
+        "subProducts": {
+            "type": "array",
+            "items": {
+                "title": "SubProduct",
+                "description": "A sub product from Acme's catalog",
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "description": "The unique identifier for a category",
+                        "type": "integer"
+                    },
+                    "name": {
+                        "description": "Name of the category",
+                        "type": "string"
+                    }
+                }
+            }
         }
     },
     "required": ["id", "name"]

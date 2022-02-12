@@ -7,7 +7,6 @@ import net.nnwsf.application.annotation.AuthenticatedResourcePathConfiguration;
 import net.nnwsf.application.annotation.AuthenticationProviderConfiguration;
 import net.nnwsf.application.annotation.NocodeConfiguration;
 import net.nnwsf.application.annotation.DatasourceConfiguration;
-import net.nnwsf.application.annotation.DatasourceConfigurations;
 import net.nnwsf.application.annotation.FlywayConfiguration;
 import net.nnwsf.application.annotation.ServerConfiguration;
 
@@ -15,12 +14,8 @@ import net.nnwsf.application.annotation.ServerConfiguration;
 @AnnotationConfiguration("net.example")
 @AuthenticatedResourcePathConfiguration("/authenticated")
 @AuthenticationProviderConfiguration
-@DatasourceConfigurations(
-    {
-        @DatasourceConfiguration,
-        @DatasourceConfiguration(name = "nocode")
-    }
-)
+@DatasourceConfiguration
+@DatasourceConfiguration(name = "nocode")
 @FlywayConfiguration
 @ApiDocConfiguration
 @NocodeConfiguration(datasource = "nocode", schemas = "/nocode/product.json", controllerPath = "/nocode")

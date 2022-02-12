@@ -2,6 +2,7 @@ package net.nnwsf.application.annotation;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -16,6 +17,7 @@ import net.nnwsf.configuration.annotation.ConfigurationKey;
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
 @ConfigurationKey("datasource")
+@Repeatable(DatasourceConfigurations.class)
 public @interface DatasourceConfiguration {
     @ConfigurationKey(value = "name", containsKeys = true)
     String name() default Default.DATASOURCE_NAME;
