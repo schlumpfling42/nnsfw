@@ -16,13 +16,13 @@ public class ParserTest {
     public void test() {
         String searchTerm = "key1:value1 OR (key2:'value : 2' AND key3:value3) OR key4:value4";
         SearchTerm result = QueryParser.parseString(searchTerm);
-        Assertions.assertEquals("{key1:value1 OR {key2:'value : 2' AND key3:value3} OR key4:value4}", result.toString());
+        Assertions.assertEquals("{key1:value1 OR {key2:value : 2 AND key3:value3} OR key4:value4}", result.toString());
     }
 
     @Test
     public void testInvalidOperation() {
         String searchTerm = "key1:value1 OR (key2:'value : 2' AND key3:value3) AND key4:value4";
-        RuntimeException exception = Assertions.assertThrowsExactly(RuntimeException.class, () -> QueryParser.parseString(searchTerm), "test");
+        RuntimeException exception = Assertions.assertThrowsExactly(IllegalArgumentException.class, () -> QueryParser.parseString(searchTerm), "test");
         Assertions.assertEquals("Invalid search term 'AND' at position: 53", exception.getMessage());
     }
 

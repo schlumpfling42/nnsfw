@@ -29,6 +29,7 @@ import net.nnwsf.authentication.OpenIdConfiguration;
 import net.nnwsf.authentication.annotation.Authenticated;
 import net.nnwsf.controller.annotation.RequestParameter;
 import net.nnwsf.controller.converter.ContentTypeConverter;
+import net.nnwsf.exceptions.NotFoundException;
 import net.nnwsf.handler.controller.ControllerProxyFactory;
 import net.nnwsf.handler.nocode.NocodeProxyFactory;
 
@@ -192,6 +193,12 @@ public class HttpHandlerImpl implements HttpHandler {
 					}
 				}
 			}
+		} catch (IllegalArgumentException iae) {
+			log.log(Level.SEVERE, "Unable to complete the request", iae);
+			exchange.setStatusCode(400).getResponseSender().send(iae.getMessage());
+		} catch (NotFoundException nfe) {
+			log.log(Level.SEVERE, "Unable to complete the request", nfe);
+			exchange.setStatusCode(404).getResponseSender().send(nfe.getMessage());
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Unable to complete the request", e);
 			exchange.setStatusCode(500).getResponseSender().send("Unexpected error");

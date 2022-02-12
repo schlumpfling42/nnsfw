@@ -3,6 +3,7 @@ package net.nnwsf.handler.nocode;
 import java.lang.reflect.InvocationTargetException;
 
 import net.nnwsf.controller.annotation.RequestBody;
+import net.nnwsf.exceptions.NotFoundException;
 import net.nnwsf.handler.AnnotatedMethodParameter;
 import net.nnwsf.handler.MethodParameter;
 import net.nnwsf.nocode.SchemaObject;
@@ -19,7 +20,7 @@ public class ControllerProxyNocodeSaveImplementation extends ControllerProxyNoco
     public Object invoke(Object[] parameters) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         Object entity = repository.findById(parameters[0]);
         if(entity == null) {
-            throw new RuntimeException("Entity of type " + schemaObject.getTitle() + " not found for id " + parameters[0]);
+            throw new NotFoundException("Entity of type " + schemaObject.getTitle() + " not found for id " + parameters[0]);
         }
         ReflectionHelper.copy(entity, parameters[1], fields);
         return repository.save(entity);

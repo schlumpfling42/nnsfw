@@ -38,13 +38,13 @@ public class QueryParser {
                             if(searchTerm instanceof OperatorTerm) {
                                 OperatorTerm operatorTerm = ((OperatorTerm)searchTerm);
                                 if(!operatorTerm.getOperator().equalsIgnoreCase(term)) {
-                                    throw new RuntimeException("Invalid search term '" + term + "' at position: " + i);
+                                    throw new IllegalArgumentException("Invalid search term '" + term + "' at position: " + i);
                                 }
                             } else {
                                 searchTerm = SearchTerm.operator(searchTerm, term);
                             }
                         } else {
-                            throw new RuntimeException("Invalid search term '" + term + "' at position: " + i);
+                            throw new IllegalArgumentException("Invalid search term '" + term + "' at position: " + i);
                         }
                     } else {
                         List<String> splitStrings = split(term, ':', QUOTES);
@@ -52,7 +52,7 @@ public class QueryParser {
                             if(splitStrings.size() == 2) {
                                 searchTerm = SearchTerm.keyValue(splitStrings.get(0), removeSurroundingQuotes(splitStrings.get(1)));
                             } else {
-                                throw new RuntimeException("Invalid search term '" + term + "' at position: " + i);
+                                throw new IllegalArgumentException("Invalid search term '" + term + "' at position: " + i);
                             }
                         } else {
                             if(splitStrings.size() == 2) {
@@ -60,10 +60,10 @@ public class QueryParser {
                                     OperatorTerm operatorTerm = ((OperatorTerm)searchTerm);
                                     operatorTerm.addValue(SearchTerm.keyValue(splitStrings.get(0), removeSurroundingQuotes(splitStrings.get(1))));
                                 } else {
-                                    throw new RuntimeException("Invalid search term '" + term + "' at position: " + i);
+                                    throw new IllegalArgumentException("Invalid search term '" + term + "' at position: " + i);
                                 }
                             } else {
-                                throw new RuntimeException("Invalid search term '" + term + "' at position: " + i);
+                                throw new IllegalArgumentException("Invalid search term '" + term + "' at position: " + i);
                             }
                         }
                     }
@@ -81,7 +81,7 @@ public class QueryParser {
                         OperatorTerm operatorTerm = (OperatorTerm)searchTerm;
                         operatorTerm.addValue(parseString(lastTerm.toString()));
                     } else {
-                        throw new RuntimeException("Invalid search term '" + lastTerm + "' at position: " + i);
+                        throw new IllegalArgumentException("Invalid search term '" + lastTerm + "' at position: " + i);
                     }
                 } else {
                     searchTerm = parseString(lastTerm.toString());
@@ -179,7 +179,7 @@ public class QueryParser {
                 result = result.substring(1);
             }
             if(result.charAt(result.length()-1) == QUOTES[i]) {
-                result = result.substring(1);
+                result = result.substring(0, result.length()-1);
             }
         }
         return result;

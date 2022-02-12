@@ -18,7 +18,7 @@ public class FindAllRequestExecutor extends Executor {
             entityManagerHolder.commitTransaction();
             return result;
         } else {
-            throw new RuntimeException("Unable to execute db query because of invalid parameters: " + Arrays.stream(params).map(String::valueOf).collect(Collectors.joining(",")));
+            throw new IllegalArgumentException("Unable to execute db query because of invalid parameters: " + Arrays.stream(params).map(String::valueOf).collect(Collectors.joining(",")));
         }
     }
     
