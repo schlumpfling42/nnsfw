@@ -3,10 +3,17 @@ datasource:
     providerClass: org.hibernate.jpa.HibernatePersistenceProvider
     jdbcDriver: org.h2.Driver
     jdbcUrl: jdbc:h2:./example/example
-    user:
-    password:
+    user: 
     properties:
       hibernate.dialect: org.hibernate.dialect.H2Dialect
+  nocode:
+    providerClass: org.hibernate.jpa.HibernatePersistenceProvider
+    jdbcDriver: org.postgresql.Driver
+    jdbcUrl: jdbc:postgresql://localhost:5432/nnsfw
+    user: postgres
+    password: postgres
+    properties:
+      hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
 flyway:
   default:
     location: flyway

@@ -61,7 +61,7 @@ public class ControllerProxyFactory {
 									(controllerAnnotation.value() + "/" + ReflectionHelper.getValue(methodAnnotation, "value")).replace("/+", "/")));
 				}
 			} catch (Exception e) {
-				throw new RuntimeException("Unable to create controller: " + aClass.getName());
+				throw new RuntimeException("Unable to create controller: " + aClass.getName(), e);
 			}
 		}
 	}

@@ -88,6 +88,14 @@ public class ReflectionHelper {
         return null;
     }
 
+    public static <T extends Annotation> T findAnnotation(Field field, Class<T> annotationClass) {
+        T annotation = field.getAnnotation(annotationClass);
+        if(annotation != null) {
+            return annotation;
+        }
+        return null;
+    }
+
     public static <T extends Annotation> Collection<T> findAnnotations(Class<?> aClass, Class<T> annotationClass) {
         Collection<T> foundAnnotations = new ArrayList<>();
         Annotation[] annotations = aClass.getAnnotations();

@@ -375,7 +375,10 @@
 	&quot;name&quot;: &quot;product&quot;,&#xd;
 	&quot;count&quot;: 1,&#xd;
 	&quot;isAvailable&quot;: true,&#xd;
-	&quot;addedDate&quot;: &quot;2022-02-10T22:18:26.625+07:00&quot;&#xd;
+	&quot;addedDate&quot;: &quot;2022-02-10T22:18:26.625+07:00&quot;,&#xd;
+	&quot;category&quot;: {&#xd;
+        &quot;name&quot;: &quot;category&quot;&#xd;
+    }&#xd;
 }</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
@@ -416,7 +419,10 @@
 	&quot;name&quot;: &quot;product&quot;,&#xd;
 	&quot;count&quot;: 1,&#xd;
 	&quot;isAvailable&quot;: true,&#xd;
-	&quot;addedDate&quot;: &quot;2022-02-10T22:18:26.625+07:00&quot;&#xd;
+	&quot;addedDate&quot;: &quot;2022-02-10T22:18:26.625+07:00&quot;,&#xd;
+	&quot;category&quot;: {&#xd;
+        &quot;name&quot;: &quot;category&quot;&#xd;
+    }&#xd;
 }</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
@@ -447,9 +453,10 @@
           </HeaderManager>
           <hashTree/>
           <JSONPostProcessor guiclass="JSONPostProcessorGui" testclass="JSONPostProcessor" testname="JSON Extractor" enabled="true">
-            <stringProp name="JSONPostProcessor.referenceNames">id</stringProp>
-            <stringProp name="JSONPostProcessor.jsonPathExprs">$.id</stringProp>
+            <stringProp name="JSONPostProcessor.referenceNames">id;catId</stringProp>
+            <stringProp name="JSONPostProcessor.jsonPathExprs">$.id;$.category.id</stringProp>
             <stringProp name="JSONPostProcessor.match_numbers"></stringProp>
+            <stringProp name="JSONPostProcessor.defaultValues">1;1</stringProp>
           </JSONPostProcessor>
           <hashTree/>
         </hashTree>
@@ -638,7 +645,11 @@
 	&quot;name&quot;: &quot;product&quot;,&#xd;
 	&quot;count&quot;: 1,&#xd;
 	&quot;isAvailable&quot;: true,&#xd;
-	&quot;addedDate&quot;: &quot;2022-02-10T22:18:26.625+07:00&quot;&#xd;
+	&quot;addedDate&quot;: &quot;2022-02-10T22:18:26.625+07:00&quot;,&#xd;
+	&quot;category&quot;: {&#xd;
+		&quot;id&quot;: ${catId},&#xd;
+     	&quot;name&quot;: &quot;category&quot;&#xd;
+    }&#xd;
 }</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
@@ -737,7 +748,7 @@
       </ResultCollector>
       <hashTree/>
       <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="true">
-        <boolProp name="ResultCollector.error_logging">true</boolProp>
+        <boolProp name="ResultCollector.error_logging">false</boolProp>
         <objProp>
           <name>saveConfig</name>
           <value class="SampleSaveConfiguration">
@@ -771,6 +782,7 @@
           </value>
         </objProp>
         <stringProp name="filename"></stringProp>
+        <boolProp name="ResultCollector.success_only_logging">true</boolProp>
       </ResultCollector>
       <hashTree/>
     </hashTree>

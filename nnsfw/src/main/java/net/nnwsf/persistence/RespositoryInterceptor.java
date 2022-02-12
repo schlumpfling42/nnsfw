@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.persistence.Column;
 import javax.persistence.Id;
 
 import net.bytebuddy.implementation.bind.annotation.AllArguments;
@@ -22,6 +23,11 @@ public class RespositoryInterceptor {
 
     public RespositoryInterceptor(Class<?> entityClass, Class<?> repositoryClass, String datasourceName) {
         Collection<Field> idFields = ReflectionHelper.findAnnotationFields(entityClass, Id.class);
+        Field idField = idFields.iterator().next();
+        Column column = ReflectionHelper.findAnnotation(idField, Column.class);
+    
+        final String idColumnName = column == null ? idField.getName() : column.name();
+
         Class<?> idClass = idFields.iterator().next().getType();
         this.datasourceName = datasourceName;
         executors = new HashMap<>();
@@ -33,7 +39,7 @@ public class RespositoryInterceptor {
             } else if("findAll".equals(aMethod.getName()) && aMethod.getParameterCount() == 0) {
                 executors.put(aMethod, new FindAllRequestExecutor(entityClass, idClass, aMethod));
             } else if("find".equals(aMethod.getName()) && aMethod.getParameterCount() == 2 && PageRequest.class.equals(aMethod.getParameterTypes()[0]) && SearchTerm.class.equals(aMethod.getParameterTypes()[1])) {
-                executors.put(aMethod, new FindWithPageRequestExecutor(entityClass, idClass, aMethod));
+                executors.put(aMethod, new FindWithPageRequestExecutor(entityClass, idClass, idColumnName, aMethod));
             } else if("delete".equals(aMethod.getName()) && aMethod.getParameterCount() == 1) {
                 executors.put(aMethod, new DeleteRequestExecutor(entityClass, idClass, aMethod));
             } else {

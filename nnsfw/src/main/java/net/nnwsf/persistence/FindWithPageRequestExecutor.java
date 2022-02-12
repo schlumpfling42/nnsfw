@@ -22,13 +22,15 @@ public class FindWithPageRequestExecutor extends Executor {
 
     private final String baseQuery;
     private final String baseCountQuery;
+    private final String orderClause;
 
     private final Map<String, Field> fields;
 
-    FindWithPageRequestExecutor(Class<?> entityClass, Class<?> idClass, Method method) {
+    FindWithPageRequestExecutor(Class<?> entityClass, Class<?> idClass, String idColumn, Method method) {
         super(entityClass, idClass, method);
         baseQuery = "select e from " + entityClass.getSimpleName() + " e";
         baseCountQuery = "select Count(e) from " + entityClass.getSimpleName() + " e";
+        orderClause = " order by " + idColumn;
         fields = ReflectionHelper.findFields(entityClass);
     }
 
@@ -47,7 +49,7 @@ public class FindWithPageRequestExecutor extends Executor {
                 appendSearchTerm(searchTerm, whereClauseBuilder, parameters);
 
                 countQuery = entityManagerHolder.getEntityManager().createQuery(baseCountQuery + whereClauseBuilder.toString());
-                query = entityManagerHolder.getEntityManager().createQuery(baseQuery + whereClauseBuilder.toString());
+                query = entityManagerHolder.getEntityManager().createQuery(baseQuery + whereClauseBuilder.toString() + orderClause);
                 parameters.forEach(aParameter -> {
                     countQuery.setParameter(aParameter.getFirst(), aParameter.getSecond());
                     query.setParameter(aParameter.getFirst(), aParameter.getSecond());
@@ -55,7 +57,7 @@ public class FindWithPageRequestExecutor extends Executor {
                 
             } else {
                 countQuery = entityManagerHolder.getEntityManager().createQuery(baseCountQuery);
-                query = entityManagerHolder.getEntityManager().createQuery(baseQuery);
+                query = entityManagerHolder.getEntityManager().createQuery(baseQuery + orderClause);
 
             }
             long totalCount = (Long)countQuery.getSingleResult();

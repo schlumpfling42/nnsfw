@@ -16,7 +16,8 @@ repositories {
 
 dependencies {
     implementation project(":nnsfw")
-    implementation "com.h2database:h2:1.4.200"
+    implementation "com.h2database:h2:1.4.200",
+      "org.postgresql:postgresql:42.3.2"
 }
 
 mainClassName = "net.example.Application"

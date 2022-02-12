@@ -31,6 +31,20 @@
         "updatedDate": {
             "description": "Date the product was updated",
             "type": "date"
+        },
+        "category": {
+            "description": "A category from Acme's catalog",
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "The unique identifier for a category",
+                    "type": "integer"
+                },
+                "name": {
+                    "description": "Name of the category",
+                    "type": "string"
+                }
+            }
         }
     },
     "required": ["id", "name"]
