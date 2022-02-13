@@ -33,6 +33,10 @@ public @interface DatasourceConfiguration {
     String user() default "";
     @ConfigurationKey("${name}.password")
     String password() default "";
+    @ConfigurationKey("${name}.connection.min")
+    int minConnections() default 5;
+    @ConfigurationKey("${name}.connection.max")
+    int maxConnections() default 20;
     @ConfigurationKey("${name}.properties")
     Property[] properties() default {};
 }

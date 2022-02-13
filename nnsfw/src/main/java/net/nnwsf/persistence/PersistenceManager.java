@@ -259,6 +259,11 @@ public class PersistenceManager {
                 .applySetting("hibernate.connection.username", datasourceConfiguration.user() == null ? "" : datasourceConfiguration.user())
                 .applySetting("hibernate.connection.password", datasourceConfiguration.password() == null ? "" : datasourceConfiguration.password())
                 .applySetting("show_sql", "true")
+                .applySetting("hibernate.c3p0.min_size", datasourceConfiguration.minConnections())
+                .applySetting("hibernate.c3p0.max_size", datasourceConfiguration.maxConnections())
+                .applySetting("hibernate.c3p0.timeout", 300)
+                .applySetting("hibernate.c3p0.max_statements", 50)
+                .applySetting("hibernate.c3p0.idle_test_period",3000)
 				.applySettings(properties)
                 .build();
 

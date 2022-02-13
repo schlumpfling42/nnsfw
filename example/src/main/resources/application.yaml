@@ -3,7 +3,8 @@ datasource:
     providerClass: org.hibernate.jpa.HibernatePersistenceProvider
     jdbcDriver: org.h2.Driver
     jdbcUrl: jdbc:h2:./example/example
-    user: 
+    user:
+    password:
     properties:
       hibernate.dialect: org.hibernate.dialect.H2Dialect
   nocode:
@@ -12,6 +13,9 @@ datasource:
     jdbcUrl: jdbc:postgresql://localhost:5432/nnsfw
     user: postgres
     password: postgres
+    connection:
+      min: 5
+      max: 50
     properties:
       hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
 flyway:
