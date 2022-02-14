@@ -1,23 +1,8 @@
 package net.nnwsf.nocode;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-@JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.PROPERTY, property="type", visible=true)
-@JsonSubTypes( {
-    @JsonSubTypes.Type(value=SchemaObject.class, name="object"),
-    @JsonSubTypes.Type(value=SchemaPrimitive.class, name="string"),
-    @JsonSubTypes.Type(value=SchemaPrimitive.class, name="integer"),
-    @JsonSubTypes.Type(value=SchemaPrimitive.class, name="long"),
-    @JsonSubTypes.Type(value=SchemaPrimitive.class, name="short"),
-    @JsonSubTypes.Type(value=SchemaPrimitive.class, name="float"),
-    @JsonSubTypes.Type(value=SchemaPrimitive.class, name="double"),
-    @JsonSubTypes.Type(value=SchemaPrimitive.class, name="char"),
-    @JsonSubTypes.Type(value=SchemaPrimitive.class, name="byte"),
-    @JsonSubTypes.Type(value=SchemaPrimitive.class, name="boolean"),
-    @JsonSubTypes.Type(value=SchemaPrimitive.class, name="date"),
-    @JsonSubTypes.Type(value=SchemaArray.class, name="array")
-})
+@JsonDeserialize(using=SchemeElementDeserializer.class)
 public abstract class SchemaElement {
     private String type;
     private String title;

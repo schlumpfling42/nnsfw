@@ -16,6 +16,7 @@ public class ControllerProxyNocodeSaveImplementation extends ControllerProxyNoco
         super(rootPath, "/{id}", method, schemaObject);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Object invoke(Object[] parameters) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         Object entity = repository.findById(parameters[0]);

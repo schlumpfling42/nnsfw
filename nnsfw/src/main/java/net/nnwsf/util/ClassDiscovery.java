@@ -64,7 +64,7 @@ public class ClassDiscovery {
 
 	@SuppressWarnings("unchecked")
 	public static <T, A extends Annotation> Map<A, Class<T>> discoverAnnotatedClasses(Class<T> type, Class<A> annotationClass) throws Exception {
-		Map<A, Class<T>> allAnnotatedClasses = new IdentityHashMap<>();
+		Map<A, Class<T>> allAnnotatedClasses = new HashMap<>();
 		for (ClassInfo classInfo : instance.scanResult.getClassesWithAnnotation(annotationClass)) {
 			if(classInfo.extendsSuperclass(type) || (type.isInterface() && classInfo.implementsInterface(type))) {
 				AnnotationInfo annotationInfo = classInfo.getAnnotationInfo(annotationClass);
@@ -82,7 +82,7 @@ public class ClassDiscovery {
 
 	@SuppressWarnings("unchecked")
 	public static <T, A extends Annotation> Map<A, Class<T>> discoverAnnotatedClasses(Class<A> annotationClass) throws Exception {
-		Map<A, Class<T>> allAnnotatedClasses = new IdentityHashMap<>();
+		Map<A, Class<T>> allAnnotatedClasses = new HashMap<>();
 		for (ClassInfo classInfo : instance.scanResult.getClassesWithAnnotation(annotationClass)) {
 			AnnotationInfo annotationInfo = classInfo.getAnnotationInfo(annotationClass);
 			allAnnotatedClasses.put((A)annotationInfo.loadClassAndInstantiate(), (Class<T>)classInfo.loadClass());

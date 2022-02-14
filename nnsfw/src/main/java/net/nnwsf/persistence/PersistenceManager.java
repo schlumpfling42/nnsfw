@@ -178,6 +178,7 @@ public class PersistenceManager {
 
     private static PersistenceManager instance;
 
+    @SuppressWarnings("rawtypes")
     public static PersistenceManager init() {
 
         if(instance == null) {
@@ -197,11 +198,13 @@ public class PersistenceManager {
         return instance;
     }
 
+    @SuppressWarnings("rawtypes")
 	private final Map<Class<PersistenceRepository>, Repository> repositoryClassesMap;
 	private final Collection<Class<?>> entityClasses;
     private final Map<String, EntityManagerFactory> entityManagerFactoryMap;
     private final Map<String, ThreadLocal<EntityManager>> entityManagerThreadLocalMap;
 
+    @SuppressWarnings("rawtypes")
 	private PersistenceManager(
 		Map<Repository, Class<PersistenceRepository>> repositoryClasses,
 		Collection<Class<?>> entityClasses,

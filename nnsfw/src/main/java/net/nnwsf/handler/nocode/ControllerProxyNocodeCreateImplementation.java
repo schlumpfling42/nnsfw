@@ -13,6 +13,7 @@ public class ControllerProxyNocodeCreateImplementation extends ControllerProxyNo
         super(rootPath, null, method, schemaObject);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Object invoke(Object[] parameters) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         return repository.save(parameters[0]);

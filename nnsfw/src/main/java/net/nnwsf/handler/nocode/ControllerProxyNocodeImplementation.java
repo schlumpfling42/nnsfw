@@ -23,7 +23,7 @@ import net.nnwsf.util.ReflectionHelper;
 
 public abstract class ControllerProxyNocodeImplementation implements EndpointProxy {
 
-    static class RequestParameterImpl implements RequestParameter{
+    static class RequestParameterImpl implements RequestParameter {
     
         private final String value;
 
@@ -42,7 +42,7 @@ public abstract class ControllerProxyNocodeImplementation implements EndpointPro
         
     }
 
-    protected static class PathVariableImpl implements PathVariable{
+    protected static class PathVariableImpl implements PathVariable {
 
         private final String value;
 
@@ -66,9 +66,11 @@ public abstract class ControllerProxyNocodeImplementation implements EndpointPro
     private final String rootPath;
     private final String httpMethod;
     protected final Class<?> entityClass;
+    @SuppressWarnings("rawtypes")
     protected final PersistenceRepository repository;
     protected final Map<String, Field> fields;
 
+    @SuppressWarnings("rawtypes")
     ControllerProxyNocodeImplementation(String rootPath, String pathPostFix, String method, SchemaObject schemaObject) {
         this.schemaObject = schemaObject;
         this.urlMatcher = new URLMatcher(method, (rootPath + "/" + schemaObject.getTitle() + (pathPostFix == null ? "" : pathPostFix)).toLowerCase().replaceAll("/+", "/"));

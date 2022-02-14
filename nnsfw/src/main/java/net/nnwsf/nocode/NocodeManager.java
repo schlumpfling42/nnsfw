@@ -6,6 +6,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -55,12 +56,35 @@ import net.nnwsf.util.ResourceUtil;
 
 public class NocodeManager {
 
+    private final class RepositoryImplementation implements Repository {
+        private final Pair<Class<? extends NocodeEntity>, Class<?>> entityIdClassPair;
+
+        private RepositoryImplementation(Pair<Class<? extends NocodeEntity>, Class<?>> entityIdClassPair) {
+            this.entityIdClassPair = entityIdClassPair;
+        }
+
+        public Class<?> entityClass() {
+            return entityIdClassPair.getFirst();
+        }
+
+        @Override
+        public Class<? extends Annotation> annotationType() {
+            return Repository.class;
+        }
+
+        @Override
+        public String datasource() {
+            return datasourceConfiguration.name();
+        }
+    }
+
     private static NocodeManager instance;
 
     public static void init(ClassLoader classLoader, NocodeConfiguration nocodeConfiguration) {
         instance = new NocodeManager(classLoader, nocodeConfiguration);
     }
 
+    @SuppressWarnings("rawtypes")
     public static Map<Class<PersistenceRepository>, Repository> getPersistenceClasses() {
         return instance.entityRepositoryMap;
     }
@@ -72,6 +96,7 @@ public class NocodeManager {
         return instance.internalGetEntityClasses();
     }
     
+    @SuppressWarnings("rawtypes")
     public static Class<PersistenceRepository> getRepositoryClass(SchemaObject schemaObject) {
         return instance.respositoryClasses.get(schemaObject);
     }
@@ -92,11 +117,16 @@ public class NocodeManager {
     private final Collection<SchemaObject> schemas;
     private final Map<SchemaObject, Pair<Class<? extends NocodeEntity>, Class<?>>> entityIdClasses;
     private final Map<Class<? extends NocodeEntity>, Collection<Class<? extends NocodeEntity>>> entityDependencies;
+    @SuppressWarnings("rawtypes")
     private final Map<SchemaObject, Class<PersistenceRepository>> respositoryClasses;
+    @SuppressWarnings("rawtypes")
     private final Map<Class<PersistenceRepository>, Repository> entityRepositoryMap;
     private ClassLoader classLoader;
     private final DatasourceConfiguration datasourceConfiguration;
 
+    private final Map<String, SchemaObject> schemaObjects;
+
+    @SuppressWarnings("rawtypes")
     NocodeManager(ClassLoader classLoader, NocodeConfiguration nocodeConfiguration) {
         this.schemas = new ArrayList<>();
         this.entityIdClasses = new HashMap<>();
@@ -113,6 +143,15 @@ public class NocodeManager {
                 try {
                     SchemaObject schemaElement = objectMapper.readValue(ResourceUtil.getResourceAsString(classLoader, aSchemaLocation), SchemaObject.class);
                     schemas.add(schemaElement);
+                } catch(Exception e) {
+                    throw new RuntimeException("Unable to load nocode schema: " + aSchemaLocation, e);
+                }
+            });
+
+            this.schemaObjects = findAllSchemaObjects(schemas);
+            schemas
+            .forEach(schemaElement -> {
+                try {
                     Pair<Class<? extends NocodeEntity>, Class<?>> entityIdClassPair = createEntityClass(schemaElement.getTitle(), schemaElement);
                     entityIdClasses.put(schemaElement, entityIdClassPair);
                     if(this.classLoader == null) {
@@ -120,33 +159,20 @@ public class NocodeManager {
                     }
                     Class<PersistenceRepository> entityRepositoryClass = (Class<PersistenceRepository>)createEntityRepositoryClass(entityIdClassPair);
                     respositoryClasses.put(schemaElement, entityRepositoryClass);
-                    Repository repository = new Repository() {
-                        public Class entityClass() {
-                            return entityIdClassPair.getFirst();
-                        }
-        
-                        @Override
-                        public Class<? extends Annotation> annotationType() {
-                            return Repository.class;
-                        }
-        
-                        @Override
-                        public String datasource() {
-                            return datasourceConfiguration.name();
-                        }
-                    };
+                    Repository repository = new RepositoryImplementation(entityIdClassPair);
                     entityRepositoryMap.put(entityRepositoryClass, repository);
                 } catch(Exception e) {
-                    throw new RuntimeException("Unable to load nocode schema: " + aSchemaLocation, e);
+                    throw new RuntimeException("Unable to create nocode setup for schema: " + schemaElement, e);
                 }
-                createTables();
             });
+            createTables();
             if(this.classLoader == null) {
                 this.classLoader = classLoader;
             }
         } else {
             this.controllerPath = null;
             this.datasourceConfiguration = null;
+            this.schemaObjects = Collections.emptyMap();
         }
 
     }
@@ -159,52 +185,67 @@ public class NocodeManager {
             builder = builder.annotateType(AnnotationDescription.Builder.ofType(Table.class)
                 .define("name", name).build());
             builder = builder.annotateType(AnnotationDescription.Builder.ofType(Entity.class).build());
-            for(Entry<String, SchemaElement> anEntry: schemaObject.getProperties().entrySet()) {
-                SchemaElement schemaElement = anEntry.getValue();
-                String attributeName = anEntry.getKey();
-                if("id".equalsIgnoreCase(attributeName)) {
-                    idClass[0] = getType(schemaElement);
-                    builder = builder
+            if(schemaObject.getProperties() != null) {
+                for(Entry<String, SchemaElement> anEntry: schemaObject.getProperties().entrySet()) {
+                    SchemaElement schemaElement = anEntry.getValue();
+                    String attributeName = anEntry.getKey();
+                    if("id".equalsIgnoreCase(attributeName)) {
+                        idClass[0] = getType(schemaElement);
+                        builder = builder
                         .defineField(attributeName, getType(schemaElement), Modifier.PUBLIC)
                         .annotateField(AnnotationDescription.Builder.ofType(Id.class)
-                            .build())
+                        .build())
                         .annotateField(AnnotationDescription.Builder.ofType(GeneratedValue.class)
                         .define("strategy", GenerationType.IDENTITY)
                         .build());
-                } else {
-                    if(schemaElement instanceof SchemaPrimitive) {
-                        builder = builder
+                    } else {
+                        if(schemaElement instanceof SchemaPrimitive) {
+                            builder = builder
                             .defineField(attributeName, getType(schemaElement), Modifier.PUBLIC)
                             .annotateField(AnnotationDescription.Builder.ofType(Column.class)
-                                .define("name", attributeName)
-                                .build());
-                    } else if(schemaElement instanceof SchemaObject) {
-                        Pair<Class<? extends NocodeEntity>, Class<?>> attributeClass = createEntityClass(attributeName, (SchemaObject)schemaElement);
-                        dependentClasses.add(attributeClass.getFirst());
-                        builder = builder
+                            .define("name", attributeName)
+                            .build());
+                        } else if(schemaElement instanceof SchemaObject) {
+                            Pair<Class<? extends NocodeEntity>, Class<?>> attributeClass = createEntityClass(attributeName, (SchemaObject)schemaElement);
+                            dependentClasses.add(attributeClass.getFirst());
+                            builder = builder
                             .defineField(attributeName, attributeClass.getFirst(), Modifier.PUBLIC)
                             .annotateField(AnnotationDescription.Builder.ofType(ManyToOne.class)
-                                .defineEnumerationArray("cascade", CascadeType.class, CascadeType.ALL)
-                                .build())
+                            .defineEnumerationArray("cascade", CascadeType.class, CascadeType.ALL)
+                            .build())
                             .annotateField(AnnotationDescription.Builder.ofType(JoinColumn.class)
-                                .define("name", attributeName + "_id")
-                                .define("nullable", true)
-                                .build());
-                    } else if(schemaElement instanceof SchemaArray) {
-                        SchemaArray schemaArray = (SchemaArray)schemaElement;
-                        Pair<Class<? extends NocodeEntity>, Class<?>> attributeClass = createEntityClass(schemaArray.getItems().getTitle(), (SchemaObject)schemaArray.getItems());
-                        dependentClasses.add(attributeClass.getFirst());
-                        Generic generic = TypeDescription.Generic.Builder.parameterizedType(Collection.class, attributeClass.getFirst()).build();
-                        builder = builder
+                            .define("name", attributeName + "_id")
+                            .define("nullable", true)
+                            .build());
+                        } else if(schemaElement instanceof SchemaArray) {
+                            SchemaArray schemaArray = (SchemaArray)schemaElement;
+                            Pair<Class<? extends NocodeEntity>, Class<?>> attributeClass = createEntityClass(schemaArray.getItems().getTitle(), (SchemaObject)schemaArray.getItems());
+                            dependentClasses.add(attributeClass.getFirst());
+                            Generic generic = TypeDescription.Generic.Builder.parameterizedType(Collection.class, attributeClass.getFirst()).build();
+                            builder = builder
                             .defineField(attributeName, generic , Modifier.PUBLIC)
                             .annotateField(AnnotationDescription.Builder.ofType(OneToMany.class)
-                                .defineEnumerationArray("cascade", CascadeType.class, CascadeType.ALL)
-                                .define("fetch", FetchType.EAGER)
-                                .build())
+                            .defineEnumerationArray("cascade", CascadeType.class, CascadeType.ALL)
+                            .define("fetch", FetchType.EAGER)
+                            .build())
                             .annotateField(AnnotationDescription.Builder.ofType(JoinColumn.class)
-                                .define("name", name + "_id")
-                                .define("nullable", true)
-                                .build());
+                            .define("name", name + "_id")
+                            .define("nullable", true)
+                            .build());
+                        } else if (schemaElement instanceof SchemaReference) {
+                            SchemaObject aSchemaObject = schemaObjects.get(((SchemaReference)schemaElement).getReference());
+                            Pair<Class<? extends NocodeEntity>, Class<?>> attributeClass = entityIdClasses.get(aSchemaObject);
+                            dependentClasses.add(attributeClass.getFirst());
+                            builder = builder
+                            .defineField(attributeName, attributeClass.getFirst(), Modifier.PUBLIC)
+                            .annotateField(AnnotationDescription.Builder.ofType(ManyToOne.class)
+                            .defineEnumerationArray("cascade", CascadeType.class, CascadeType.ALL)
+                            .build())
+                            .annotateField(AnnotationDescription.Builder.ofType(JoinColumn.class)
+                            .define("name", attributeName + "_id")
+                            .define("nullable", true)
+                            .build());
+                        }
                     }
                 }
             }
@@ -226,6 +267,7 @@ public class NocodeManager {
         return classes;
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private Class<PersistenceRepository> createEntityRepositoryClass(Pair<Class<? extends NocodeEntity>, Class<?>> entityIdClassPair) {
         Builder<?> builder = new ByteBuddy()
             .makeInterface(TypeDescription.Generic.Builder.parameterizedType(PersistenceRepository.class, entityIdClassPair.getFirst(), entityIdClassPair.getSecond()).build());
@@ -304,5 +346,11 @@ public class NocodeManager {
         schemaUpdate.setFormat(true);
         schemaUpdate.setDelimiter(";");
         schemaUpdate.execute(EnumSet.of(TargetType.DATABASE), metadataBuilder.build());
+    }
+
+    private Map<String, SchemaObject> findAllSchemaObjects(Collection<SchemaObject> schemaObjectList) {
+        Map<String, SchemaObject> schemaObjects = new HashMap<>();
+        schemaObjectList.forEach(aSchemaObject -> schemaObjects.put(aSchemaObject.getTitle(), aSchemaObject));
+        return schemaObjects;
     }
 }
