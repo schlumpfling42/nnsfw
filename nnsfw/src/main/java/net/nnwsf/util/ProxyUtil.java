@@ -8,33 +8,31 @@ public class ProxyUtil {
 
     public static <T> T createProxy(Class<T> aClass, Class<?> interceptor) {
         try {
-        return new ByteBuddy()
-        .subclass(aClass)
-        .method(ElementMatchers.isDeclaredBy(aClass))
-        .intercept(MethodDelegation.to(interceptor))
-        .make()
-        .load(aClass.getClassLoader()).getLoaded()
-        .getDeclaredConstructor(new Class[0])
-        .newInstance(new Object[0]);
+            return new ByteBuddy()
+                .subclass(aClass)
+                .method(ElementMatchers.isDeclaredBy(aClass))
+                .intercept(MethodDelegation.to(interceptor))
+                .make()
+                .load(aClass.getClassLoader()).getLoaded()
+                .getDeclaredConstructor(new Class[0])
+                .newInstance(new Object[0]);
         } catch(Exception e) {
-            e.printStackTrace();
-            return null;
+            throw new RuntimeException("Unable to create proxy for class: " + aClass, e);
         }
     }
 
     public static <T> T createProxy(Class<T> aClass, Object interceptor) {
         try {
-        return new ByteBuddy()
-        .subclass(aClass)
-        .method(ElementMatchers.any())
-        .intercept(MethodDelegation.to(interceptor))
-        .make()
-        .load(aClass.getClassLoader()).getLoaded()
-        .getDeclaredConstructor(new Class[0])
-        .newInstance(new Object[0]);
+            return new ByteBuddy()
+                .subclass(aClass)
+                .method(ElementMatchers.any())
+                .intercept(MethodDelegation.to(interceptor))
+                .make()
+                .load(aClass.getClassLoader()).getLoaded()
+                .getDeclaredConstructor(new Class[0])
+                .newInstance(new Object[0]);
         } catch(Exception e) {
-            e.printStackTrace();
-            return null;
+            throw new RuntimeException("Unable to create proxy for class: " + aClass, e);
         }
     }
 }

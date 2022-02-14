@@ -9,6 +9,10 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import net.nnwsf.configuration.ConfigurationManager;
+import net.nnwsf.nocode.NocodeManager;
+import net.nnwsf.persistence.DatasourceManager;
+import net.nnwsf.persistence.PersistenceManager;
 import net.nnwsf.service.annotation.Service;
 import net.nnwsf.util.ClassDiscovery;
 import net.nnwsf.util.InjectionHelper;
@@ -43,7 +47,11 @@ public class TestServiceManager {
     @BeforeAll
     public static void setup() {
         ClassDiscovery.init("net.nnwsf");
+        ConfigurationManager.init(TestServiceManager.class.getClassLoader());
         ServiceManager.init();
+        DatasourceManager.init();
+        NocodeManager.init(null, null);
+        PersistenceManager.init();
     }
 
     @Service

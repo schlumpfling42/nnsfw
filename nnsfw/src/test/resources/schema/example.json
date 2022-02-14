@@ -8,13 +8,13 @@
         "properties": {
             "id": {
                 "description": "The unique identifier for a product",
-                "type": "number"
+                "type": "integer"
             },
             "name": {
                 "type": "string"
             },
             "price": {
-                "type": "number",
+                "type": "integer",
                 "minimum": 0,
                 "exclusiveMinimum": true
             },
@@ -25,15 +25,6 @@
                 },
                 "minItems": 1,
                 "uniqueItems": true
-            },
-            "dimensions": {
-                "type": "object",
-                "properties": {
-                    "length": {"type": "number"},
-                    "width": {"type": "number"},
-                    "height": {"type": "number"}
-                },
-                "required": ["length", "width", "height"]
             }
         },
         "required": ["id", "name", "price"]

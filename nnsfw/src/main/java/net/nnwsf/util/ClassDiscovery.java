@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -63,13 +64,9 @@ public class ClassDiscovery {
 
 	@SuppressWarnings("unchecked")
 	public static <T, A extends Annotation> Map<A, Class<T>> discoverAnnotatedClasses(Class<T> type, Class<A> annotationClass) throws Exception {
-		Map<A, Class<T>> allAnnotatedClasses = new HashMap<>();
+		Map<A, Class<T>> allAnnotatedClasses = new IdentityHashMap<>();
 		for (ClassInfo classInfo : instance.scanResult.getClassesWithAnnotation(annotationClass)) {
 			if(classInfo.extendsSuperclass(type) || (type.isInterface() && classInfo.implementsInterface(type))) {
-				AnnotationInfo annotationInfo = classInfo.getAnnotationInfo(annotationClass);
-				if(annotationInfo != null) {
-					allAnnotatedClasses.put((A)annotationInfo.loadClassAndInstantiate(), (Class<T>)classInfo.loadClass());
-				}
 				AnnotationInfoList annotationInfoList = classInfo.getAnnotationInfoRepeatable(annotationClass);
 				if(annotationInfoList != null) {
 					annotationInfoList.forEach(anAnnotationInfo -> allAnnotatedClasses.put((A)anAnnotationInfo.loadClassAndInstantiate(), (Class<T>)classInfo.loadClass()));
@@ -81,7 +78,7 @@ public class ClassDiscovery {
 
 	@SuppressWarnings("unchecked")
 	public static <T, A extends Annotation> Map<A, Class<T>> discoverAnnotatedClasses(Class<A> annotationClass) throws Exception {
-		Map<A, Class<T>> allAnnotatedClasses = new HashMap<>();
+		Map<A, Class<T>> allAnnotatedClasses = new IdentityHashMap<>();
 		for (ClassInfo classInfo : instance.scanResult.getClassesWithAnnotation(annotationClass)) {
 			AnnotationInfo annotationInfo = classInfo.getAnnotationInfo(annotationClass);
 			allAnnotatedClasses.put((A)annotationInfo.loadClassAndInstantiate(), (Class<T>)classInfo.loadClass());
