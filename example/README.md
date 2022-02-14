@@ -2,6 +2,10 @@
 
 A basic example on how to use NNSFW
 
+## Prerequisites
+1. Gradle - install Gradle 7
+2. PostgreSQL - install Postgres
+
 ## What do I need to start it up?
 
 1. The example relies on Google Authentication for securing some endpoints. You can start it up without adding the credentials, but some endpoints will not work,
@@ -27,10 +31,9 @@ A basic example on how to use NNSFW
 }
 ```
 
-2. You don't need to set it ut to run the example, but there are a couple of ways to configure the examples. First have a look at [application.yaml](src/main/resources/application.yaml). There you have the datasource for the in-memory database configured. Other configuration elements are done in the code via annotations. If you look at [Application,java](src/main/java/net/example/Application.java) you can see an annotation like `@AnnotationConfiguration("net.example")`. This will help the framework to look for other annotations inside the example.
+2. You don't need to set it up to run the example, but there are a couple of ways to configure the examples. First have a look at [application.yaml](src/main/resources/application.yaml). There you have two datasources for the in-memory database and postgresql configured. Please verify that the postgresql configuration is correct. Other configuration elements are done in the code via annotations. If you look at [Application,java](src/main/java/net/example/Application.java) you can see an annotation like `@AnnotationConfiguration("net.example")`. This will help the framework to look for other annotations inside the example.
 
 ## Start the example
-
 After you added the credential file, you can start the example by running `net.example.Application` .
 The startup should only take a few seconds. The default port the example application listens to is 8080.
 To test it out go to the following url: http://lvh.me:8080/index.html
