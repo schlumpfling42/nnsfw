@@ -10,7 +10,7 @@ public class ControllerProxyNocodeDeleteImplementation extends ControllerProxyNo
 
 
     public ControllerProxyNocodeDeleteImplementation(String rootPath, String method, SchemaObject schemaObject, Class<?> controllerClass) {
-        super(rootPath, "/{id}", method, schemaObject, controllerClass);
+        super(rootPath, "/{id}", method, schemaObject, controllerClass, "Delete " + schemaObject.getTitle());
     }
 
     @SuppressWarnings("unchecked")

@@ -10,7 +10,7 @@ public class ControllerProxyNocodeCreateImplementation extends ControllerProxyNo
 
 
     public ControllerProxyNocodeCreateImplementation(String rootPath, String method, SchemaObject schemaObject, Class<?> controllerClass) {
-        super(rootPath, null, method, schemaObject, controllerClass);
+        super(rootPath, null, method, schemaObject, controllerClass, "Create " + schemaObject.getTitle());
     }
 
     @SuppressWarnings("unchecked")

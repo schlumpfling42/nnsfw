@@ -21,7 +21,7 @@ public class ControllerProxyNocodeFindImplementation extends ControllerProxyNoco
     };
 
     public ControllerProxyNocodeFindImplementation(String rootPath, String method, SchemaObject schemaObject, Class<?> controllerClass) {
-        super(rootPath,null,  method, schemaObject, controllerClass);
+        super(rootPath,null,  method, schemaObject, controllerClass, "Find " + schemaObject.getTitle());
     }
 
     @Override

@@ -13,7 +13,7 @@ public class ControllerProxyNocodeSaveImplementation extends ControllerProxyNoco
 
 
     public ControllerProxyNocodeSaveImplementation(String rootPath, String method, SchemaObject schemaObject, Class<?> controllerClass) {
-        super(rootPath, "/{id}", method, schemaObject, controllerClass);
+        super(rootPath, "/{id}", method, schemaObject, controllerClass, "Save " + schemaObject.getTitle());
     }
 
     @SuppressWarnings("unchecked")

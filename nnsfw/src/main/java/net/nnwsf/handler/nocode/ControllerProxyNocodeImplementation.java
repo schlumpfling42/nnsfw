@@ -70,9 +70,10 @@ public abstract class ControllerProxyNocodeImplementation implements EndpointPro
     protected final PersistenceRepository repository;
     protected final Map<String, Field> fields;
     protected final Class<?> controllerClass;
+    protected final Collection<Annotation> annotations;
 
     @SuppressWarnings("rawtypes")
-    ControllerProxyNocodeImplementation(String rootPath, String pathPostFix, String method, SchemaObject schemaObject, Class<?> controllerClass) {
+    ControllerProxyNocodeImplementation(String rootPath, String pathPostFix, String method, SchemaObject schemaObject, Class<?> controllerClass, String description) {
         this.schemaObject = schemaObject;
         this.urlMatcher = new URLMatcher(method, (rootPath + "/" + schemaObject.getTitle() + (pathPostFix == null ? "" : pathPostFix)).toLowerCase().replaceAll("/+", "/"));
         this.rootPath = rootPath;
@@ -82,10 +83,7 @@ public abstract class ControllerProxyNocodeImplementation implements EndpointPro
         repository = (PersistenceRepository)PersistenceManager.createRepository(repositoryClass);
         this.fields = ReflectionHelper.findFields(entityClass);
         this.controllerClass = controllerClass;
-    }
-
-    public Collection<Annotation> getAnnotations() {
-        return Arrays.asList(new ApiDoc() {
+        this.annotations = Arrays.asList(new ApiDoc() {
 
             @Override
             public Class<? extends Annotation> annotationType() {
@@ -94,10 +92,14 @@ public abstract class ControllerProxyNocodeImplementation implements EndpointPro
 
             @Override
             public String value() {
-                return "test";
+                return description;
             }
             
         });
+    }
+
+    public Collection<Annotation> getAnnotations() {
+        return annotations;
     }
 
     public String getContentType() {
