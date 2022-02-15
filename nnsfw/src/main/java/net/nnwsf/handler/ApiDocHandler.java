@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +43,8 @@ public class ApiDocHandler implements HttpHandler {
 
 	private static List<String> methodSortOrder = List.of("Put", "Get", "Post", "Delete");
 
-    static final Collection<Class<?>> simpleTypes = Set.of(String.class, Integer.class, Long.class, Double.class, Float.class, BigDecimal.class, BigInteger.class, int.class, long.class, float.class, double.class, Character.class, char.class, CharSequence.class);
+    static final Collection<Class<?>> simpleTypes = Set.of(String.class, Integer.class, Long.class, Double.class, Float.class, BigDecimal.class, BigInteger.class, int.class, 
+        long.class, float.class, double.class, Character.class, char.class, CharSequence.class, boolean.class, Boolean.class, Date.class);
 
     private static String HTML_TEMPLATE_NAME = "api_html.jte";
 
@@ -100,6 +102,13 @@ public class ApiDocHandler implements HttpHandler {
                     });
                     aControllerDoc.setEndpoints(endpoints);
                     controllers.add(aControllerDoc);
+
+                    Collections.sort(controllers, new Comparator<ControllerDoc>() {
+                        @Override
+                        public int compare(ControllerDoc o1, ControllerDoc o2) {
+                            return o1.getClassName().compareTo(o2.getClassName());
+                        }
+                    });
                 }
             });
 
@@ -126,7 +135,11 @@ public class ApiDocHandler implements HttpHandler {
         if(aClass == null) {
             return null;
         } else if(aClass.isAssignableFrom(Collection.class)) {
-            return CollectionClassDescription.of(getClassDescription(genericClasses[0]));
+            ClassDescription genericClass = getClassDescription(genericClasses[0]);
+            if(genericClass == null) {
+                genericClass = SimpleClassDescription.of(Object.class);
+            }
+            return CollectionClassDescription.of(genericClass);
         } else if(aClass.isAssignableFrom(Map.class)) {
             return MapClassDescription.of(getClassDescription(genericClasses[0]), getClassDescription(genericClasses[1]));
         } else if(simpleTypes.contains(aClass)) {

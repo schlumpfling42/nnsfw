@@ -12,8 +12,8 @@ import net.nnwsf.util.ReflectionHelper;
 public class ControllerProxyNocodeSaveImplementation extends ControllerProxyNocodeImplementation {
 
 
-    public ControllerProxyNocodeSaveImplementation(String rootPath, String method, SchemaObject schemaObject) {
-        super(rootPath, "/{id}", method, schemaObject);
+    public ControllerProxyNocodeSaveImplementation(String rootPath, String method, SchemaObject schemaObject, Class<?> controllerClass) {
+        super(rootPath, "/{id}", method, schemaObject, controllerClass);
     }
 
     @SuppressWarnings("unchecked")

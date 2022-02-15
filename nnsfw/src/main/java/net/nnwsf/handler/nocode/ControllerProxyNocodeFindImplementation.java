@@ -20,8 +20,8 @@ public class ControllerProxyNocodeFindImplementation extends ControllerProxyNoco
         new AnnotatedMethodParameter(new RequestParameterImpl("search"), "search", String.class, 2),
     };
 
-    public ControllerProxyNocodeFindImplementation(String rootPath, String method, SchemaObject schemaObject) {
-        super(rootPath,null,  method, schemaObject);
+    public ControllerProxyNocodeFindImplementation(String rootPath, String method, SchemaObject schemaObject, Class<?> controllerClass) {
+        super(rootPath,null,  method, schemaObject, controllerClass);
     }
 
     @Override

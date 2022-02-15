@@ -4,12 +4,12 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import net.nnwsf.application.Constants;
 import net.nnwsf.controller.annotation.RequestParameter;
+import net.nnwsf.controller.documentation.annotation.ApiDoc;
 import net.nnwsf.controller.annotation.PathVariable;
 import net.nnwsf.handler.AnnotatedMethodParameter;
 import net.nnwsf.handler.EndpointProxy;
@@ -69,9 +69,10 @@ public abstract class ControllerProxyNocodeImplementation implements EndpointPro
     @SuppressWarnings("rawtypes")
     protected final PersistenceRepository repository;
     protected final Map<String, Field> fields;
+    protected final Class<?> controllerClass;
 
     @SuppressWarnings("rawtypes")
-    ControllerProxyNocodeImplementation(String rootPath, String pathPostFix, String method, SchemaObject schemaObject) {
+    ControllerProxyNocodeImplementation(String rootPath, String pathPostFix, String method, SchemaObject schemaObject, Class<?> controllerClass) {
         this.schemaObject = schemaObject;
         this.urlMatcher = new URLMatcher(method, (rootPath + "/" + schemaObject.getTitle() + (pathPostFix == null ? "" : pathPostFix)).toLowerCase().replaceAll("/+", "/"));
         this.rootPath = rootPath;
@@ -80,10 +81,23 @@ public abstract class ControllerProxyNocodeImplementation implements EndpointPro
         Class<PersistenceRepository> repositoryClass = NocodeManager.getRepositoryClass(schemaObject);
         repository = (PersistenceRepository)PersistenceManager.createRepository(repositoryClass);
         this.fields = ReflectionHelper.findFields(entityClass);
+        this.controllerClass = controllerClass;
     }
 
     public Collection<Annotation> getAnnotations() {
-        return Collections.emptyList();
+        return Arrays.asList(new ApiDoc() {
+
+            @Override
+            public Class<? extends Annotation> annotationType() {
+                return ApiDoc.class;
+            }
+
+            @Override
+            public String value() {
+                return "test";
+            }
+            
+        });
     }
 
     public String getContentType() {
@@ -129,7 +143,7 @@ public abstract class ControllerProxyNocodeImplementation implements EndpointPro
 
     @Override
     public Class<?> getControllerClass() {
-        return NocodeController.class;
+        return controllerClass;
     }
 
     @Override

@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -121,7 +122,9 @@ public class HttpHandlerImpl implements HttpHandler {
 		});
 
 		if(apiDocConfiguration != null) {
-			apiDocHandler = new ApiDocHandler(controllerProxyFactory.getProxies());
+			List<EndpointProxy> proxies = new ArrayList<>(controllerProxyFactory.getProxies());
+			proxies.addAll(nocodeProxyFactory.getProxies());
+			apiDocHandler = new ApiDocHandler(proxies);
 			apiDocPath = apiDocConfiguration.value();
 		} else {
 			apiDocHandler = null;

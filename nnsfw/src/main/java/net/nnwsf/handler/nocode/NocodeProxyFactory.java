@@ -6,6 +6,11 @@ import java.util.Collection;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.dynamic.DynamicType.Builder;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.nnwsf.controller.documentation.annotation.ApiDoc;
 import net.nnwsf.handler.EndpointProxy;
 import net.nnwsf.nocode.NocodeManager;
 
@@ -21,11 +26,15 @@ public class NocodeProxyFactory {
 		objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 		proxies = new ArrayList<>();
 		NocodeManager.getSchemas().forEach(aSchemaObject -> {
-			proxies.add(new ControllerProxyNocodeFindAllImplementation(wellFormedControllerRootPath, "GET", aSchemaObject));
-			proxies.add(new ControllerProxyNocodeFindImplementation(wellFormedControllerRootPath, "GET", aSchemaObject));
-			proxies.add(new ControllerProxyNocodeCreateImplementation(wellFormedControllerRootPath, "PUT", aSchemaObject));
-			proxies.add(new ControllerProxyNocodeSaveImplementation(wellFormedControllerRootPath, "POST", aSchemaObject));
-			proxies.add(new ControllerProxyNocodeDeleteImplementation(wellFormedControllerRootPath, "DELETE", aSchemaObject));
+            Builder<?> builder = new ByteBuddy().subclass(NocodeController.class).name("Nocode" + aSchemaObject.getTitle() + "Controller");
+            builder = builder.annotateType(AnnotationDescription.Builder.ofType(ApiDoc.class)
+                .define("value", aSchemaObject.getDescription()).build());
+			Class<?> controllerClass =  builder.make().load(NocodeController.class.getClassLoader(), ClassLoadingStrategy.Default.INJECTION).getLoaded();
+			proxies.add(new ControllerProxyNocodeFindAllImplementation(wellFormedControllerRootPath, "GET", aSchemaObject, controllerClass));
+			proxies.add(new ControllerProxyNocodeFindImplementation(wellFormedControllerRootPath, "GET", aSchemaObject, controllerClass));
+			proxies.add(new ControllerProxyNocodeCreateImplementation(wellFormedControllerRootPath, "PUT", aSchemaObject, controllerClass));
+			proxies.add(new ControllerProxyNocodeSaveImplementation(wellFormedControllerRootPath, "POST", aSchemaObject, controllerClass));
+			proxies.add(new ControllerProxyNocodeDeleteImplementation(wellFormedControllerRootPath, "DELETE", aSchemaObject, controllerClass));
 		});
 }
 

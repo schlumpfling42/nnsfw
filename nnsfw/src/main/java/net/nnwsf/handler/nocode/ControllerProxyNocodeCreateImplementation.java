@@ -9,8 +9,8 @@ import net.nnwsf.nocode.SchemaObject;
 public class ControllerProxyNocodeCreateImplementation extends ControllerProxyNocodeImplementation {
 
 
-    public ControllerProxyNocodeCreateImplementation(String rootPath, String method, SchemaObject schemaObject) {
-        super(rootPath, null, method, schemaObject);
+    public ControllerProxyNocodeCreateImplementation(String rootPath, String method, SchemaObject schemaObject, Class<?> controllerClass) {
+        super(rootPath, null, method, schemaObject, controllerClass);
     }
 
     @SuppressWarnings("unchecked")
