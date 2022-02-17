@@ -23,6 +23,24 @@ import net.nnwsf.util.ReflectionHelper;
 
 public abstract class ControllerProxyNocodeImplementation implements EndpointProxy {
 
+    static class ApiDocImplementation implements ApiDoc {
+        private final String description;
+
+        private ApiDocImplementation(String description) {
+            this.description = description;
+        }
+
+        @Override
+        public Class<? extends Annotation> annotationType() {
+            return ApiDoc.class;
+        }
+
+        @Override
+        public String value() {
+            return description;
+        }
+    }
+
     static class RequestParameterImpl implements RequestParameter {
     
         private final String value;
@@ -83,19 +101,7 @@ public abstract class ControllerProxyNocodeImplementation implements EndpointPro
         repository = (PersistenceRepository)PersistenceManager.createRepository(repositoryClass);
         this.fields = ReflectionHelper.findFields(entityClass);
         this.controllerClass = controllerClass;
-        this.annotations = Arrays.asList(new ApiDoc() {
-
-            @Override
-            public Class<? extends Annotation> annotationType() {
-                return ApiDoc.class;
-            }
-
-            @Override
-            public String value() {
-                return description;
-            }
-            
-        });
+        this.annotations = Arrays.asList(new ApiDocImplementation(description));
     }
 
     public Collection<Annotation> getAnnotations() {
