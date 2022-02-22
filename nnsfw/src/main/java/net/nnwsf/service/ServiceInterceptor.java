@@ -28,7 +28,14 @@ public class ServiceInterceptor {
                     }).chain(session -> 
                         session.withTransaction(trx -> {
                             try {
-                                return callable.call();
+                                Object result = callable.call();
+                                if(result == null) {
+                                    return Uni.createFrom().nullItem();
+                                } else if(result instanceof Uni) {
+                                    return (Uni<Object>)result;
+                                } else {
+                                    return Uni.createFrom().item(result);
+                                }
                             } catch (Exception e) {
                                 trx.markForRollback();
                                 return Uni.createFrom().failure(e);

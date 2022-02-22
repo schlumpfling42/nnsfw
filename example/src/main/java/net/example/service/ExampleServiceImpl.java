@@ -57,10 +57,10 @@ public class ExampleServiceImpl implements ExampleService{
     public Uni<ExampleBean> createExample(String name) {
         ExampleEntity entity = new ExampleEntity();
         entity.setName(name);
-        return repository.save(entity).chain(savedEntity -> repository.findById(entity.getId()).map(foundEntity -> {
+        return repository.save(entity).chain(savedEntity -> repository.findById(savedEntity.getId()).map(foundEntity -> {
             ExampleBean exampleBean = new ExampleBean();
-            exampleBean.setName(entity.getName());
-            exampleBean.setId(entity.getId());
+            exampleBean.setName(foundEntity.getName());
+            exampleBean.setId(foundEntity.getId());
             return exampleBean;
         }));
     }

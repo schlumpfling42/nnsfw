@@ -1,9 +1,7 @@
 package net.example.service;
 
-import java.util.Collection;
 import java.util.List;
 
-import javax.transaction.Transactional;
 
 import io.smallrye.mutiny.Uni;
 import net.example.resource.ExampleBean;

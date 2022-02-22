@@ -71,14 +71,14 @@ Class annotations:
 - Get - defines that this method will be called on an HTTP GET request, the value will be appended to the path defined by the Controller annotation 
 
 Method annotations
-The value defined for the annotations define the path (appended to the controller path) and can contain path variables. The convention for path variables is ```{variable name}```. 
+The value defined for the annotations define the path (appended to the controller path) and can contain path variables. The convention for path variables is ```:<variable name>```. 
 You can also define request parameters.
 
 Example URL http://lhv.me/bar?var2=foo:
 ```    
 @Controller("/")
 public class ExampleController {
-    @Get("/{var1}")
+    @Get("/:var1")
     public String getRequest(
       @PathVariable("var1") String echo, 
       @RequestParameter("var2")) {
@@ -128,7 +128,7 @@ public class ExampleController {
     @Inject
     private ExampleService service;
 
-    @Get("/{var1}")
+    @Get("/:var1")
     public String getRequest(
       @PathVariable("var1") String echo, 
       @RequestParameter("var2")) {

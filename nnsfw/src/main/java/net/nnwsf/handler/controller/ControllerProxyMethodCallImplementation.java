@@ -103,7 +103,14 @@ public class ControllerProxyMethodCallImplementation implements EndpointProxy {
 
     @Override
     public Uni<?> invoke(Object[] parameters) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-        return (Uni<?>)method.invoke(instance, parameters);
+        Object result = method.invoke(instance, parameters);
+        if(result == null) {
+            return Uni.createFrom().nullItem();
+        } else if(result instanceof Uni) {
+            return (Uni<?>)result;
+        } else {
+            return Uni.createFrom().item(result);
+        }
     }
 
     @Override
