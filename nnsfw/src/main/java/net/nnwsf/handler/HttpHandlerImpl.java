@@ -4,9 +4,11 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -73,7 +75,6 @@ public class HttpHandlerImpl {
 	private final EndpointHandlerImpl controllerHandler;
 
 	private final Router router;
-	private final String protocol;
 	private final String hostname;
 	private final int port;
 
@@ -89,7 +90,6 @@ public class HttpHandlerImpl {
 		AuthenticationProviderConfiguration authenticationProviderConfiguration,
 		ApiDocConfiguration apiDocConfiguration,
 		Vertx vertx) {
-		this.protocol = protocol;
 		this.hostname = hostname;
 		this.port = port;
 		this.controllerHandler = new EndpointHandlerImpl(converterClasses);
@@ -157,6 +157,14 @@ public class HttpHandlerImpl {
 			}
 		});
 
+		if(apiDocConfiguration != null) {
+			List<EndpointProxy> proxies = new ArrayList<>(controllerProxyFactory.getProxies());
+			proxies.addAll(nocodeProxyFactory.getProxies());
+			ApiDocHandler apiDocHandler = new ApiDocHandler(proxies);
+			String apiDocPath = apiDocConfiguration.value();
+			router.get(apiDocPath).respond(routingContext -> apiDocHandler.handle(routingContext));
+		}
+
 		router.get("/*").handler(StaticHandler
 			.create("." + resourcePath )
 			.setCachingEnabled(false)
@@ -209,16 +217,6 @@ public class HttpHandlerImpl {
 				throw new RuntimeException("Unable to initialize open auth", e);
 			}
 		}
-
-		// if(apiDocConfiguration != null) {
-		// 	List<EndpointProxy> proxies = new ArrayList<>(controllerProxyFactory.getProxies());
-		// 	proxies.addAll(nocodeProxyFactory.getProxies());
-		// 	apiDocHandler = new ApiDocHandler(proxies);
-		// 	apiDocPath = apiDocConfiguration.value();
-		// } else {
-		// 	apiDocHandler = null;
-		// 	apiDocPath = null;
-		// }
 	}
 
 

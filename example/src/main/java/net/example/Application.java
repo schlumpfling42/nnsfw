@@ -16,7 +16,7 @@ import net.nnwsf.application.annotation.ServerConfiguration;
 @AuthenticationProviderConfiguration
 @DatasourceConfiguration
 @FlywayConfiguration
-// @ApiDocConfiguration
+@ApiDocConfiguration
 @NocodeConfiguration(schemas = {"/nocode/category.json", "/nocode/product.json"}, controllerPath = "/nocode")
 public class Application {
     public static void main(String[] args) {

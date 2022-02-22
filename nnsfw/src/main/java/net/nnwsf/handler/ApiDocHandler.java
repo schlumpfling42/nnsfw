@@ -31,6 +31,10 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import gg.jte.TemplateEngine;
+import gg.jte.TemplateOutput;
+import gg.jte.output.StringOutput;
+import io.smallrye.mutiny.Uni;
+import io.vertx.mutiny.ext.web.RoutingContext;
 
 public class ApiDocHandler {
 
@@ -110,6 +114,13 @@ public class ApiDocHandler {
         } catch (Exception e) {
             logger.log(Level.WARNING, "Unable to initialize API Documentation endpoint", e);
         }
+    }
+
+    public Uni<?> handle(RoutingContext routingContext) {
+        routingContext.response().putHeader("Content-Type", Constants.CONTENT_TYPE_TEXT_HTML);
+		TemplateOutput output = new StringOutput();
+        templateEngine.render(HTML_TEMPLATE_NAME, controllers, output);
+        return routingContext.response().end(output.toString());
     }
 
     private ClassDescription getClassDescription(Class<?> aClass) {

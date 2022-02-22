@@ -25,7 +25,6 @@ import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.reactive.mutiny.Mutiny;
 import org.hibernate.reactive.mutiny.Mutiny.Session;
 import org.hibernate.reactive.provider.ReactiveServiceRegistryBuilder;
-import org.hibernate.reactive.vertx.VertxInstance;
 
 import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.core.Vertx;
@@ -194,6 +193,7 @@ public class PersistenceManager {
 		);
 	}
 
+    @SuppressWarnings("rawtypes")
 	public static String getDatasource(Class<PersistenceRepository> repositoryClass) {
 		return instance.repositoryClassesMap.get(repositoryClass).datasource();
 	}
