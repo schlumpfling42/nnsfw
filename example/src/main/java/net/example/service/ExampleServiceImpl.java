@@ -54,41 +54,44 @@ public class ExampleServiceImpl implements ExampleService{
             });
     }
 
-    // public Uni<ExampleBean> createExample(String name) {
-    //     ExampleEntity entity = new ExampleEntity();
-    //     entity.setName(name);
-    //     entity = repository.save(entity);
-    //     entity = repository.findById(entity.getId());
-    //     ExampleBean exampleBean = new ExampleBean();
-    //     exampleBean.setName(entity.getName());
-    //     exampleBean.setId(entity.getId());
-    //     return exampleBean;
-    // }
+    public Uni<ExampleBean> createExample(String name) {
+        ExampleEntity entity = new ExampleEntity();
+        entity.setName(name);
+        return repository.save(entity).chain(savedEntity -> repository.findById(entity.getId()).map(foundEntity -> {
+            ExampleBean exampleBean = new ExampleBean();
+            exampleBean.setName(entity.getName());
+            exampleBean.setId(entity.getId());
+            return exampleBean;
+        }));
+    }
 
-    // public Uni<ExampleBean> saveExample(int id, ExampleBean bean) {
-    //     ExampleEntity entity = repository.findById(id);
-    //     entity.setName(bean.getName());
-    //     entity = repository.save(entity);
-    //     ExampleBean exampleBean = new ExampleBean();
-    //     exampleBean.setName(entity.getName());
-    //     exampleBean.setId(entity.getId());
-    //     return exampleBean;
-    // }
+    public Uni<ExampleBean> saveExample(int id, ExampleBean bean) {
+        return repository.findById(id).chain(foundEntity -> {
+            foundEntity.setName(bean.getName());
+            return repository.save(foundEntity).map(savedEntity -> {
+                ExampleBean exampleBean = new ExampleBean();
+                exampleBean.setName(savedEntity.getName());
+                exampleBean.setId(savedEntity.getId());
+                return exampleBean;
+            });
+        });
+    }
 
-    // public Uni<Void> deleteExample(int id) {
-    //     ExampleEntity entity = repository.findById(id);
-    //     repository.delete(entity);
-    // }
+    public Uni<Void> deleteExample(int id) {
+        return repository.findById(id).chain(foundEntity ->
+            repository.delete(foundEntity));
+    }
     
-    // public Uni<Page<ExampleBean>> getExamples(PageRequest pageRequest) {
-    //     Page<ExampleEntity> resultPage = repository.find(pageRequest, null);
-    //     Collection<ExampleBean> exampleBeans = resultPage.getElements().stream().map(entity -> {
-    //         ExampleBean exampleBean = new ExampleBean();
-    //         exampleBean.setName(entity.getName());
-    //         exampleBean.setId(entity.getId());
-    //         return exampleBean;
-    //     }).collect(Collectors.toList());
-    //     return new Page<ExampleBean>(resultPage.getTotalNumber(), pageRequest, exampleBeans);
-    // }
+    public Uni<Page<ExampleBean>> getExamples(PageRequest pageRequest) {
+        return repository.find(pageRequest, null).map(resultPage -> {
+            Collection<ExampleBean> exampleBeans = resultPage.getElements().stream().map(entity -> {
+                ExampleBean exampleBean = new ExampleBean();
+                exampleBean.setName(entity.getName());
+                exampleBean.setId(entity.getId());
+                return exampleBean;
+            }).collect(Collectors.toList());
+            return new Page<ExampleBean>(resultPage.getTotalNumber(), pageRequest, exampleBeans);
+        });
+    }
 
 }

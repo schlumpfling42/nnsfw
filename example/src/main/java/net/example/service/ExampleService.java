@@ -1,7 +1,5 @@
 package net.example.service;
 
-import java.util.Collection;
-
 import javax.transaction.Transactional;
 
 import io.smallrye.mutiny.Uni;
@@ -18,14 +16,14 @@ public interface ExampleService {
 
     Uni<String> log(String aString);
 
-    // @Transactional
-    // Uni<ExampleBean> createExample(String name);
+    @Transactional
+    Uni<ExampleBean> createExample(String name);
 
-    // @Transactional
-    // Uni<ExampleBean> saveExample(int id, ExampleBean exampleBean);
+    @Transactional
+    Uni<ExampleBean> saveExample(int id, ExampleBean exampleBean);
 
-    // @Transactional
-    // Uni<Void> deleteExample(int id);
+    @Transactional
+    Uni<Void> deleteExample(int id);
 
-    // Uni<Page<ExampleBean>> getExamples(PageRequest pageRequest);
+    Uni<Page<ExampleBean>> getExamples(PageRequest pageRequest);
 }

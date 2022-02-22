@@ -13,8 +13,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import net.nnwsf.application.TestApplication;
-import net.nnwsf.application.annotation.DatasourceConfiguration;
-import net.nnwsf.application.annotation.Property;
 import net.nnwsf.service.annotation.Service;
 import net.nnwsf.util.InjectionHelper;
 

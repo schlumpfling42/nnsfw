@@ -21,22 +21,23 @@ public class ExampleService2Impl implements ExampleService {
         return Uni.createFrom().item(echo);
     }
 
-    // public ExampleBean createExample(String name) {
-    //     ExampleBean newBean = new ExampleBean();
-    //     newBean.setName(name);
-    //     return newBean;
-    // }
+    public Uni<ExampleBean> createExample(String name) {
+        ExampleBean newBean = new ExampleBean();
+        newBean.setName(name);
+        return Uni.createFrom().item(newBean);
+    }
 
-    // public ExampleBean saveExample(int id, ExampleBean bean) {
-    //     return bean;
-    // }
+    public Uni<ExampleBean> saveExample(int id, ExampleBean bean) {
+        return Uni.createFrom().item(bean);
+    }
 
-    // public Page<ExampleBean> getExamples(PageRequest pageRequest) {
-    //     ExampleBean newBean = new ExampleBean();
-    //     newBean.setName("Test");
-    //     return new Page<ExampleBean>(1, pageRequest, List.of(newBean));
-    // }
+    public Uni<Page<ExampleBean>> getExamples(PageRequest pageRequest) {
+        ExampleBean newBean = new ExampleBean();
+        newBean.setName("Test");
+        return Uni.createFrom().item(new Page<ExampleBean>(1, pageRequest, List.of(newBean)));
+    }
 
-    // public void deleteExample(int id) {
-    // }
+    public Uni<Void> deleteExample(int id) {
+        return Uni.createFrom().voidItem();
+    }
 }

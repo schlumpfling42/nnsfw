@@ -34,9 +34,9 @@ public class TestApplication {
     @BeforeAll
     public static void init() {
         PostgreSQLContainer<?> postgreSQLContainer = new PostgreSQLContainer<>("postgres:11-alpine")
-        .withDatabaseName("postgres")
-        .withUsername("postgres")
-        .withPassword("postgres");
+            .withDatabaseName("postgres")
+            .withUsername("postgres")
+            .withPassword("postgres");
   
         postgreSQLContainer.start();
 

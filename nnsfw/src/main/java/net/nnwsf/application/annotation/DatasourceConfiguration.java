@@ -7,8 +7,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import javax.persistence.spi.PersistenceProvider;
-
 import net.nnwsf.configuration.Default;
 import net.nnwsf.configuration.annotation.ConfigurationKey;
 
