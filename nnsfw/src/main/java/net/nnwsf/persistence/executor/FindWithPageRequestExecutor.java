@@ -9,11 +9,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.hibernate.LockMode;
 import org.hibernate.reactive.mutiny.Mutiny.Query;
 import org.hibernate.reactive.mutiny.Mutiny.Session;
 
-import io.smallrye.mutiny.ItemWithContext;
 import io.smallrye.mutiny.Uni;
 import net.nnwsf.query.KeyValueTerm;
 import net.nnwsf.query.OperatorTerm;
@@ -41,11 +39,16 @@ public class FindWithPageRequestExecutor extends Executor {
 
     @Override
     public Uni<?> execute(Session session, Object[] params) {
+        PageRequest aPageRequest = null;
         if(PageRequest.class.isInstance(params[0])) {
-            long startTime = System.currentTimeMillis();
+            aPageRequest = (PageRequest)params[0];
+        } else if( params[0] == null) {
+            aPageRequest = PageRequest.of(0, 100);
+        }
+        if(aPageRequest != null) {
             Query<Long> countQuery;
             Query<Collection<?>> query;
-            PageRequest pageRequest = (PageRequest)params[0];
+            PageRequest pageRequest = aPageRequest;
             int start = pageRequest.getPage() * pageRequest.getSize();
             SearchTerm searchTerm = (SearchTerm)params[1];
             if(searchTerm != null) {
@@ -70,13 +73,10 @@ public class FindWithPageRequestExecutor extends Executor {
             query.setFirstResult(start);
             query.setMaxResults(pageRequest.getSize());
             return countQuery.getSingleResult().attachContext().map(itemWithContext -> {
-                itemWithContext.context().put("SQL", System.currentTimeMillis() - startTime);
                 return itemWithContext.get();
             }).chain(count -> {
-                long startTime2 = System.currentTimeMillis();
                 return query.getResultList()
                 .map(list -> new Page<>(count, pageRequest, list)).attachContext().map(itemWithContext -> {
-                    itemWithContext.context().put("SQL", itemWithContext.context().get("SQL") + ":" + (System.currentTimeMillis() - startTime2));
                     return itemWithContext.get();
                 });
             });

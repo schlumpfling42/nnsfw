@@ -8,7 +8,7 @@ datasource:
     connection:
       max: 50
     properties:
-      hibernate.dialect: org.hibernate.dialect.PostgreSQL94Dialect
+      hibernate.dialect: org.hibernate.dialect.PostgreSQL95Dialect
 flyway:
   default:
     location: flyway

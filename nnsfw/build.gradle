@@ -44,7 +44,9 @@ dependencies {
             "io.smallrye.reactive:smallrye-mutiny-vertx-web:2.18.1"
 
     testImplementation "org.junit.jupiter:junit-jupiter-api:5.8.1",
-            "com.h2database:h2:1.4.200",
+            "org.testcontainers:postgresql:1.16.0",
+            "io.vertx:vertx-pg-client:4.2.5",
+            "org.postgresql:postgresql:42.3.2",
             "io.smallrye.reactive:smallrye-mutiny-vertx-pg-client:2.18.1"
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.8.1"
 }

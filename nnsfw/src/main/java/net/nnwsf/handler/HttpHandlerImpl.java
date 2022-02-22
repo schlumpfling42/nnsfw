@@ -163,49 +163,51 @@ public class HttpHandlerImpl {
 			.setAllowRootFileSystemAccess(false)
 		);
 		
-		try {
-			@SuppressWarnings("unchecked")
-			Map<String, Object> credentialsMap = (Map<String, Object>) new ObjectMapper().readValue(
-					new InputStreamReader(ClassLoader.getSystemClassLoader().getResourceAsStream(authenticationProviderConfiguration.jsonFileName())),
-					Map.class);
-			@SuppressWarnings("unchecked")
-			Map<String, Object> credentialParameters =  (Map<String, Object>) credentialsMap.get("web");
+		if(authenticationProviderConfiguration != null && authenticationProviderConfiguration.jsonFileName() != null) {
+			try {
+				@SuppressWarnings("unchecked")
+				Map<String, Object> credentialsMap = (Map<String, Object>) new ObjectMapper().readValue(
+						new InputStreamReader(ClassLoader.getSystemClassLoader().getResourceAsStream(authenticationProviderConfiguration.jsonFileName())),
+						Map.class);
+				@SuppressWarnings("unchecked")
+				Map<String, Object> credentialParameters =  (Map<String, Object>) credentialsMap.get("web");
 
-			String clientId = (String) credentialParameters.get("client_id");
-			String clientSecret =(String) credentialParameters.get("client_secret");
+				String clientId = (String) credentialParameters.get("client_id");
+				String clientSecret =(String) credentialParameters.get("client_secret");
 
-			URL authUri = URI.create((String)credentialParameters.get("auth_uri")).toURL();
-			// authUri
-			String tokenUri = (String)credentialParameters.get("token_uri");
+				URL authUri = URI.create((String)credentialParameters.get("auth_uri")).toURL();
+				// authUri
+				String tokenUri = (String)credentialParameters.get("token_uri");
 
 
-			OAuth2Auth authProvider = OAuth2Auth.create(vertx, new OAuth2Options()
-				.setClientId(clientId)
-				.setClientSecret(clientSecret)
-				.setFlow(OAuth2FlowType.AUTH_CODE)
-				.setSite(authUri.getProtocol() + "://" + authUri.getHost())
-				.setTokenPath(tokenUri)
-				.setAuthorizationPath(authUri.getPath()))
-			;
+				OAuth2Auth authProvider = OAuth2Auth.create(vertx, new OAuth2Options()
+					.setClientId(clientId)
+					.setClientSecret(clientSecret)
+					.setFlow(OAuth2FlowType.AUTH_CODE)
+					.setSite(authUri.getProtocol() + "://" + authUri.getHost())
+					.setTokenPath(tokenUri)
+					.setAuthorizationPath(authUri.getPath()))
+				;
 
-			OAuth2AuthHandler handler = OAuth2AuthHandler.create(vertx, authProvider, protocol + "://" + hostname + ":" + port  + authenticationProviderConfiguration.callbackPath())
-					.setupCallback(router.route(authenticationProviderConfiguration.callbackPath()));
+				OAuth2AuthHandler handler = OAuth2AuthHandler.create(vertx, authProvider, protocol + "://" + hostname + ":" + port  + authenticationProviderConfiguration.callbackPath())
+						.setupCallback(router.route(authenticationProviderConfiguration.callbackPath()));
 
-			Field aField = handler.getClass().getDeclaredField("delegate");
-			aField.setAccessible(true);
-			aField.set(handler, handler.getDelegate().withScopes(Arrays.asList("https://www.googleapis.com/auth/userinfo.email", "openid", "https://www.googleapis.com/auth/userinfo.profile")));
+				Field aField = handler.getClass().getDeclaredField("delegate");
+				aField.setAccessible(true);
+				aField.set(handler, handler.getDelegate().withScopes(Arrays.asList("https://www.googleapis.com/auth/userinfo.email", "openid", "https://www.googleapis.com/auth/userinfo.profile")));
 
-			authenticatedResourcePaths.forEach(aPath -> {
-				Router subRouter = Router.router(vertx);
-				subRouter.get("/*").handler(handler)
-					.handler(StaticHandler
-						.create("." + resourcePath + aPath)
-						.setCachingEnabled(false)
-						.setAllowRootFileSystemAccess(false));
-				router.mountSubRouter(aPath, subRouter);
-				});
-		} catch (Exception e) {
-			throw new RuntimeException("Unable to initialize open auth", e);
+				authenticatedResourcePaths.forEach(aPath -> {
+					Router subRouter = Router.router(vertx);
+					subRouter.get("/*").handler(handler)
+						.handler(StaticHandler
+							.create("." + resourcePath + aPath)
+							.setCachingEnabled(false)
+							.setAllowRootFileSystemAccess(false));
+					router.mountSubRouter(aPath, subRouter);
+					});
+			} catch (Exception e) {
+				throw new RuntimeException("Unable to initialize open auth", e);
+			}
 		}
 
 		// if(apiDocConfiguration != null) {
