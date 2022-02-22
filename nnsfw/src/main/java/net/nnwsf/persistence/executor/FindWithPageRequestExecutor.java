@@ -1,15 +1,20 @@
-package net.nnwsf.persistence;
+package net.nnwsf.persistence.executor;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import javax.persistence.Query;
+import org.hibernate.LockMode;
+import org.hibernate.reactive.mutiny.Mutiny.Query;
+import org.hibernate.reactive.mutiny.Mutiny.Session;
 
+import io.smallrye.mutiny.ItemWithContext;
+import io.smallrye.mutiny.Uni;
 import net.nnwsf.query.KeyValueTerm;
 import net.nnwsf.query.OperatorTerm;
 import net.nnwsf.query.SearchTerm;
@@ -26,7 +31,7 @@ public class FindWithPageRequestExecutor extends Executor {
 
     private final Map<String, Field> fields;
 
-    FindWithPageRequestExecutor(Class<?> entityClass, Class<?> idClass, String idColumn, Method method) {
+    public FindWithPageRequestExecutor(Class<?> entityClass, Class<?> idClass, String idColumn, Method method) {
         super(entityClass, idClass, method);
         baseQuery = "select e from " + entityClass.getSimpleName() + " e";
         baseCountQuery = "select Count(e) from " + entityClass.getSimpleName() + " e";
@@ -35,10 +40,11 @@ public class FindWithPageRequestExecutor extends Executor {
     }
 
     @Override
-    public Object execute(EntityManagerHolder entityManagerHolder, Object[] params) {
+    public Uni<?> execute(Session session, Object[] params) {
         if(PageRequest.class.isInstance(params[0])) {
-            Query countQuery;
-            Query query;
+            long startTime = System.currentTimeMillis();
+            Query<Long> countQuery;
+            Query<Collection<?>> query;
             PageRequest pageRequest = (PageRequest)params[0];
             int start = pageRequest.getPage() * pageRequest.getSize();
             SearchTerm searchTerm = (SearchTerm)params[1];
@@ -48,23 +54,32 @@ public class FindWithPageRequestExecutor extends Executor {
                 whereClauseBuilder.append(" where");
                 appendSearchTerm(searchTerm, whereClauseBuilder, parameters);
 
-                countQuery = entityManagerHolder.getEntityManager().createQuery(baseCountQuery + whereClauseBuilder.toString());
-                query = entityManagerHolder.getEntityManager().createQuery(baseQuery + whereClauseBuilder.toString() + orderClause);
+                countQuery = session.createQuery(baseCountQuery + whereClauseBuilder.toString());
+                query = session.createQuery(baseQuery + whereClauseBuilder.toString() + orderClause);
                 parameters.forEach(aParameter -> {
                     countQuery.setParameter(aParameter.getFirst(), aParameter.getSecond());
                     query.setParameter(aParameter.getFirst(), aParameter.getSecond());
                 });
                 
             } else {
-                countQuery = entityManagerHolder.getEntityManager().createQuery(baseCountQuery);
-                query = entityManagerHolder.getEntityManager().createQuery(baseQuery + orderClause);
+                countQuery = session.createQuery(baseCountQuery);
+                query = session.createQuery(baseQuery + orderClause);
 
             }
-            long totalCount = (Long)countQuery.getSingleResult();
+            query.setReadOnly(true);
             query.setFirstResult(start);
             query.setMaxResults(pageRequest.getSize());
-            List<?> resultList = query.getResultList();
-            return new Page<>(totalCount, pageRequest, resultList);
+            return countQuery.getSingleResult().attachContext().map(itemWithContext -> {
+                itemWithContext.context().put("SQL", System.currentTimeMillis() - startTime);
+                return itemWithContext.get();
+            }).chain(count -> {
+                long startTime2 = System.currentTimeMillis();
+                return query.getResultList()
+                .map(list -> new Page<>(count, pageRequest, list)).attachContext().map(itemWithContext -> {
+                    itemWithContext.context().put("SQL", itemWithContext.context().get("SQL") + ":" + (System.currentTimeMillis() - startTime2));
+                    return itemWithContext.get();
+                });
+            });
         } else {
             throw new IllegalArgumentException("Unable to execute db query because of invalid parameters: " + Arrays.stream(params).map(Object::toString).collect(Collectors.joining(",")));
         }

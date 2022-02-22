@@ -21,8 +21,6 @@ import net.nnwsf.configuration.annotation.ConfigurationKey;
 public @interface DatasourceConfiguration {
     @ConfigurationKey(value = "name", containsKeys = true)
     String name() default Default.DATASOURCE_NAME;
-    @ConfigurationKey("${name}.providerClass")
-    Class<? extends PersistenceProvider> providerClass() default PersistenceProvider.class;
     @ConfigurationKey("${name}.jdbcDriver")
     String jdbcDriver() default "";
     @ConfigurationKey("${name}.jdbcUrl")

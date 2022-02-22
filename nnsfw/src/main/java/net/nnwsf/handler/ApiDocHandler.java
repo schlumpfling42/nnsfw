@@ -1,8 +1,5 @@
 package net.nnwsf.handler;
 
-import io.undertow.server.HttpHandler;
-import io.undertow.server.HttpServerExchange;
-import io.undertow.util.Headers;
 import net.nnwsf.application.Constants;
 import net.nnwsf.controller.annotation.RequestBody;
 import net.nnwsf.controller.documentation.annotation.ApiDoc;
@@ -34,10 +31,8 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import gg.jte.TemplateEngine;
-import gg.jte.TemplateOutput;
-import gg.jte.output.StringOutput;
 
-public class ApiDocHandler implements HttpHandler {
+public class ApiDocHandler {
 
 	private final static Logger logger = Logger.getLogger(ApiDocHandler.class.getName());
 
@@ -153,12 +148,5 @@ public class ApiDocHandler implements HttpHandler {
         return Map.entry(aField.getName(), getClassDescription(aField.getType(), ReflectionHelper.getGenericTypes(aField)));
     }
 
-	@Override
-	public void handleRequest(final HttpServerExchange exchange) throws Exception {
-		exchange.getResponseHeaders().add(Headers.CONTENT_TYPE, Constants.CONTENT_TYPE_TEXT_HTML);
-		TemplateOutput output = new StringOutput();
-        templateEngine.render(HTML_TEMPLATE_NAME, controllers, output);
-        exchange.getResponseSender().send(output.toString());
-	}
 
 }

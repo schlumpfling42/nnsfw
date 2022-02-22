@@ -15,10 +15,9 @@ import net.nnwsf.application.annotation.ServerConfiguration;
 @AuthenticatedResourcePathConfiguration("/authenticated")
 @AuthenticationProviderConfiguration
 @DatasourceConfiguration
-@DatasourceConfiguration(name = "nocode")
 @FlywayConfiguration
-@ApiDocConfiguration
-@NocodeConfiguration(datasource = "nocode", schemas = {"/nocode/category.json", "/nocode/product.json"}, controllerPath = "/nocode")
+// @ApiDocConfiguration
+@NocodeConfiguration(schemas = {"/nocode/category.json", "/nocode/product.json"}, controllerPath = "/nocode")
 public class Application {
     public static void main(String[] args) {
          ApplicationServer.start(Application.class);

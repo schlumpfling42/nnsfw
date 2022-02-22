@@ -7,10 +7,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import io.undertow.server.HttpServerExchange;
 import net.nnwsf.util.InjectionHelper;
 import net.nnwsf.util.ReflectionHelper;
 import net.nnwsf.application.Constants;
@@ -58,7 +54,7 @@ public class ControllerProxyFactory {
 					proxies.add(new ControllerProxyMethodCallImplementation(object, methodAnnotation.annotationType().getSimpleName(), annotations, annotatedMethod, contentType,
 									annotatedMethodParameters,
 									specialMethodParameters, 
-									(controllerAnnotation.value() + "/" + ReflectionHelper.getValue(methodAnnotation, "value")).replace("/+", "/")));
+									(controllerAnnotation.value() + "/" + ReflectionHelper.getValue(methodAnnotation, "value")).replaceAll("//", "/")));
 				}
 			} catch (Exception e) {
 				throw new RuntimeException("Unable to create controller: " + aClass.getName(), e);
@@ -99,14 +95,6 @@ public class ControllerProxyFactory {
 					} else if (aParameterAnnotation.annotationType().isAssignableFrom(RequestBody.class)) {
 						annotatedMethodParameters[i] = new AnnotatedMethodParameter(aParameterAnnotation, "body",
 								annotatedMethod.getParameterTypes()[i], i);
-					} else if (annotatedMethod.getParameters()[i].getType()
-							.isAssignableFrom(HttpServletRequest.class)) {
-						annotatedMethodParameters[i] = new AnnotatedMethodParameter(aParameterAnnotation, "request",
-								annotatedMethod.getParameterTypes()[i], i);
-					} else if (annotatedMethod.getParameters()[i].getType()
-							.isAssignableFrom(HttpServletResponse.class)) {
-						annotatedMethodParameters[i] = new AnnotatedMethodParameter(aParameterAnnotation, "response",
-								annotatedMethod.getParameterTypes()[i], i);
 					}
 				}
 			}
@@ -128,12 +116,6 @@ public class ControllerProxyFactory {
 								annotatedMethod.getParameterTypes()[i], i);
 					}
 				}
-			}
-		}
-		Class<?>[] parameters = annotatedMethod.getParameterTypes();
-		for (int i = 0; i < parameters.length; i++) {
-			if (parameters[i].isAssignableFrom(HttpServerExchange.class)) {
-				annotatedMethodParameters[i] = new MethodParameter("exchange", parameters[i], i);
 			}
 		}
 		return annotatedMethodParameters;

@@ -1,268 +1,252 @@
 package net.nnwsf.handler;
 
-import static net.nnwsf.handler.EndpointProxy.ENDPOINT_PROXY_ATTACHMENT_KEY;
-import static net.nnwsf.handler.URLMatcher.URL_MATCHER_ATTACHMENT_KEY;
-
-import java.lang.annotation.Annotation;
-import java.util.ArrayList;
+import java.io.InputStreamReader;
+import java.lang.reflect.Field;
+import java.net.URI;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
-import org.pac4j.core.exception.TechnicalException;
-import org.pac4j.undertow.handler.CallbackHandler;
-import org.pac4j.undertow.handler.SecurityHandler;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.undertow.security.api.AuthenticationMechanism;
-import io.undertow.server.HttpHandler;
-import io.undertow.server.HttpServerExchange;
-import io.undertow.util.HttpString;
+import io.smallrye.mutiny.Uni;
+import io.vertx.ext.auth.oauth2.OAuth2FlowType;
+import io.vertx.ext.auth.oauth2.OAuth2Options;
+import io.vertx.mutiny.core.Vertx;
+import io.vertx.mutiny.ext.auth.oauth2.OAuth2Auth;
+import io.vertx.mutiny.ext.web.Router;
+import io.vertx.mutiny.ext.web.RoutingContext;
+import io.vertx.mutiny.ext.web.handler.BodyHandler;
+import io.vertx.mutiny.ext.web.handler.OAuth2AuthHandler;
+import io.vertx.mutiny.ext.web.handler.SessionHandler;
+import io.vertx.mutiny.ext.web.handler.StaticHandler;
+import io.vertx.mutiny.ext.web.sstore.LocalSessionStore;
 import net.nnwsf.application.annotation.ApiDocConfiguration;
 import net.nnwsf.application.annotation.AuthenticationProviderConfiguration;
-import net.nnwsf.authentication.OpenIdConfiguration;
-import net.nnwsf.authentication.annotation.Authenticated;
-import net.nnwsf.controller.annotation.RequestParameter;
 import net.nnwsf.controller.converter.ContentTypeConverter;
 import net.nnwsf.exceptions.NotFoundException;
 import net.nnwsf.handler.controller.ControllerProxyFactory;
 import net.nnwsf.handler.nocode.NocodeProxyFactory;
 
-public class HttpHandlerImpl implements HttpHandler {
+public class HttpHandlerImpl {
 
 	private final static Logger log = Logger.getLogger(HttpHandlerImpl.class.getName());
 
-	private final Map<URLMatcher, Collection<EndpointProxy>> proxies = new HashMap<>();
-	private final Map<URLMatcher, Map<Collection<String>, EndpointProxy>> matchedProxies = new HashMap<>();
+	private static HttpHandlerImpl instance;
 
-	private final HttpHandler apiSecurityHandler;
-	private final String callbackPath;
-	private final HttpHandler controllerHandler;
-	private final HttpHandler resourceSecurityHandler;
-	private final HttpHandler resourceHandler;
-	private final HttpHandler callbackHandler;
-	private final HttpHandler apiDocHandler;
-	private final String apiDocPath;
-	private final Collection<String> authenticatedResourcePaths;
+	public static void init(
+		String protocol,
+		String hostname,
+		int port,
+		ClassLoader applicationClassLoader, 
+		String resourcePath,
+		Collection<String> authenticatedResourcePaths, 
+		Collection<Class<Object>> controllerClasses,
+		Collection<Class<ContentTypeConverter>> converterClasses,
+		AuthenticationProviderConfiguration authenticationProviderConfiguration,
+		ApiDocConfiguration apiDocConfiguration,
+		Vertx vertx) {
+		instance = new HttpHandlerImpl(
+			protocol,
+			hostname,
+			port,
+			applicationClassLoader, resourcePath, authenticatedResourcePaths, controllerClasses, converterClasses, authenticationProviderConfiguration, apiDocConfiguration, vertx);
+	}
+	
+	public static Router getRouter() {
+		return instance.router;
+	}
 
-	public HttpHandlerImpl(ClassLoader applicationClassLoader, String resourcePath,
-			Collection<String> authenticatedResourcePaths, 
-			Collection<Class<Object>> controllerClasses,
-			Collection<Class<ContentTypeConverter>> converterClasses,
-			Collection<Class<AuthenticationMechanism>> authenticationMechanisms,
-			AuthenticationProviderConfiguration authenticationProviderConfiguration,
-			ApiDocConfiguration apiDocConfiguration) {
+	public static String getHostname() {
+		return instance.hostname;
+	}
 
+	public static int getPort() {
+		return instance.port;
+	}
+
+	private final Map<String, Map<String, EndpointProxy>> proxies = new HashMap<>();
+	private final EndpointHandlerImpl controllerHandler;
+
+	private final Router router;
+	private final String protocol;
+	private final String hostname;
+	private final int port;
+
+
+	private HttpHandlerImpl(
+		String protocol,
+		String hostname,
+		int port,
+		ClassLoader applicationClassLoader, String resourcePath,
+		Collection<String> authenticatedResourcePaths, 
+		Collection<Class<Object>> controllerClasses,
+		Collection<Class<ContentTypeConverter>> converterClasses,
+		AuthenticationProviderConfiguration authenticationProviderConfiguration,
+		ApiDocConfiguration apiDocConfiguration,
+		Vertx vertx) {
+		this.protocol = protocol;
+		this.hostname = hostname;
+		this.port = port;
 		this.controllerHandler = new EndpointHandlerImpl(converterClasses);
-		this.authenticatedResourcePaths = authenticatedResourcePaths;
-		String cleanedResourcePath = "";
-		if (resourcePath.startsWith("/")) {
-			cleanedResourcePath = resourcePath.substring(1);
-		} else {
-			cleanedResourcePath = resourcePath;
-		}
-		resourceHandler = new ResourceHandlerImpl(applicationClassLoader, cleanedResourcePath);
-		HttpHandler aCallbackHandler = null;
-		if (authenticationProviderConfiguration == null || authenticationProviderConfiguration.jsonFileName() == null) {
-			this.apiSecurityHandler = null;
-			this.resourceSecurityHandler = null;
-			this.callbackHandler = null;
-			this.callbackPath = null;
-		} else {
-			HttpHandler anApiSercurityHandler = null;
-			HttpHandler aResourceSercurityHandler = null;
-			try {
-				OpenIdConfiguration authConfig = new OpenIdConfiguration(
-						authenticationProviderConfiguration.jsonFileName(),
-						authenticationProviderConfiguration.openIdDiscoveryUri());
-				aCallbackHandler = CallbackHandler.build(authConfig.getControllerConfig(), null, true);
-				anApiSercurityHandler = SecurityHandler.build(controllerHandler,
-						authConfig.getApiConfig());
-				aResourceSercurityHandler = SecurityHandler.build(resourceHandler,
-						authConfig.getControllerConfig());
-			} catch (Throwable t) {
-				anApiSercurityHandler = null;
-				aResourceSercurityHandler = null;
-			}
-			this.apiSecurityHandler = anApiSercurityHandler;
-			this.resourceSecurityHandler = aResourceSercurityHandler;
-			this.callbackHandler = aCallbackHandler;
-			this.callbackPath = authenticationProviderConfiguration.callbackPath();
-		}
-		
+
+		router = Router.router(vertx);
+
+		router.route()
+			.handler(SessionHandler.create(LocalSessionStore.create(vertx)));
+
+		BodyHandler bodyHandler = BodyHandler.create();
+		router.post().handler(bodyHandler::handle);
+		router.put().handler(bodyHandler::handle);
+
 		ControllerProxyFactory controllerProxyFactory = new ControllerProxyFactory(controllerClasses);
 		
 		controllerProxyFactory.getProxies().forEach(proxy -> {
-			Collection<EndpointProxy> existingProxies = proxies.get(proxy.getUrlMatcher());
-			if (existingProxies == null) {
-				existingProxies = new ArrayList<>();
-				proxies.put(proxy.getUrlMatcher(), existingProxies);
-				matchedProxies.put(proxy.getUrlMatcher(), new HashMap<>());
+			Map<String, EndpointProxy> pathProxies = proxies.get(proxy.getHttpMethod());
+			if (pathProxies == null) {
+				pathProxies = new HashMap<>();
+				proxies.put(proxy.getHttpMethod(), pathProxies);
+				if(pathProxies.containsKey(proxy.getPath())) {
+					throw new RuntimeException("Duplicate path detected: method=" + proxy.getHttpMethod() + ", path=" + proxy.getPath());
+				}
 			}
-			
-			existingProxies.add(proxy);
+			pathProxies.put(proxy.getPath(), proxy);
 		});
 
 		NocodeProxyFactory nocodeProxyFactory = new NocodeProxyFactory();
 		
 		nocodeProxyFactory.getProxies().forEach(proxy -> {
-			Collection<EndpointProxy> existingProxies = proxies.get(proxy.getUrlMatcher());
-			if (existingProxies == null) {
-				existingProxies = new ArrayList<>();
-				proxies.put(proxy.getUrlMatcher(), existingProxies);
-				matchedProxies.put(proxy.getUrlMatcher(), new HashMap<>());
-			}
-			
-			existingProxies.add(proxy);
-		});
-
-		if(apiDocConfiguration != null) {
-			List<EndpointProxy> proxies = new ArrayList<>(controllerProxyFactory.getProxies());
-			proxies.addAll(nocodeProxyFactory.getProxies());
-			apiDocHandler = new ApiDocHandler(proxies);
-			apiDocPath = apiDocConfiguration.value();
-		} else {
-			apiDocHandler = null;
-			apiDocPath = null;
-		}
-	}
-	
-	@Override
-	public void handleRequest(final HttpServerExchange exchange) {
-		try {
-			if (exchange.isInIoThread()) {
-				exchange.dispatch(this);
-				return;
-			}
-			log.log(Level.FINEST, "HttpRequest: start: {0}: {1}",
-					new Object[] { exchange.getRequestMethod(), exchange.getRequestPath() });
-			HttpString method = exchange.getRequestMethod();
-
-			if(apiDocPath != null && apiDocPath.equals(exchange.getRequestPath())) {
-				apiDocHandler.handleRequest(exchange);
-			} else {
-				URLMatcher requestUrlMatcher = new URLMatcher(method.toString(), exchange.getRequestPath());
-				exchange.putAttachment(URL_MATCHER_ATTACHMENT_KEY, requestUrlMatcher);
-
-				EndpointProxy proxy = findController(exchange, requestUrlMatcher);
-				if (proxy != null) {
-					exchange.putAttachment(ENDPOINT_PROXY_ATTACHMENT_KEY, proxy);
-
-					if (needsAuthentication(proxy)) {
-						try {
-							if (apiSecurityHandler == null) {
-								log.log(Level.SEVERE, "No valid authentication provider configuration");
-								exchange.setStatusCode(500).getResponseSender()
-										.send("Invalid authentication configuration");
-							} else {
-								apiSecurityHandler.handleRequest(exchange);
-							}
-						} catch (TechnicalException te) {
-							log.log(Level.SEVERE, "Invalid auth token");
-							exchange.setStatusCode(401).getResponseSender().send("Invalid auth token");
-						}
-					} else {
-						controllerHandler.handleRequest(exchange);
-					}
-				} else {
-					if (callbackPath != null && callbackPath.equals(exchange.getRequestPath()) && callbackHandler != null) {
-						callbackHandler.handleRequest(exchange);
-					} else {
-						boolean authenticate = false;
-						String requestPath = exchange.getRequestPath();
-						for (String aPath : authenticatedResourcePaths) {
-							if (requestPath.startsWith(aPath)) {
-								authenticate = true;
-								break;
-							}
-						}
-						if (authenticate) {
-							if (resourceSecurityHandler == null) {
-								log.log(Level.SEVERE, "No valid authentication provider configuration");
-								exchange.setStatusCode(500).getResponseSender()
-										.send("Invalid authentication configuration");
-							} else {
-								resourceSecurityHandler.handleRequest(exchange);
-							}
-						} else {
-							resourceHandler.handleRequest(exchange);
-						}
-					}
+			Map<String, EndpointProxy> pathProxies = proxies.get(proxy.getHttpMethod());
+			if (pathProxies == null) {
+				pathProxies = new HashMap<>();
+				proxies.put(proxy.getHttpMethod(), pathProxies);
+				if(pathProxies.containsKey(proxy.getPath())) {
+					throw new RuntimeException("Duplicate path detected: method=" + proxy.getHttpMethod() + ", path=" + proxy.getPath());
 				}
 			}
+			pathProxies.put(proxy.getPath(), proxy);
+		});
+
+		proxies.keySet().forEach(httpMethod -> {
+			Map<String, EndpointProxy> pathProxies = proxies.get(httpMethod);
+			switch(httpMethod.toUpperCase()) {
+				case "PUT":
+					pathProxies.entrySet().forEach(anEntry -> {
+						router.put(anEntry.getKey()).respond(routingContext -> handle(routingContext, anEntry.getValue()));
+					});
+					break;
+				case "GET":
+					pathProxies.entrySet().forEach(anEntry -> {
+						router.get(anEntry.getKey()).respond(routingContext -> handle(routingContext, anEntry.getValue()));
+					});
+					break;
+				case "POST":
+					pathProxies.entrySet().forEach(anEntry -> {
+						router.post(anEntry.getKey()).respond(routingContext -> handle(routingContext, anEntry.getValue()));
+					});
+					break;
+				case "DELETE":
+					pathProxies.entrySet().forEach(anEntry -> {
+						router.delete(anEntry.getKey()).respond(routingContext -> handle(routingContext, anEntry.getValue()));
+					});
+					break;
+			}
+		});
+
+		router.get("/*").handler(StaticHandler
+			.create("." + resourcePath )
+			.setCachingEnabled(false)
+			.setAllowRootFileSystemAccess(false)
+		);
+		
+		try {
+			@SuppressWarnings("unchecked")
+			Map<String, Object> credentialsMap = (Map<String, Object>) new ObjectMapper().readValue(
+					new InputStreamReader(ClassLoader.getSystemClassLoader().getResourceAsStream(authenticationProviderConfiguration.jsonFileName())),
+					Map.class);
+			@SuppressWarnings("unchecked")
+			Map<String, Object> credentialParameters =  (Map<String, Object>) credentialsMap.get("web");
+
+			String clientId = (String) credentialParameters.get("client_id");
+			String clientSecret =(String) credentialParameters.get("client_secret");
+
+			URL authUri = URI.create((String)credentialParameters.get("auth_uri")).toURL();
+			// authUri
+			String tokenUri = (String)credentialParameters.get("token_uri");
+
+
+			OAuth2Auth authProvider = OAuth2Auth.create(vertx, new OAuth2Options()
+				.setClientId(clientId)
+				.setClientSecret(clientSecret)
+				.setFlow(OAuth2FlowType.AUTH_CODE)
+				.setSite(authUri.getProtocol() + "://" + authUri.getHost())
+				.setTokenPath(tokenUri)
+				.setAuthorizationPath(authUri.getPath()))
+			;
+
+			OAuth2AuthHandler handler = OAuth2AuthHandler.create(vertx, authProvider, protocol + "://" + hostname + ":" + port  + authenticationProviderConfiguration.callbackPath())
+					.setupCallback(router.route(authenticationProviderConfiguration.callbackPath()));
+
+			Field aField = handler.getClass().getDeclaredField("delegate");
+			aField.setAccessible(true);
+			aField.set(handler, handler.getDelegate().withScopes(Arrays.asList("https://www.googleapis.com/auth/userinfo.email", "openid", "https://www.googleapis.com/auth/userinfo.profile")));
+
+			authenticatedResourcePaths.forEach(aPath -> {
+				Router subRouter = Router.router(vertx);
+				subRouter.get("/*").handler(handler)
+					.handler(StaticHandler
+						.create("." + resourcePath + aPath)
+						.setCachingEnabled(false)
+						.setAllowRootFileSystemAccess(false));
+				router.mountSubRouter(aPath, subRouter);
+				});
+		} catch (Exception e) {
+			throw new RuntimeException("Unable to initialize open auth", e);
+		}
+
+		// if(apiDocConfiguration != null) {
+		// 	List<EndpointProxy> proxies = new ArrayList<>(controllerProxyFactory.getProxies());
+		// 	proxies.addAll(nocodeProxyFactory.getProxies());
+		// 	apiDocHandler = new ApiDocHandler(proxies);
+		// 	apiDocPath = apiDocConfiguration.value();
+		// } else {
+		// 	apiDocHandler = null;
+		// 	apiDocPath = null;
+		// }
+	}
+
+
+	private Uni<?> handle(RoutingContext routingContext, EndpointProxy endpointProxy) {
+		try{
+			return controllerHandler.handleRequest(routingContext, endpointProxy);
 		} catch (IllegalArgumentException iae) {
 			log.log(Level.SEVERE, "Unable to complete the request", iae);
-			exchange.setStatusCode(400).getResponseSender().send(iae.getMessage());
+			routingContext.fail(400, iae);
 		} catch (NotFoundException nfe) {
 			log.log(Level.SEVERE, "Unable to complete the request", nfe);
-			exchange.setStatusCode(404).getResponseSender().send(nfe.getMessage());
+			routingContext.fail(404, nfe);
 		} catch (Exception e) {
 			log.log(Level.SEVERE, "Unable to complete the request", e);
-			exchange.setStatusCode(500).getResponseSender().send("Unexpected error");
+			routingContext.fail(500, e);
 		} finally {
 			log.log(Level.FINEST, "HttpRequest: end");
 		}
+		return routingContext.end();
 	}
 
-	private EndpointProxy findController(HttpServerExchange exchange, URLMatcher requestUrlMatcher) throws Exception {
-		EndpointProxy matchingProxy = getBestMatch(exchange, requestUrlMatcher);
 
-		return matchingProxy;
-	}
 
-	private EndpointProxy getBestMatch(HttpServerExchange exchange, URLMatcher requestUrlMatcher) {
-		Collection<EndpointProxy> allMatchingProxies = proxies.get(requestUrlMatcher);
-		if (allMatchingProxies == null) {
-			return null;
-		}
-		Collection<String> requestParameters = new HashSet<>(exchange.getQueryParameters().keySet());
-		allMatchingProxies = allMatchingProxies.stream().filter(aProxy -> {
-			return aProxy.getParametersCount() >= requestParameters.size();
-		}).collect(Collectors.toSet());
-		EndpointProxy parameterMatchingProxy = matchedProxies.get(requestUrlMatcher).get(requestParameters);
-
-		if (parameterMatchingProxy != null) {
-			return parameterMatchingProxy;
-		}
-
-		for (EndpointProxy aProxy : allMatchingProxies) {
-			Collection<String> methodParameters = Arrays.asList(aProxy.getParameters()).stream()
-					.filter(s -> s != null
-							&& s.getAnnotation().annotationType().isAssignableFrom(RequestParameter.class))
-					.map(m -> m.getName()).filter(s -> s != null).collect(Collectors.toList());
-			if (methodParameters.containsAll(requestParameters)) {
-				matchedProxies.get(requestUrlMatcher).put(requestParameters, aProxy);
-				return aProxy;
-			}
-		}
-
-		for (EndpointProxy aProxy : allMatchingProxies) {
-			Collection<String> methodParameters = Arrays.asList(aProxy.getParameters()).stream()
-					.filter(s -> s != null
-							&& s.getAnnotation().annotationType().isAssignableFrom(RequestParameter.class))
-					.map(m -> m.getName()).filter(s -> s != null).collect(Collectors.toList());
-			if (methodParameters.isEmpty()) {
-				matchedProxies.get(requestUrlMatcher).put(requestParameters, aProxy);
-				return aProxy;
-			}
-		}
-
-		return null;
-
-	}
-
-	private boolean needsAuthentication(EndpointProxy proxy) {
-		for (Annotation annotation : proxy.getAnnotations()) {
-			if (annotation.annotationType().isAssignableFrom(Authenticated.class)) {
-				return true;
-			}
-		}
-		return false;
-	}
+	// private boolean needsAuthentication(EndpointProxy proxy) {
+	// 	for (Annotation annotation : proxy.getAnnotations()) {
+	// 		if (annotation.annotationType().isAssignableFrom(Authenticated.class)) {
+	// 			return true;
+	// 		}
+	// 	}
+	// 	return false;
+	// }
 
 }

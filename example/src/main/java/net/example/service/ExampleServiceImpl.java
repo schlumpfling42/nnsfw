@@ -4,7 +4,9 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
+import javax.transaction.Transactional;
 
+import io.smallrye.mutiny.Uni;
 import net.example.persistence.ExampleEntity;
 import net.example.persistence.ExampleRepository;
 import net.example.resource.ExampleBean;
@@ -16,66 +18,77 @@ public class ExampleServiceImpl implements ExampleService{
     @Inject
     private ExampleRepository repository;
     
-    public String echo(String echo) {
+    @Transactional
+    public Uni<String> echo(String echo) {
         ExampleEntity entity = new ExampleEntity();
         entity.setName(echo);
-        entity = repository.save(entity);
-        entity = repository.findById(entity.getId());
-        repository.delete(entity);
-        return entity.getName() + ":" + repository.findAll().size();
+        return repository.save(entity).chain(savedEntity -> repository.findById(savedEntity.getId()).chain(foundEntity ->
+            repository.delete(foundEntity))).flatMap(ignore -> repository.findAll().map(resultList -> entity.getName() + ":" + resultList.size()));
     }
 
-    public String log(String aString) {
+    @Transactional
+    public Uni<String> log(String aString) {
         StringBuilder log = new StringBuilder();
         log.append("Before: ");
-        log.append("Count: " + repository.findAll().size() + "\n");
-        ExampleEntity entity = new ExampleEntity();
-        entity.setName(aString);
-        entity = repository.save(entity);
-        log.append("Save: " + entity.getId() + ":" + entity.getName());
-        log.append("Count: " + repository.findAll().size() + "\n");
-        entity = repository.findById(entity.getId());
-        repository.delete(entity);
-        log.append("After: ");
-        log.append("Count: " + repository.findAll().size() + "\n");
-        return log.toString();
+        return repository.findAll()
+            .chain(resultList -> {
+                log.append("Count: " + resultList.size() + "\n");
+                ExampleEntity entity = new ExampleEntity();
+                entity.setName(aString);
+                return repository.save(entity);
+            }).chain(savedEnity -> {
+                log.append("Save: " + savedEnity.getId() + ":" + savedEnity.getName());
+                return repository.findAll()
+                    .chain(resultList -> {
+                        log.append("Count: " + resultList.size() + "\n");
+                        return repository.findById(savedEnity.getId());
+                    });
+            })
+            .chain(foundEntity -> repository.delete(foundEntity))
+            .chain(ignore -> {
+                return repository.findAll().map(resultList -> {
+                    log.append("After: ");
+                    log.append("Count: " + resultList.size() + "\n");
+                    return log.toString();
+                });
+            });
     }
 
-    public ExampleBean createExample(String name) {
-        ExampleEntity entity = new ExampleEntity();
-        entity.setName(name);
-        entity = repository.save(entity);
-        entity = repository.findById(entity.getId());
-        ExampleBean exampleBean = new ExampleBean();
-        exampleBean.setName(entity.getName());
-        exampleBean.setId(entity.getId());
-        return exampleBean;
-    }
+    // public Uni<ExampleBean> createExample(String name) {
+    //     ExampleEntity entity = new ExampleEntity();
+    //     entity.setName(name);
+    //     entity = repository.save(entity);
+    //     entity = repository.findById(entity.getId());
+    //     ExampleBean exampleBean = new ExampleBean();
+    //     exampleBean.setName(entity.getName());
+    //     exampleBean.setId(entity.getId());
+    //     return exampleBean;
+    // }
 
-    public ExampleBean saveExample(int id, ExampleBean bean) {
-        ExampleEntity entity = repository.findById(id);
-        entity.setName(bean.getName());
-        entity = repository.save(entity);
-        ExampleBean exampleBean = new ExampleBean();
-        exampleBean.setName(entity.getName());
-        exampleBean.setId(entity.getId());
-        return exampleBean;
-    }
+    // public Uni<ExampleBean> saveExample(int id, ExampleBean bean) {
+    //     ExampleEntity entity = repository.findById(id);
+    //     entity.setName(bean.getName());
+    //     entity = repository.save(entity);
+    //     ExampleBean exampleBean = new ExampleBean();
+    //     exampleBean.setName(entity.getName());
+    //     exampleBean.setId(entity.getId());
+    //     return exampleBean;
+    // }
 
-    public void deleteExample(int id) {
-        ExampleEntity entity = repository.findById(id);
-        repository.delete(entity);
-    }
+    // public Uni<Void> deleteExample(int id) {
+    //     ExampleEntity entity = repository.findById(id);
+    //     repository.delete(entity);
+    // }
     
-    public Page<ExampleBean> getExamples(PageRequest pageRequest) {
-        Page<ExampleEntity> resultPage = repository.find(pageRequest, null);
-        Collection<ExampleBean> exampleBeans = resultPage.getElements().stream().map(entity -> {
-            ExampleBean exampleBean = new ExampleBean();
-            exampleBean.setName(entity.getName());
-            exampleBean.setId(entity.getId());
-            return exampleBean;
-        }).collect(Collectors.toList());
-        return new Page<ExampleBean>(resultPage.getTotalNumber(), pageRequest, exampleBeans);
-    }
+    // public Uni<Page<ExampleBean>> getExamples(PageRequest pageRequest) {
+    //     Page<ExampleEntity> resultPage = repository.find(pageRequest, null);
+    //     Collection<ExampleBean> exampleBeans = resultPage.getElements().stream().map(entity -> {
+    //         ExampleBean exampleBean = new ExampleBean();
+    //         exampleBean.setName(entity.getName());
+    //         exampleBean.setId(entity.getId());
+    //         return exampleBean;
+    //     }).collect(Collectors.toList());
+    //     return new Page<ExampleBean>(resultPage.getTotalNumber(), pageRequest, exampleBeans);
+    // }
 
 }

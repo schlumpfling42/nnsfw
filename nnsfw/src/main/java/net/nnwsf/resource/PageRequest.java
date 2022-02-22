@@ -2,8 +2,8 @@ package net.nnwsf.resource;
 
 public class PageRequest {
 
-    public static PageRequest of(int page, int size) {
-        return new PageRequest(page, size);
+    public static PageRequest of(Integer page, Integer size) {
+        return new PageRequest(page == null ? 0 : page, size == null ? 100 : size);
     }
     private final int page;
     private final int size;

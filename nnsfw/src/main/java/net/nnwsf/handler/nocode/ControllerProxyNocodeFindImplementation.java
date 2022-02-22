@@ -2,6 +2,7 @@ package net.nnwsf.handler.nocode;
 
 import java.lang.reflect.InvocationTargetException;
 
+import io.smallrye.mutiny.Uni;
 import net.nnwsf.handler.AnnotatedMethodParameter;
 import net.nnwsf.nocode.SchemaObject;
 import net.nnwsf.query.QueryParser;
@@ -21,12 +22,12 @@ public class ControllerProxyNocodeFindImplementation extends ControllerProxyNoco
     };
 
     public ControllerProxyNocodeFindImplementation(String rootPath, String method, SchemaObject schemaObject, Class<?> controllerClass) {
-        super(rootPath,null,  method, schemaObject, controllerClass, "Find " + schemaObject.getTitle());
+        super(rootPath, null,  method, schemaObject, controllerClass, "Find " + schemaObject.getTitle());
     }
 
     @Override
-    public Object invoke(Object[] parameters) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-        return repository.find(PageRequest.of((int)parameters[0], (int)parameters[1]), QueryParser.parseString((String)parameters[2]));
+    public Uni<?> invoke(Object[] parameters) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+        return executeWithSession(false, () -> repository.find(PageRequest.of((Integer)parameters[0], (Integer)parameters[1]), QueryParser.parseString((String)parameters[2])));
     }
 
 

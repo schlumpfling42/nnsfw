@@ -1,6 +1,10 @@
-package net.nnwsf.persistence;
+package net.nnwsf.persistence.executor;
 
 import java.lang.reflect.Method;
+
+import org.hibernate.reactive.mutiny.Mutiny.Session;
+
+import io.smallrye.mutiny.Uni;
 
 public abstract class Executor {
     protected final Class<?> entityClass;
@@ -13,5 +17,5 @@ public abstract class Executor {
         this.method = method;
 
     }
-    public abstract Object execute(EntityManagerHolder entityManagerHolder, Object[] params);
+    public abstract Uni<?> execute(Session session, Object[] params);
 }

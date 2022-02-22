@@ -1,17 +1,14 @@
 package net.nnwsf.application;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import io.undertow.Undertow;
-import io.undertow.server.HttpHandler;
-import io.undertow.server.session.InMemorySessionManager;
-import io.undertow.server.session.SessionAttachmentHandler;
-import io.undertow.server.session.SessionCookieConfig;
+import io.vertx.core.DeploymentOptions;
+import io.vertx.core.VertxOptions;
+import io.vertx.mutiny.core.Vertx;
 import net.nnwsf.application.annotation.AnnotationConfiguration;
 import net.nnwsf.application.annotation.ApiDocConfiguration;
 import net.nnwsf.application.annotation.AuthenticatedResourcePathConfiguration;
@@ -65,21 +62,9 @@ public class ApplicationServer {
     }
 
     private ApplicationServer(Class<?> applicationClass) {
-
-        ServerConfiguration serverConfiguration = ReflectionHelper.findAnnotation(applicationClass,
-                ServerConfiguration.class);
-        if (serverConfiguration == null) {
-            throw new IllegalStateException("ServerConfiguration annotation required to start the server");
-        }
-        serverConfiguration = ConfigurationManager.apply(serverConfiguration);
-
-        String hostname = serverConfiguration.hostname();
-        int port = serverConfiguration.port();
-        String resourcePath = serverConfiguration.resourcePath();
-
         AnnotationConfiguration annotationConfiguration = ReflectionHelper.findAnnotation(applicationClass,
                 AnnotationConfiguration.class);
-        if(annotationConfiguration != null) {
+        if (annotationConfiguration != null) {
             ClassDiscovery.init(annotationConfiguration.value());
         } else {
             ClassDiscovery.init(applicationClass.getPackageName().split("\\.")[0]);
@@ -91,62 +76,83 @@ public class ApplicationServer {
 
         initServices();
 
-        AuthenticationProviderConfiguration authenticationProviderConfiguration = ReflectionHelper.findAnnotation(
-            applicationClass,
-            AuthenticationProviderConfiguration.class
-        );
-
-        ApiDocConfiguration apiDocConfiguration = ReflectionHelper.findAnnotation(
-            applicationClass,
-            ApiDocConfiguration.class
-        );
-
         NocodeConfiguration nocodeConfiguration = ReflectionHelper.findAnnotation(
-            applicationClass,
-            NocodeConfiguration.class
-        );
+                applicationClass,
+                NocodeConfiguration.class);
 
         NocodeManager.init(applicationClass.getClassLoader(), nocodeConfiguration);
 
-        initPersistence();
+        DeploymentOptions options = new DeploymentOptions()
+            .setInstances(8);
 
+        
+        VertxOptions vertxOptions = new VertxOptions()
+            .setPreferNativeTransport(true);
+
+        Vertx vertx = Vertx.vertx(vertxOptions);
+
+        ServerConfiguration serverConfiguration = ReflectionHelper.findAnnotation(applicationClass,
+        ServerConfiguration.class);
+
+        if (serverConfiguration == null) {
+            throw new IllegalStateException("ServerConfiguration annotation required to start the server");
+        }
+        serverConfiguration = ConfigurationManager.apply(serverConfiguration);
+
+        String protocol = serverConfiguration.protocol();
+        String hostname = serverConfiguration.hostname();
+        int port = serverConfiguration.port();
+        String resourcePath = serverConfiguration.resourcePath();
+
+        initPersistence(vertx);
+        
+        ApiDocConfiguration apiDocConfiguration = ReflectionHelper.findAnnotation(
+                applicationClass,
+                ApiDocConfiguration.class);
+
+
+        QueryParser.init();
+        AuthenticationProviderConfiguration authenticationProviderConfiguration = ReflectionHelper.findAnnotation(
+                applicationClass,
+                AuthenticationProviderConfiguration.class);
         authenticationProviderConfiguration = ConfigurationManager.apply(authenticationProviderConfiguration);
-
         Collection<String> authenticatedResourcePaths = ReflectionHelper
                 .findAnnotations(applicationClass, AuthenticatedResourcePathConfiguration.class).stream()
                 .map(annotation -> annotation.value()).collect(Collectors.toList());
-        HttpHandler httpHandler;
-        QueryParser.init();
-        try {
+                try {
             Collection<Class<Object>> controllerClasses = ClassDiscovery
                     .discoverAnnotatedClasses(Object.class, Controller.class).values();
             Collection<Class<ContentTypeConverter>> contentTypeConverterClasses = ClassDiscovery
                     .discoverAnnotatedClasses(ContentTypeConverter.class, Converter.class).values();
-            httpHandler = new HttpHandlerImpl(
+            HttpHandlerImpl.init(
+                protocol,
+                hostname,
+                port,
                 applicationClass.getClassLoader(), resourcePath,
-                    authenticatedResourcePaths, controllerClasses, 
-                    contentTypeConverterClasses,
-                    Collections.emptyList(),
-                    authenticationProviderConfiguration,
-                    apiDocConfiguration);
+                authenticatedResourcePaths, controllerClasses,
+                contentTypeConverterClasses,
+                authenticationProviderConfiguration,
+                apiDocConfiguration,
+                vertx);
         } catch (Exception e) {
             throw new RuntimeException("Unable to discover annotated classes", e);
         }
+                
 
-        log.info("Starting server at " + hostname + " port " + port);
-        Undertow server = Undertow.builder().addHttpListener(port, hostname)
-                .setHandler(new SessionAttachmentHandler(httpHandler, new InMemorySessionManager("SessionManager"),
-                        new SessionCookieConfig()))
-                .build();
-        server.start();
+        vertx.deployVerticle(WebServerVerticle.class.getName(), options).subscribe().with( // <2>
+                ok -> {
+                    log.info("Deployment success");
+                },
+                err -> log.log(Level.SEVERE, "Deployment failure", err));
     }
 
-    private void initPersistence() {
-        PersistenceManager.init();
+    private void initPersistence(Vertx vertx) {
+        PersistenceManager.init(vertx);
     }
 
     private void initServices() {
         ServiceManager.init();
     }
+
 
 }

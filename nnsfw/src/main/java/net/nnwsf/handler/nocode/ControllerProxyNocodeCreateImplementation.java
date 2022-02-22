@@ -2,6 +2,7 @@ package net.nnwsf.handler.nocode;
 
 import java.lang.reflect.InvocationTargetException;
 
+import io.smallrye.mutiny.Uni;
 import net.nnwsf.controller.annotation.RequestBody;
 import net.nnwsf.handler.MethodParameter;
 import net.nnwsf.nocode.SchemaObject;
@@ -15,8 +16,8 @@ public class ControllerProxyNocodeCreateImplementation extends ControllerProxyNo
 
     @SuppressWarnings("unchecked")
     @Override
-    public Object invoke(Object[] parameters) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-        return repository.save(parameters[0]);
+    public Uni<?> invoke(Object[] parameters) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+        return executeWithSession(true, () -> repository.save(parameters[0]));
     }
 
     @Override

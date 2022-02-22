@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import io.vertx.mutiny.core.Vertx;
 import net.nnwsf.configuration.ConfigurationManager;
 import net.nnwsf.nocode.NocodeManager;
 import net.nnwsf.persistence.DatasourceManager;
@@ -51,7 +52,7 @@ public class TestServiceManager {
         ServiceManager.init();
         DatasourceManager.init();
         NocodeManager.init(null, null);
-        PersistenceManager.init();
+        PersistenceManager.init(Vertx.vertx());
     }
 
     @Service

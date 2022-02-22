@@ -2,6 +2,7 @@ package net.nnwsf.handler.nocode;
 
 import java.lang.reflect.InvocationTargetException;
 
+import io.smallrye.mutiny.Uni;
 import net.nnwsf.handler.AnnotatedMethodParameter;
 import net.nnwsf.handler.MethodParameter;
 import net.nnwsf.nocode.SchemaObject;
@@ -10,15 +11,14 @@ public class ControllerProxyNocodeDeleteImplementation extends ControllerProxyNo
 
 
     public ControllerProxyNocodeDeleteImplementation(String rootPath, String method, SchemaObject schemaObject, Class<?> controllerClass) {
-        super(rootPath, "/{id}", method, schemaObject, controllerClass, "Delete " + schemaObject.getTitle());
+        super(rootPath, "/:id", method, schemaObject, controllerClass, "Delete " + schemaObject.getTitle());
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public Object invoke(Object[] parameters) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-        Object entity = repository.findById(parameters[0]);
-        repository.delete(entity);
-        return null;
+    public Uni<?> invoke(Object[] parameters) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+        return executeWithSession(true, () -> repository.findById(parameters[0])
+            .chain(entity -> repository.delete(entity)));
     }
 
     @Override

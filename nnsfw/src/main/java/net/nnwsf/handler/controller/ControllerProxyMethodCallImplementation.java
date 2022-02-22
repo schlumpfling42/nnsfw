@@ -6,17 +6,14 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-import io.undertow.server.HttpServerExchange;
+import io.smallrye.mutiny.Uni;
 import net.nnwsf.controller.annotation.AuthenticatedUser;
 import net.nnwsf.controller.annotation.RequestBody;
 import net.nnwsf.handler.AnnotatedMethodParameter;
 import net.nnwsf.handler.EndpointProxy;
 import net.nnwsf.handler.MethodParameter;
-import net.nnwsf.handler.URLMatcher;
 import net.nnwsf.util.ReflectionHelper;
 
 public class ControllerProxyMethodCallImplementation implements EndpointProxy {
@@ -27,9 +24,8 @@ public class ControllerProxyMethodCallImplementation implements EndpointProxy {
     private final Object instance;
     private final AnnotatedMethodParameter[] annotatedMethodParameters;
     private final MethodParameter[] specialMethodParameters;
-    private final List<String> pathElements;
     private String httpMethod;
-    private final URLMatcher urlMatcher;
+    private final String path;
     private Map<Class<?>, MethodParameter> specialRequestParameters = new HashMap<>();
     private final Class<?> returnType;
     private final Class<?>[] genericReturnTypes;
@@ -49,8 +45,7 @@ public class ControllerProxyMethodCallImplementation implements EndpointProxy {
         this.contentType = contentType;
         this.annotatedMethodParameters = annotatedMethodParameters;
         this.specialMethodParameters = specialMethodParameters;
-        this.urlMatcher = new URLMatcher(httpMethod, path);
-        this.pathElements = Arrays.asList(urlMatcher.getPathElements());
+        this.path = path;
         this.annotations = annotations;
 
         for(int i = 0; i<specialMethodParameters.length; i++) {
@@ -67,8 +62,6 @@ public class ControllerProxyMethodCallImplementation implements EndpointProxy {
                     if(annotatedSpecialMethodParameter.getAnnotation().annotationType().isAssignableFrom(AuthenticatedUser.class)) {
                         specialRequestParameters.put(AuthenticatedUser.class, specialMethodParameter);
                     }
-                } else if(specialMethodParameter.getType().isAssignableFrom(HttpServerExchange.class)) {
-                    specialRequestParameters.put(HttpServerExchange.class, specialMethodParameter);
                 }
             }
         }
@@ -97,10 +90,6 @@ public class ControllerProxyMethodCallImplementation implements EndpointProxy {
         return specialMethodParameters;
     }
 
-    public List<String> getPathElements() {
-        return pathElements;
-    }
-
     @Override
     public String toString() {
         return "ControllerProxy [class=" + instance.getClass() + ", method=" + method + ", parameterNames="
@@ -113,17 +102,13 @@ public class ControllerProxyMethodCallImplementation implements EndpointProxy {
     }
 
     @Override
-    public Object invoke(Object[] parameters) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-        return method.invoke(instance, parameters);
-    }
-    @Override
-    public URLMatcher getUrlMatcher() {
-        return urlMatcher;
+    public Uni<?> invoke(Object[] parameters) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+        return (Uni<?>)method.invoke(instance, parameters);
     }
 
     @Override
     public String getPath() {
-        return pathElements.stream().collect(Collectors.joining("/", "/", ""));
+        return path;
     }
 
     @Override

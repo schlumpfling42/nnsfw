@@ -2,11 +2,11 @@ package net.nnwsf.controller.converter;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.StdDateFormat;
 
+import io.vertx.mutiny.core.buffer.Buffer;
 import net.nnwsf.application.Constants;
 import net.nnwsf.controller.converter.annotation.Converter;
 
@@ -20,8 +20,8 @@ public class JsonContentTypeConverter implements ContentTypeConverter{
     }
 
     @Override
-    public void writeTo(Object output, OutputStream outputStream) throws IOException {
-        mapper.writeValue(outputStream, output);
+    public void writeTo(Object output, Buffer buffer) throws IOException {
+        buffer.appendBytes(mapper.writeValueAsBytes(output));
     }
 
     @Override

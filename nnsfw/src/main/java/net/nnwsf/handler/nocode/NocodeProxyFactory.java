@@ -30,7 +30,6 @@ public class NocodeProxyFactory {
             builder = builder.annotateType(AnnotationDescription.Builder.ofType(ApiDoc.class)
                 .define("value", aSchemaObject.getDescription()).build());
 			Class<?> controllerClass =  builder.make().load(NocodeController.class.getClassLoader(), ClassLoadingStrategy.Default.INJECTION).getLoaded();
-			proxies.add(new ControllerProxyNocodeFindAllImplementation(wellFormedControllerRootPath, "GET", aSchemaObject, controllerClass));
 			proxies.add(new ControllerProxyNocodeFindImplementation(wellFormedControllerRootPath, "GET", aSchemaObject, controllerClass));
 			proxies.add(new ControllerProxyNocodeCreateImplementation(wellFormedControllerRootPath, "PUT", aSchemaObject, controllerClass));
 			proxies.add(new ControllerProxyNocodeSaveImplementation(wellFormedControllerRootPath, "POST", aSchemaObject, controllerClass));

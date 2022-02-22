@@ -10,9 +10,18 @@ import java.util.Map;
 import javax.persistence.Column;
 import javax.persistence.Id;
 
+import org.hibernate.reactive.mutiny.Mutiny.Session;
+
+import io.smallrye.mutiny.Uni;
 import net.bytebuddy.implementation.bind.annotation.AllArguments;
 import net.bytebuddy.implementation.bind.annotation.Origin;
 import net.bytebuddy.implementation.bind.annotation.RuntimeType;
+import net.nnwsf.persistence.executor.DeleteRequestExecutor;
+import net.nnwsf.persistence.executor.Executor;
+import net.nnwsf.persistence.executor.FindByIdRequestExecutor;
+import net.nnwsf.persistence.executor.FindWithPageRequestExecutor;
+import net.nnwsf.persistence.executor.QueryRequestRequestExecutor;
+import net.nnwsf.persistence.executor.SaveRequestExecutor;
 import net.nnwsf.query.SearchTerm;
 import net.nnwsf.resource.PageRequest;
 import net.nnwsf.util.ReflectionHelper;
@@ -36,8 +45,6 @@ public class RespositoryInterceptor {
                 executors.put(aMethod, new SaveRequestExecutor(entityClass, idClass, aMethod));
             } else if("findById".equals(aMethod.getName()) && aMethod.getParameterCount() == 1) {
                 executors.put(aMethod, new FindByIdRequestExecutor(entityClass, idClass, aMethod));
-            } else if("findAll".equals(aMethod.getName()) && aMethod.getParameterCount() == 0) {
-                executors.put(aMethod, new FindAllRequestExecutor(entityClass, idClass, aMethod));
             } else if("find".equals(aMethod.getName()) && aMethod.getParameterCount() == 2 && PageRequest.class.equals(aMethod.getParameterTypes()[0]) && SearchTerm.class.equals(aMethod.getParameterTypes()[1])) {
                 executors.put(aMethod, new FindWithPageRequestExecutor(entityClass, idClass, idColumnName, aMethod));
             } else if("delete".equals(aMethod.getName()) && aMethod.getParameterCount() == 1) {
@@ -51,12 +58,25 @@ public class RespositoryInterceptor {
         });
     }
     @RuntimeType
-    public Object intercept(@Origin Method method, @AllArguments Object[] args) throws Exception {
+    public Uni<?> intercept(@Origin Method method, @AllArguments Object[] args) throws Exception {
         Executor executor = executors.get(method);
         if(executor != null) {
-            try(EntityManagerHolder entityManagerHolder = PersistenceManager.createEntityManager(datasourceName)) {
-                return executor.execute(entityManagerHolder, args);
-            }
+            long start = System.currentTimeMillis();
+            return Uni.createFrom().context(context -> {
+                    if(!context.contains("session")) {
+                        return PersistenceManager.createSession(datasourceName).map(aSession -> {
+                            context.put("session", aSession);
+                            return aSession;
+                        }).chain(session -> executor.execute(session, args)
+                            .chain(result -> {
+                                context.delete("session");
+                                context.put("Repo", System.currentTimeMillis() - start);
+                                return session.close().replaceWith(result);
+                            }));
+                    }
+                    return Uni.createFrom().item(() -> (Session)context.get("session")).chain(session -> executor.execute(session, args))
+                    .onItem().invoke(()->context.put("Repo", method.getName() + ":" + (System.currentTimeMillis() - start)));
+                });
         } else {
             throw new UnsupportedOperationException("Unable to execute: " + method.getName());
         }

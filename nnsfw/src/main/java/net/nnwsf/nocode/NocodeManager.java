@@ -31,12 +31,15 @@ import javax.persistence.Table;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.hibernate.boot.MetadataBuilder;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.BootstrapServiceRegistry;
 import org.hibernate.boot.registry.BootstrapServiceRegistryBuilder;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.hibernate.reactive.provider.ReactiveServiceRegistryBuilder;
 import org.hibernate.tool.hbm2ddl.SchemaUpdate;
 import org.hibernate.tool.schema.TargetType;
 
@@ -213,6 +216,9 @@ public class NocodeManager {
                             .annotateField(AnnotationDescription.Builder.ofType(ManyToOne.class)
                             .defineEnumerationArray("cascade", CascadeType.class, CascadeType.ALL)
                             .build())
+                            .annotateField(AnnotationDescription.Builder.ofType(Fetch.class)
+                            .define("value", FetchMode.JOIN)
+                            .build())
                             .annotateField(AnnotationDescription.Builder.ofType(JoinColumn.class)
                             .define("name", attributeName + "_id")
                             .define("nullable", true)
@@ -228,6 +234,9 @@ public class NocodeManager {
                             .defineEnumerationArray("cascade", CascadeType.class, CascadeType.ALL)
                             .define("fetch", FetchType.EAGER)
                             .build())
+                            .annotateField(AnnotationDescription.Builder.ofType(Fetch.class)
+                            .define("value", FetchMode.JOIN)
+                            .build())
                             .annotateField(AnnotationDescription.Builder.ofType(JoinColumn.class)
                             .define("name", name + "_id")
                             .define("nullable", true)
@@ -240,6 +249,9 @@ public class NocodeManager {
                             .defineField(attributeName, attributeClass.getFirst(), Modifier.PUBLIC)
                             .annotateField(AnnotationDescription.Builder.ofType(ManyToOne.class)
                             .defineEnumerationArray("cascade", CascadeType.class, CascadeType.ALL)
+                            .build())
+                            .annotateField(AnnotationDescription.Builder.ofType(Fetch.class)
+                            .define("value", FetchMode.JOIN)
                             .build())
                             .annotateField(AnnotationDescription.Builder.ofType(JoinColumn.class)
                             .define("name", attributeName + "_id")
@@ -308,30 +320,29 @@ public class NocodeManager {
     }
 
     private void createTables() {
-
+        
         Map<String, String> properties = Optional.ofNullable(datasourceConfiguration.properties())
         .map(p -> 
             Arrays.stream(p)
             .collect(Collectors.toMap(v -> v.name(), v -> v.value()))
-        ).orElse(new HashMap<>());
-
-
-        BootstrapServiceRegistryBuilder bootstrapRegistryBuilder =
-        new BootstrapServiceRegistryBuilder();
-        // add a custom ClassLoader
-        bootstrapRegistryBuilder.applyClassLoader( classLoader );
+            ).orElse(new HashMap<>());
+            
+            
+            BootstrapServiceRegistryBuilder bootstrapRegistryBuilder =
+            new BootstrapServiceRegistryBuilder();
+            // add a custom ClassLoader
+            bootstrapRegistryBuilder.applyClassLoader( classLoader );
 
         BootstrapServiceRegistry bootstrapRegistry = bootstrapRegistryBuilder.build();
 
-        StandardServiceRegistry standardRegistry = StandardServiceRegistryBuilder
+        StandardServiceRegistry standardRegistry = ReactiveServiceRegistryBuilder
             .forJpa(bootstrapRegistry)
-            .applySetting("connection.driver_class", datasourceConfiguration.jdbcDriver())
+            .applySetting("hibernate.connection.driver_class", datasourceConfiguration.jdbcDriver())
             .applySetting("hibernate.connection.url", datasourceConfiguration.jdbcUrl())
             .applySetting("hibernate.connection.username", datasourceConfiguration.user() == null ? "" : datasourceConfiguration.user())
             .applySetting("hibernate.connection.password", datasourceConfiguration.password() == null ? "" : datasourceConfiguration.password())
             .applySetting("hibernate.hbm2ddl.auto", "update")
             .applySetting("show_sql", "true")
-            .applySettings(properties)
             .build();
 
         MetadataSources sources = new MetadataSources(standardRegistry);
@@ -339,7 +350,6 @@ public class NocodeManager {
 
         MetadataBuilder metadataBuilder = sources.getMetadataBuilder();
 
-        Thread.currentThread().setContextClassLoader(classLoader);
 
         SchemaUpdate schemaUpdate = new SchemaUpdate();
         schemaUpdate.setHaltOnError(false);

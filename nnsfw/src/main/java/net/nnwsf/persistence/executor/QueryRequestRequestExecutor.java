@@ -1,11 +1,13 @@
-package net.nnwsf.persistence;
+package net.nnwsf.persistence.executor;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Collection;
 
-import javax.persistence.Query;
+import org.hibernate.reactive.mutiny.Mutiny.Query;
+import org.hibernate.reactive.mutiny.Mutiny.Session;
 
+import io.smallrye.mutiny.Uni;
 import net.nnwsf.persistence.annotation.QueryParameter;
 
 public class QueryRequestRequestExecutor extends Executor {
@@ -13,7 +15,7 @@ public class QueryRequestRequestExecutor extends Executor {
     private final QueryParameter[] queryParameters;
     private final String queryString;
 
-    QueryRequestRequestExecutor(Class<?> entityClass, Class<?> idClass, Method method) {
+    public  QueryRequestRequestExecutor(Class<?> entityClass, Class<?> idClass, Method method) {
         super(entityClass, idClass, method);
         queryString = method.getAnnotation(net.nnwsf.persistence.annotation.Query.class).value();
         queryParameters = new QueryParameter[method.getParameterCount()];
@@ -31,26 +33,27 @@ public class QueryRequestRequestExecutor extends Executor {
     }
 
     @Override
-    public Object execute(EntityManagerHolder entityManagerHolder, Object[] params) {
-        entityManagerHolder.beginTransaction();
-        Query query = entityManagerHolder.getEntityManager().createQuery(queryString);
+    public Uni<?> execute(Session session, Object[] params) {
+        long start = System.currentTimeMillis();
+        Query<Collection<?>> query = session.createQuery(queryString);
         for(int i=0; i< params.length; i++) {
             if(queryParameters[i] != null) {
                 query.setParameter(queryParameters[i].value(), params[i]);
             }
         }
-        Collection<?> result = query.getResultList();
-        if(!method.getReturnType().isAssignableFrom(Collection.class)) {
-            if(result.size() == 1) {
-                return result.iterator().next();
-            } else if(result.size() == 0) {
-                return null;
-            } else {
-                throw new IllegalStateException("Expected one result but got " + result.size());
+        return query.getResultList().chain(resultList -> {
+            if(!method.getReturnType().isAssignableFrom(Collection.class)) {
+                if(resultList.size() == 1) {
+                    return Uni.createFrom().item(resultList.iterator().next());
+                } else if(resultList.size() == 0) {
+                    return Uni.createFrom().nullItem();
+                }
             }
-        }
-        entityManagerHolder.commitTransaction();
-        return result;
+            return Uni.createFrom().failure(new IllegalStateException("Expected one result but got " + resultList.size()));
+        }).attachContext().map(itemWithContext -> {
+            itemWithContext.context().put("SQL", method.getName() + ":" + (System.currentTimeMillis() - start));
+            return itemWithContext.get();
+        });
     }
     
 }

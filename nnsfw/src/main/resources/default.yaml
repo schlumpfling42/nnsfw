@@ -1,4 +1,4 @@
 server:
-  hostname: localhost
+  hostname: lvh.me
   port: 8080
   resourcePath: /static

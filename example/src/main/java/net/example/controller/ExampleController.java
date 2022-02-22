@@ -4,6 +4,7 @@ import java.util.Collection;
 
 import javax.inject.Inject;
 
+import io.smallrye.mutiny.Uni;
 import net.example.resource.ExampleBean;
 import net.example.service.ExampleService;
 import net.example.service.ExampleService2Impl;
@@ -34,56 +35,56 @@ public class ExampleController {
     @Get("/")
     @ContentType(Constants.CONTENT_TYPE_TEXT)
     @ApiDoc("Simple get to show service injection")
-    public String get() {
+    public Uni<String> get() {
         return service.echo("Hello example");
     }
 
-    @Post("/")
-    @ContentType(Constants.CONTENT_TYPE_TEXT)
-    @ApiDoc("Simple post to show how serialization works")
-    public ExampleBean Post(@RequestBody ExampleBean data) {
-        data.setName(data.getName() + "-response");
-        return data;
-    }
+    // @Post("/")
+    // @ContentType(Constants.CONTENT_TYPE_TEXT)
+    // @ApiDoc("Simple post to show how serialization works")
+    // public ExampleBean Post(@RequestBody ExampleBean data) {
+    //     data.setName(data.getName() + "-response");
+    //     return data;
+    // }
 
-    @Get("/")
-    @ContentType(Constants.CONTENT_TYPE_TEXT)
-    @ApiDoc("Simple get to how query parameters are handled")
-    public String getQuery(@RequestParameter("echo") String echo, String ignore) {
-        return service2.echo(echo) + " ---" +  service.echo(echo);
-    }
+    // @Get("/")
+    // @ContentType(Constants.CONTENT_TYPE_TEXT)
+    // @ApiDoc("Simple get to how query parameters are handled")
+    // public String getQuery(@RequestParameter("echo") String echo, String ignore) {
+    //     return service2.echo(echo) + " ---" +  service.echo(echo);
+    // }
 
-    @Get("/log/{aString}")
+    @Get("/log/:aString")
     @ContentType(Constants.CONTENT_TYPE_TEXT)
     @ApiDoc("Simple get to how path variables are handled")
-    public String getLog(@PathVariable("aString") String aString, String ignore) {
+    public Uni<String> getLog(@PathVariable("aString") String aString, String ignore) {
         return service.log(aString);
     }
 
-    @Put("/example/{aString}")
-    @ContentType(Constants.CONTENT_TYPE_APPLICATION_JSON)
-    @ApiDoc("Example put to create a new entry in the database, to show how the persistence integration works")
-    public ExampleBean createExample(@PathVariable("aString") String aString) {
-        return service.createExample(aString);
-    }
-    @Post("/example/{id}")
-    @ContentType(Constants.CONTENT_TYPE_APPLICATION_JSON)
-    @ApiDoc("Example post to update an entry in the database, to show how the persistence integration works")
-    public ExampleBean updateExample(@PathVariable("id") int id, @RequestBody ExampleBean data) {
-        return service.saveExample(id, data );
-    }
+    // @Put("/example/{aString}")
+    // @ContentType(Constants.CONTENT_TYPE_APPLICATION_JSON)
+    // @ApiDoc("Example put to create a new entry in the database, to show how the persistence integration works")
+    // public ExampleBean createExample(@PathVariable("aString") String aString) {
+    //     return service.createExample(aString);
+    // }
+    // @Post("/example/{id}")
+    // @ContentType(Constants.CONTENT_TYPE_APPLICATION_JSON)
+    // @ApiDoc("Example post to update an entry in the database, to show how the persistence integration works")
+    // public ExampleBean updateExample(@PathVariable("id") int id, @RequestBody ExampleBean data) {
+    //     return service.saveExample(id, data );
+    // }
     
-    @Delete("/example/{id}")
-    @ContentType(Constants.CONTENT_TYPE_APPLICATION_JSON)
-    @ApiDoc("Example delete to delete an entry in the database, to show how the persistence integration works")
-    public void deleteExample(@PathVariable("id") int id) {
-        service.deleteExample(id );
-    }
+    // @Delete("/example/{id}")
+    // @ContentType(Constants.CONTENT_TYPE_APPLICATION_JSON)
+    // @ApiDoc("Example delete to delete an entry in the database, to show how the persistence integration works")
+    // public void deleteExample(@PathVariable("id") int id) {
+    //     service.deleteExample(id );
+    // }
     
-    @Get("/example/")
-    @ContentType(Constants.CONTENT_TYPE_APPLICATION_JSON)
-    @ApiDoc("Example get all entries from the database, to show how the persistence integration works")
-    public Page<ExampleBean> getExamples(@RequestParameter("page") int page, @RequestParameter("size") int size) {
-        return service.getExamples(PageRequest.of(page, size));
-    }
+    // @Get("/example/")
+    // @ContentType(Constants.CONTENT_TYPE_APPLICATION_JSON)
+    // @ApiDoc("Example get all entries from the database, to show how the persistence integration works")
+    // public Page<ExampleBean> getExamples(@RequestParameter("page") int page, @RequestParameter("size") int size) {
+    //     return service.getExamples(PageRequest.of(page, size));
+    // }
 }

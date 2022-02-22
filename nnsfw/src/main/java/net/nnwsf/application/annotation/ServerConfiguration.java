@@ -10,10 +10,12 @@ import net.nnwsf.configuration.annotation.ConfigurationKey;
 @Retention(RetentionPolicy.RUNTIME)
 @ConfigurationKey("server")
 public @interface ServerConfiguration {
-    @ConfigurationKey("port")
-    int port() default Integer.MIN_VALUE;
+    @ConfigurationKey("protocol")
+    String protocol() default "http";
     @ConfigurationKey("hostname")
     String hostname() default "";
+    @ConfigurationKey("port")
+    int port() default Integer.MIN_VALUE;
     @ConfigurationKey("resourcePath")
     String resourcePath() default "";
 }

@@ -30,12 +30,7 @@ public class TestProxyUtil {
         @RuntimeType
         public static Object intercept(@Origin Method method, 
                                        @SuperCall Callable<?> callable) throws Exception {
-          long start = System.currentTimeMillis();
-          try {
             return callable.call();
-          } finally {
-            System.out.println(method + " took " + (System.currentTimeMillis() - start));
-          }
         }
     }
 
@@ -43,12 +38,7 @@ public class TestProxyUtil {
         @RuntimeType
         public Object intercept(@Origin Method method, 
                                        @AllArguments Object[] args) throws Exception {
-          long start = System.currentTimeMillis();
-          try {
-            return args[0];
-          } finally {
-            System.out.println(method + " took " + (System.currentTimeMillis() - start));
-          }
+          return args[0];
         }
     }
 

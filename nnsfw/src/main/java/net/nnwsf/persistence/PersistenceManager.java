@@ -1,29 +1,18 @@
 package net.nnwsf.persistence;
 
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import javax.persistence.Entity;
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.SharedCacheMode;
-import javax.persistence.ValidationMode;
-import javax.persistence.spi.ClassTransformer;
-import javax.persistence.spi.PersistenceUnitInfo;
-import javax.persistence.spi.PersistenceUnitTransactionType;
-import javax.sql.DataSource;
 
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.configuration.FluentConfiguration;
@@ -33,9 +22,13 @@ import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.BootstrapServiceRegistry;
 import org.hibernate.boot.registry.BootstrapServiceRegistryBuilder;
 import org.hibernate.boot.registry.StandardServiceRegistry;
-import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.hibernate.jpa.HibernatePersistenceProvider;
+import org.hibernate.reactive.mutiny.Mutiny;
+import org.hibernate.reactive.mutiny.Mutiny.Session;
+import org.hibernate.reactive.provider.ReactiveServiceRegistryBuilder;
+import org.hibernate.reactive.vertx.VertxInstance;
 
+import io.smallrye.mutiny.Uni;
+import io.vertx.mutiny.core.Vertx;
 import net.nnwsf.application.annotation.DatasourceConfiguration;
 import net.nnwsf.application.annotation.FlywayConfiguration;
 import net.nnwsf.configuration.ConfigurationManager;
@@ -45,141 +38,12 @@ import net.nnwsf.util.ClassDiscovery;
 import net.nnwsf.util.ProxyUtil;
 
 public class PersistenceManager {
-	public class PersistenceUnitInfoImpl implements PersistenceUnitInfo {
- 
-    public static final String JPA_VERSION = "2.1";
- 
-    private final String persistenceUnitName;
- 
-    private PersistenceUnitTransactionType transactionType =
-        PersistenceUnitTransactionType.RESOURCE_LOCAL;
- 
-    private final Collection<Class<?>> managedClasses;
- 
-    private final List<String> mappingFileNames = new ArrayList<>();
- 
-    private final Properties properties;
- 
-    private DataSource jtaDataSource;
- 
-    private DataSource nonJtaDataSource;
- 
-    public PersistenceUnitInfoImpl(
-            String persistenceUnitName,
-            Collection<Class<?>> managedClasses,
-            Properties properties) {
-        this.persistenceUnitName = persistenceUnitName;
-        this.managedClasses = managedClasses;
-        this.properties = properties;
-    }
- 
-    @Override
-    public String getPersistenceUnitName() {
-        return persistenceUnitName;
-    }
- 
-    @Override
-    public String getPersistenceProviderClassName() {
-        return HibernatePersistenceProvider.class.getName();
-    }
- 
-    @Override
-    public PersistenceUnitTransactionType getTransactionType() {
-        return transactionType;
-    }
- 
-    @Override
-    public DataSource getJtaDataSource() {
-        return jtaDataSource;
-    }
- 
-    public PersistenceUnitInfoImpl setJtaDataSource(
-            DataSource jtaDataSource) {
-        this.jtaDataSource = jtaDataSource;
-        this.nonJtaDataSource = null;
-        transactionType = PersistenceUnitTransactionType.JTA;
-        return this;
-    }
- 
-    @Override
-    public DataSource getNonJtaDataSource() {
-        return nonJtaDataSource;
-    }
- 
-    public PersistenceUnitInfoImpl setNonJtaDataSource(
-            DataSource nonJtaDataSource) {
-        this.nonJtaDataSource = nonJtaDataSource;
-        this.jtaDataSource = null;
-        transactionType = PersistenceUnitTransactionType.RESOURCE_LOCAL;
-        return this;
-    }
- 
-    @Override
-    public List<String> getMappingFileNames() {
-        return mappingFileNames;
-    }
- 
-    @Override
-    public List<URL> getJarFileUrls() {
-        return Collections.emptyList();
-    }
- 
-    @Override
-    public URL getPersistenceUnitRootUrl() {
-        return null;
-    }
- 
-    @Override
-    public List<String> getManagedClassNames() {
-        return managedClasses.stream().map(Class::getName).collect(Collectors.toList());
-    }
- 
-    @Override
-    public boolean excludeUnlistedClasses() {
-        return false;
-    }
- 
-    @Override
-    public SharedCacheMode getSharedCacheMode() {
-        return SharedCacheMode.UNSPECIFIED;
-    }
- 
-    @Override
-    public ValidationMode getValidationMode() {
-        return ValidationMode.AUTO;
-    }
- 
-    public Properties getProperties() {
-        return properties;
-    }
- 
-    @Override
-    public String getPersistenceXMLSchemaVersion() {
-        return JPA_VERSION;
-    }
- 
-    @Override
-    public ClassLoader getClassLoader() {
-        return NocodeManager.getClassLoader();
-    }
- 
-    @Override
-    public void addTransformer(ClassTransformer transformer) {
- 
-    }
- 
-    @Override
-    public ClassLoader getNewTempClassLoader() {
-        return null;
-    }
-}
-
 	private static Logger log = Logger.getLogger(PersistenceManager.class.getName());
 
     private static PersistenceManager instance;
 
     @SuppressWarnings("rawtypes")
-    public static PersistenceManager init() {
+    public static PersistenceManager init(Vertx vertx) {
 
         if(instance == null) {
 			try {
@@ -188,7 +52,7 @@ public class PersistenceManager {
 				Map<Entity, Class<Object>> entityClassAnnotations = ClassDiscovery.discoverAnnotatedClasses(Object.class, Entity.class);
 				Collection<Class<?>> entityClasses = new ArrayList<>(entityClassAnnotations.values());
 				entityClasses.addAll(NocodeManager.getEntityClasses());
-				instance = new PersistenceManager( repositoryClasses, entityClasses, flywayConfigurationClasses);
+				instance = new PersistenceManager( vertx, repositoryClasses, entityClasses, flywayConfigurationClasses);
 			} catch (Exception e) {
                 log.log(Level.SEVERE, "Unable to discover repositories or datasources", e);
                 throw new RuntimeException("Unable to discover repositories or datasources", e);
@@ -201,20 +65,19 @@ public class PersistenceManager {
     @SuppressWarnings("rawtypes")
 	private final Map<Class<PersistenceRepository>, Repository> repositoryClassesMap;
 	private final Collection<Class<?>> entityClasses;
-    private final Map<String, EntityManagerFactory> entityManagerFactoryMap;
-    private final Map<String, ThreadLocal<EntityManager>> entityManagerThreadLocalMap;
+    private final Map<String, Mutiny.SessionFactory> sessionFactoryMap;
 
     @SuppressWarnings("rawtypes")
 	private PersistenceManager(
+		Vertx vertx,
 		Map<Repository, Class<PersistenceRepository>> repositoryClasses,
 		Collection<Class<?>> entityClasses,
 		Map<FlywayConfiguration, Class<Object>> flywayConfigurationClasses) {
-		this.entityManagerThreadLocalMap = new HashMap<>();
 		this.repositoryClassesMap = new HashMap<>();
 		this.entityClasses = entityClasses;
-		this.entityManagerFactoryMap = new HashMap<>();
+		this.sessionFactoryMap = new HashMap<>();
 		DatasourceManager.getDatasourceConfigurations().forEach(aDatasource ->
-			initEntityManager(aDatasource)
+			initEntityManager(vertx, aDatasource)
 		);
 		for(Entry<FlywayConfiguration, Class<Object>> entry : flywayConfigurationClasses.entrySet()) {
 			FlywayConfiguration hydratedFlywayConfiguration = ConfigurationManager.apply(entry.getKey());
@@ -227,12 +90,8 @@ public class PersistenceManager {
 	}
 
 	@SuppressWarnings("unchecked")
-    private void initEntityManager(DatasourceConfiguration datasourceConfiguration) {
+    private void initEntityManager(Vertx vertx, DatasourceConfiguration datasourceConfiguration) {
 		try {
-			if(datasourceConfiguration.providerClass() == null) {
-				log.log(Level.SEVERE, "Unable to discover repositories, no persistenceProviderClass found");
-				throw new RuntimeException("Unable to discover repositories, no persistenceProviderClass found");
-			}
 			if(datasourceConfiguration.jdbcDriver() == null || datasourceConfiguration.jdbcDriver().isEmpty()) {
 				log.log(Level.SEVERE, "Unable to discover repositories, no jdbcDriver found");
 				throw new RuntimeException("Unable to discover repositories, no jdbcDriver found");
@@ -242,49 +101,48 @@ public class PersistenceManager {
 				throw new RuntimeException("Unable to discover repositories, no jdbcUrl found");
 			}
 			Map<String, Object> properties = (Map<String, Object>)Optional.ofNullable(datasourceConfiguration.properties())
-					.map(p -> 
-						Arrays.stream(p)
-						.collect(Collectors.toMap(v -> v.name(), v -> v.value()))
-					).orElse(Collections.EMPTY_MAP);
-
-
-            BootstrapServiceRegistryBuilder bootstrapRegistryBuilder =
-            new BootstrapServiceRegistryBuilder();
-            // add a custom ClassLoader
-            bootstrapRegistryBuilder.applyClassLoader( NocodeManager.getClassLoader() );
-            
-            BootstrapServiceRegistry bootstrapRegistry = bootstrapRegistryBuilder.build();
-
-            StandardServiceRegistry standardRegistry = StandardServiceRegistryBuilder
-                .forJpa(bootstrapRegistry)
-                .applySetting("connection.driver_class", datasourceConfiguration.jdbcDriver())
-                .applySetting("hibernate.connection.url", datasourceConfiguration.jdbcUrl())
-                .applySetting("hibernate.connection.username", datasourceConfiguration.user() == null ? "" : datasourceConfiguration.user())
-                .applySetting("hibernate.connection.password", datasourceConfiguration.password() == null ? "" : datasourceConfiguration.password())
-                .applySetting("show_sql", "true")
-                .applySetting("hibernate.c3p0.min_size", datasourceConfiguration.minConnections())
-                .applySetting("hibernate.c3p0.max_size", datasourceConfiguration.maxConnections())
-                .applySetting("hibernate.c3p0.timeout", 300)
-                .applySetting("hibernate.c3p0.max_statements", 50)
-                .applySetting("hibernate.c3p0.idle_test_period",3000)
-				.applySettings(properties)
-                .build();
-
-            MetadataSources sources = new MetadataSources(standardRegistry);
-            entityClasses.forEach(aClass -> sources.addAnnotatedClass(aClass));
-
-            MetadataBuilder metadataBuilder = sources.getMetadataBuilder();
-
-            Metadata metadata = metadataBuilder.build();
-
-			EntityManagerFactory entityManagerFactory = metadata.getSessionFactoryBuilder().build();
-			entityManagerFactoryMap.put(datasourceConfiguration.name(), entityManagerFactory);
+			.map(p -> 
+			Arrays.stream(p)
+			.collect(Collectors.toMap(v -> v.name(), v -> v.value()))
+			).orElse(Collections.EMPTY_MAP);
+			
+			Uni<Void> startHibernate = Uni.createFrom().deferred(() -> {
+				BootstrapServiceRegistryBuilder bootstrapRegistryBuilder =
+					new BootstrapServiceRegistryBuilder();
+				// add a custom ClassLoader
+				bootstrapRegistryBuilder.applyClassLoader( NocodeManager.getClassLoader() );
+				
+				
+				BootstrapServiceRegistry bootstrapRegistry = bootstrapRegistryBuilder.build();
+				
+				StandardServiceRegistry standardRegistry = ReactiveServiceRegistryBuilder
+					.forJpa(bootstrapRegistry)
+					.applySetting("hibernate.connection.url", datasourceConfiguration.jdbcUrl())
+					.applySetting("hibernate.connection.username",datasourceConfiguration.user() == null ? "" : datasourceConfiguration.user())
+					.applySetting("hibernate.connection.password", datasourceConfiguration.password() == null ? "" : datasourceConfiguration.password())
+					.applySetting("hibernate.connection.pool_size", datasourceConfiguration.maxConnections())
+					.applySettings(properties)
+					.build();
+					
+				MetadataSources sources = new MetadataSources(standardRegistry);
+				entityClasses.forEach(aClass -> sources.addAnnotatedClass(aClass));
+		
+				MetadataBuilder metadataBuilder = sources.getMetadataBuilder();
+		
+				Metadata metadata = metadataBuilder.build();
+		
+				Mutiny.SessionFactory sessionFactory =  metadata.getSessionFactoryBuilder().build()
+				.unwrap(Mutiny.SessionFactory.class);
+				
+				sessionFactoryMap.put(datasourceConfiguration.name(), sessionFactory);
+				return Uni.createFrom().voidItem();
+			  });
+			  
+			  vertx.executeBlockingAndAwait(startHibernate);
 		} catch(Exception e) {
 			log.log(Level.SEVERE, "Unable to initialize persistence", e);
 			throw new RuntimeException(e);
 		}
-		this.entityManagerThreadLocalMap.put(datasourceConfiguration.name(),new ThreadLocal<>());
-
 	}
 	
 	private void initFlyway(FlywayConfiguration flywayConfiguration) {
@@ -310,25 +168,15 @@ public class PersistenceManager {
 		}
 	}
 
-	public static EntityManagerHolder createEntityManager(String datasourceName) {
+	public static Uni<Session> createSession(String datasourceName) {
         if(instance != null) {
-            return instance.internalCreateEntityManager(datasourceName);
+            return instance.internalCreateSession(datasourceName);
         }
         return null;
     }
 
-	private EntityManagerHolder internalCreateEntityManager(String datasourceName) {
-        boolean created = false;
-        EntityManager entityManager = entityManagerThreadLocalMap.get(datasourceName).get();
-        if(entityManager == null) {
-            entityManager = entityManagerFactoryMap.get(datasourceName).createEntityManager();
-            entityManagerThreadLocalMap.get(datasourceName).set(entityManager);
-            if(entityManager != null) {
-                created = true;
-            }
-        }
-
-		return new EntityManagerHolder(entityManager, e -> entityManagerThreadLocalMap.get(datasourceName).remove(), created);
+	private  Uni<Session> internalCreateSession(String datasourceName) {
+        return sessionFactoryMap.get(datasourceName).openSession();
 	}
 
 	public static boolean isRepository(Class<?> aClass) {
@@ -344,6 +192,10 @@ public class PersistenceManager {
 				instance.repositoryClassesMap.get(aClass).datasource()
 			)
 		);
+	}
+
+	public static String getDatasource(Class<PersistenceRepository> repositoryClass) {
+		return instance.repositoryClassesMap.get(repositoryClass).datasource();
 	}
 
 }

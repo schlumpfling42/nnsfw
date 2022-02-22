@@ -4,8 +4,11 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
+
+import io.smallrye.mutiny.Uni;
+import org.hibernate.reactive.mutiny.Mutiny.Session;
 
 import net.nnwsf.application.Constants;
 import net.nnwsf.controller.annotation.RequestParameter;
@@ -14,7 +17,6 @@ import net.nnwsf.controller.annotation.PathVariable;
 import net.nnwsf.handler.AnnotatedMethodParameter;
 import net.nnwsf.handler.EndpointProxy;
 import net.nnwsf.handler.MethodParameter;
-import net.nnwsf.handler.URLMatcher;
 import net.nnwsf.nocode.NocodeManager;
 import net.nnwsf.nocode.SchemaObject;
 import net.nnwsf.persistence.PersistenceManager;
@@ -80,9 +82,10 @@ public abstract class ControllerProxyNocodeImplementation implements EndpointPro
     }
 
     protected final SchemaObject schemaObject;
-    private final URLMatcher urlMatcher;
     private final String rootPath;
+    private final String pathPostFix;
     private final String httpMethod;
+    protected final String datasource;
     protected final Class<?> entityClass;
     @SuppressWarnings("rawtypes")
     protected final PersistenceRepository repository;
@@ -91,14 +94,15 @@ public abstract class ControllerProxyNocodeImplementation implements EndpointPro
     protected final Collection<Annotation> annotations;
 
     @SuppressWarnings("rawtypes")
-    ControllerProxyNocodeImplementation(String rootPath, String pathPostFix, String method, SchemaObject schemaObject, Class<?> controllerClass, String description) {
+    ControllerProxyNocodeImplementation(String rootPath, String pathPostFix, String method, SchemaObject schemaObject,  Class<?> controllerClass, String description) {
         this.schemaObject = schemaObject;
-        this.urlMatcher = new URLMatcher(method, (rootPath + "/" + schemaObject.getTitle() + (pathPostFix == null ? "" : pathPostFix)).toLowerCase().replaceAll("/+", "/"));
         this.rootPath = rootPath;
+        this.pathPostFix = pathPostFix;
         this.httpMethod = method;
         this.entityClass = NocodeManager.getEntityClass(schemaObject).getFirst();
         Class<PersistenceRepository> repositoryClass = NocodeManager.getRepositoryClass(schemaObject);
         repository = (PersistenceRepository)PersistenceManager.createRepository(repositoryClass);
+        this.datasource = PersistenceManager.getDatasource(repositoryClass);
         this.fields = ReflectionHelper.findFields(entityClass);
         this.controllerClass = controllerClass;
         this.annotations = Arrays.asList(new ApiDocImplementation(description));
@@ -120,10 +124,6 @@ public abstract class ControllerProxyNocodeImplementation implements EndpointPro
         return new MethodParameter[0];
     }
 
-    public List<String> getPathElements() {
-        return Arrays.asList(urlMatcher.getPathElements());
-    }
-
     @Override
     public String toString() {
         return "ControllerProxy [class=" + schemaObject.getTitle() + "]";
@@ -135,13 +135,8 @@ public abstract class ControllerProxyNocodeImplementation implements EndpointPro
     }
 
     @Override
-    public URLMatcher getUrlMatcher() {
-        return urlMatcher;
-    }
-
-    @Override
     public String getPath() {
-        return (rootPath + "/" + schemaObject.getTitle()).toLowerCase().replaceAll("/+", "/");
+        return (rootPath + "/" + schemaObject.getTitle() + (pathPostFix == null ? "" : ("/" + pathPostFix))).toLowerCase().replaceAll("/+", "/");
     }
 
     @Override
@@ -167,5 +162,52 @@ public abstract class ControllerProxyNocodeImplementation implements EndpointPro
     @Override
     public Class<?>[] getGenericReturnTypes() {
         return null;
+    }
+
+    protected Uni<?> executeWithSession(boolean transaction, Supplier<Uni<?>> supplier) {
+        return Uni.createFrom().context(context -> {
+            if(transaction) {
+                if(!context.contains("session")) {
+                    return PersistenceManager.createSession(datasource).map(aSession -> {
+                        context.put("session", aSession);
+                        return aSession;
+                    }).chain(session -> 
+                        session.withTransaction(trx -> {
+                            try {
+                                return supplier.get();
+                            } catch (Exception e) {
+                                trx.markForRollback();
+                                return Uni.createFrom().failure(e);
+                            }
+                        }).chain(result -> {
+                            context.delete("session");
+                            return session.close().replaceWith(result);
+                        })
+                    );
+                }
+                return Uni.createFrom().item(() -> (Session)context.get("session")).chain(session -> session.withTransaction(trx -> {
+                    try {
+                        return supplier.get();
+                    } catch (Exception e) {
+                        trx.markForRollback();
+                        return Uni.createFrom().failure(e);
+                    }
+                }));
+            } else {
+                if(!context.contains("session")) {
+                    return PersistenceManager.createSession(datasource).map(aSession -> {
+                        context.put("session", aSession);
+                        return aSession;
+                    }).chain(session -> supplier.get()
+                        .chain(result -> {
+                            context.delete("session");
+                            return session.close().replaceWith(result);
+                        })
+                    );
+                }
+                return supplier.get();
+            }
+
+        });
     }
 }
