@@ -1,7 +1,6 @@
 package net.nnwsf.handler;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
@@ -10,12 +9,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-// import org.pac4j.undertow.account.Pac4jAccount;
+import org.pac4j.core.profile.UserProfile;
 
 import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.core.MultiMap;
 import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.ext.web.RoutingContext;
+import net.nnwsf.authentication.User;
+import net.nnwsf.controller.annotation.AuthenticatedUser;
 import net.nnwsf.controller.annotation.PathVariable;
 import net.nnwsf.controller.annotation.RequestBody;
 import net.nnwsf.controller.annotation.RequestParameter;
@@ -42,7 +43,7 @@ public class EndpointHandlerImpl {
 			.collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue(), (first, second) -> first));
 	}
 
-	public Uni<Void> handleRequest(final RoutingContext routingContext, EndpointProxy endpointProxy) throws Exception {
+	public Uni<Void> handleRequest(final RoutingContext routingContext, EndpointProxy endpointProxy, UserProfile userProfile) throws Exception {
 		log.log(Level.FINEST, "Endpoint request: start");
 
 		MultiMap queryParameters = routingContext.queryParams();
@@ -69,16 +70,12 @@ public class EndpointHandlerImpl {
 				MethodParameter parameter = endpointProxy.getSpecialRequestParameter(RequestBody.class);
 				parameters[parameter.getIndex()] = contentTypeConverter.readFrom(new ByteArrayInputStream(routingContext.getBody().getBytes()), parameter.getType());
 			}
-			// if(endpointProxy.getSpecialRequestParameter(AuthenticatedUser.class) != null) {
-			// 	MethodParameter parameter = endpointProxy.getSpecialRequestParameter(AuthenticatedUser.class);
-			// 	if(exchange.getSecurityContext() != null && exchange.getSecurityContext().getAuthenticatedAccount() != null) {
-			// 		parameters[parameter.getIndex()] = new User((Pac4jAccount)exchange.getSecurityContext().getAuthenticatedAccount());
-			// 	}
-			// }
-			// if(endpointProxy.getSpecialRequestParameter(HttpServerExchange.class) != null) {
-			// 	MethodParameter parameter = endpointProxy.getSpecialRequestParameter(RequestBody.class);
-			// 	parameters[parameter.getIndex()] = exchange;
-			// }
+			if(endpointProxy.getSpecialRequestParameter(AuthenticatedUser.class) != null) {
+				MethodParameter parameter = endpointProxy.getSpecialRequestParameter(AuthenticatedUser.class);
+				if(routingContext.session() != null) {
+					parameters[parameter.getIndex()] = new User(userProfile);
+				}
+			}
 			try {
 				return endpointProxy.invoke(parameters)
 					.withContext((resultUni, context) -> 

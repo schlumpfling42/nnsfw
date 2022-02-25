@@ -30,13 +30,6 @@ public class ExampleController {
     @Inject
     private ExampleService2Impl service2;
 
-    @Get("/")
-    @ContentType(Constants.CONTENT_TYPE_TEXT)
-    @ApiDoc("Simple get to show service injection")
-    public Uni<String> get() {
-        return service.echo("Hello example");
-    }
-
     @Post("/")
     @ContentType(Constants.CONTENT_TYPE_TEXT)
     @ApiDoc("Simple post to show how serialization works")
