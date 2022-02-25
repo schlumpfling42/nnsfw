@@ -83,7 +83,7 @@ public class ApplicationServer {
         NocodeManager.init(applicationClass.getClassLoader(), nocodeConfiguration);
 
         DeploymentOptions options = new DeploymentOptions()
-            .setInstances(8);
+            .setInstances(Runtime.getRuntime().availableProcessors());
 
         
         VertxOptions vertxOptions = new VertxOptions()
