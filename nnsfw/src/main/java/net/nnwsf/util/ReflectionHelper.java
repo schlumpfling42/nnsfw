@@ -15,7 +15,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -81,11 +83,7 @@ public class ReflectionHelper {
     }
 
     public static <T extends Annotation> T findAnnotation(Method method, Class<T> annotationClass) {
-        T annotation = method.getAnnotation(annotationClass);
-        if(annotation != null) {
-            return annotation;
-        }
-        return null;
+        return findAllMethods(method).stream().map(aMethod -> aMethod.getAnnotation(annotationClass)).filter(annotation -> annotation != null).findFirst().orElse(null);
     }
 
     public static <T extends Annotation> T findAnnotation(Field field, Class<T> annotationClass) {
@@ -271,5 +269,19 @@ public class ReflectionHelper {
             });
             return result;
         }
+    }
+
+    private static List<Method> findAllMethods(Method aMethod) {
+        List<Method> allMethods = new ArrayList<>();
+        allMethods.add(aMethod);
+        getAllClassesAndInterfaces(aMethod.getDeclaringClass())
+            .forEach(aClass -> {
+                try {
+                    allMethods.add(aClass.getDeclaredMethod(aMethod.getName(), aMethod.getParameterTypes()));
+                } catch (NoSuchMethodException | SecurityException e) {
+                }
+            });
+
+        return allMethods;
     }
 }
