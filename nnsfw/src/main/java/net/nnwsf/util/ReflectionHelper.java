@@ -17,7 +17,6 @@ import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -25,23 +24,50 @@ public class ReflectionHelper {
 
     private static Logger log = Logger.getLogger(ReflectionHelper.class.getName());
 
+    private final static ReflectionHelper instance = new ReflectionHelper();
+
+    private final Map<Class<?>,Map<Class<?>,Map<Annotation, Method>>> classMethodAnnotationCache;
+    private final Map<Method, List<Method>> methodsCache;
+    private final Map<Method, Map<Class<?>,Annotation>> methodAnnotationCache;
+
+    ReflectionHelper() {
+        this.classMethodAnnotationCache = new HashMap<>();
+        this.methodsCache = new HashMap<>();
+        this.methodAnnotationCache = new HashMap<>();
+    }
+
     public static Map<Annotation, Method> findAnnotationMethods(Class<?> aRootClass, Class<?>... annotationClasses) {
-        Map<Annotation, Method> annotationMethodMap = new IdentityHashMap<>();
+        return instance.internalFindAnnotationMethods(aRootClass, annotationClasses);
+    }
+
+    public Map<Annotation, Method> internalFindAnnotationMethods(Class<?> aRootClass, Class<?>... annotationClasses) {
+        Map<Annotation, Method> allAnnotationMethodMap = new IdentityHashMap<>();
         Collection<Class<?>> classes = getAllClassesAndInterfaces(aRootClass);
-        for(Class<?> aClass : classes){
-            Method[] methods = aClass.getMethods();
-            for(Method method : methods) {
-                Annotation[] annotations = method.getAnnotations();
-                for(Annotation annotation : annotations) {
-                    for(Class<?> annotationClass : annotationClasses) {
-                        if (annotation.annotationType().isAssignableFrom(annotationClass)) {
-                            annotationMethodMap.put((Annotation)annotation, method);
+        for(Class<?> annotationClass : annotationClasses) {
+            Map<Class<?>,Map<Annotation, Method>> classMethodAnnotations = classMethodAnnotationCache.get(annotationClass);
+            if(classMethodAnnotations == null) {
+                classMethodAnnotations = new HashMap<>();
+                classMethodAnnotationCache.put(annotationClass, classMethodAnnotations);
+            }
+            for(Class<?> aClass : classes){
+                Map<Annotation, Method> methodAnnotations = classMethodAnnotations.get(aClass);
+                if(methodAnnotations == null) {
+                    methodAnnotations = new HashMap<>();
+                    classMethodAnnotations.put(aClass, methodAnnotations);
+                    Method[] methods = aClass.getMethods();
+                    for(Method method : methods) {
+                        Annotation[] annotations = method.getAnnotations();
+                        for(Annotation annotation : annotations) {
+                            if (annotation.annotationType().isAssignableFrom(annotationClass)) {
+                                methodAnnotations.put((Annotation)annotation, method);
+                            }
                         }
                     }
                 }
+                allAnnotationMethodMap.putAll(methodAnnotations);
             }
         }
-        return annotationMethodMap;
+        return allAnnotationMethodMap;
     }
 
     public static Collection<Field> findAnnotationFields(Class<?> aClass, Class<?> annotationClass) {
@@ -83,7 +109,22 @@ public class ReflectionHelper {
     }
 
     public static <T extends Annotation> T findAnnotation(Method method, Class<T> annotationClass) {
-        return findAllMethods(method).stream().map(aMethod -> aMethod.getAnnotation(annotationClass)).filter(annotation -> annotation != null).findFirst().orElse(null);
+        return instance.internalfindAnnotation(method, annotationClass);
+    }
+
+    public <T extends Annotation> T internalfindAnnotation(Method method, Class<T> annotationClass) {
+        Map<Class<?>, Annotation> annotationMap = methodAnnotationCache.get(method);
+        if(annotationMap == null) {
+            annotationMap = new HashMap<>();
+            methodAnnotationCache.put(method, annotationMap);
+        }
+        @SuppressWarnings("unchecked")
+        T annotation = (T)annotationMap.get(annotationClass);
+        if(!annotationMap.containsKey(annotationClass)) {
+            annotation = findAllMethods(method).stream().map(aMethod -> aMethod.getAnnotation(annotationClass)).filter(anAnnotation -> anAnnotation != null).findFirst().orElse(null);
+            annotationMap.put(annotationClass, annotation);
+        }
+        return annotation;
     }
 
     public static <T extends Annotation> T findAnnotation(Field field, Class<T> annotationClass) {
@@ -271,16 +312,22 @@ public class ReflectionHelper {
         }
     }
 
-    private static List<Method> findAllMethods(Method aMethod) {
-        List<Method> allMethods = new ArrayList<>();
-        allMethods.add(aMethod);
-        getAllClassesAndInterfaces(aMethod.getDeclaringClass())
-            .forEach(aClass -> {
-                try {
-                    allMethods.add(aClass.getDeclaredMethod(aMethod.getName(), aMethod.getParameterTypes()));
-                } catch (NoSuchMethodException | SecurityException e) {
-                }
-            });
+    private List<Method> findAllMethods(Method aMethod) {
+        List<Method> allMethods = methodsCache.get(aMethod);
+        if(allMethods == null) {
+            allMethods = new ArrayList<>();
+            methodsCache.put(aMethod, allMethods);
+            allMethods.add(aMethod);
+            List<Method> superMethods = new ArrayList<>();
+            getAllClassesAndInterfaces(aMethod.getDeclaringClass())
+                .forEach(aClass -> {
+                    try {
+                        superMethods.add(aClass.getDeclaredMethod(aMethod.getName(), aMethod.getParameterTypes()));
+                    } catch (NoSuchMethodException | SecurityException e) {
+                    }
+                });
+            allMethods.addAll(superMethods);
+        }
 
         return allMethods;
     }
