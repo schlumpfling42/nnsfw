@@ -122,7 +122,7 @@ public class PersistenceManager {
 					.applySetting("hibernate.connection.pool_size", datasourceConfiguration.maxConnections())
 					.applySettings(properties)
 					.build();
-					
+
 				MetadataSources sources = new MetadataSources(standardRegistry);
 				entityClasses.forEach(aClass -> sources.addAnnotatedClass(aClass));
 		

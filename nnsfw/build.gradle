@@ -25,6 +25,7 @@ dependencies {
             "io.vertx:vertx-web:4.2.5",
             "io.vertx:vertx-sql-client:4.2.5",
             "io.vertx:vertx-reactive-streams:4.2.5",
+            "io.vertx:vertx-opentracing:4.2.5",
             "io.netty:netty-transport-native-epoll:4.1.74.Final",
             "io.smallrye.reactive:smallrye-mutiny-vertx-core:2.18.1",
             "io.smallrye.reactive:smallrye-mutiny-vertx-web:2.18.1",

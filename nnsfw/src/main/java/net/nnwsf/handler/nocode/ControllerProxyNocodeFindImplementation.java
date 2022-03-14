@@ -1,10 +1,12 @@
 package net.nnwsf.handler.nocode;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.function.Supplier;
 
 import io.smallrye.mutiny.Uni;
 import net.nnwsf.handler.AnnotatedMethodParameter;
 import net.nnwsf.nocode.SchemaObject;
+import net.nnwsf.persistence.PersistenceManager;
 import net.nnwsf.query.QueryParser;
 import net.nnwsf.resource.Page;
 import net.nnwsf.resource.PageRequest;
@@ -49,6 +51,26 @@ public class ControllerProxyNocodeFindImplementation extends ControllerProxyNoco
     @Override
     public AnnotatedMethodParameter[] getParameters() {
         return ANNOTATED_METHOD_PARAMETERS;
+    }
+
+    protected Uni<?> executeWithSession(boolean transaction, Supplier<Uni<?>> supplier) {
+        long startTime = System.currentTimeMillis();
+        return Uni.createFrom().context(context -> {
+            if(!context.contains("session")) {
+                return PersistenceManager.createSession(datasource).map(aSession -> {
+                    context.put("session", aSession);
+                    return aSession;
+                }).chain(session -> supplier.get()
+                    .chain(result -> {
+                        context.delete("session");
+                        return session.close().onItem().invoke(() -> {
+                            context.put("CTRL", System.currentTimeMillis() - startTime);
+                        }).replaceWith(result);
+                    })
+                );
+            }
+            return supplier.get();
+        });
     }
 
 }

@@ -61,7 +61,6 @@ public class RespositoryInterceptor {
     public Uni<?> intercept(@Origin Method method, @AllArguments Object[] args) throws Exception {
         Executor executor = executors.get(method);
         if(executor != null) {
-            long start = System.currentTimeMillis();
             return Uni.createFrom().context(context -> {
                     if(!context.contains("session")) {
                         return PersistenceManager.createSession(datasourceName).map(aSession -> {
@@ -70,12 +69,10 @@ public class RespositoryInterceptor {
                         }).chain(session -> executor.execute(session, args)
                             .chain(result -> {
                                 context.delete("session");
-                                context.put("Repo", System.currentTimeMillis() - start);
                                 return session.close().replaceWith(result);
                             }));
                     }
-                    return Uni.createFrom().item(() -> (Session)context.get("session")).chain(session -> executor.execute(session, args))
-                    .onItem().invoke(()->context.put("Repo", method.getName() + ":" + (System.currentTimeMillis() - start)));
+                    return Uni.createFrom().item(() -> (Session)context.get("session")).chain(session -> executor.execute(session, args));
                 });
         } else {
             throw new UnsupportedOperationException("Unable to execute: " + method.getName());

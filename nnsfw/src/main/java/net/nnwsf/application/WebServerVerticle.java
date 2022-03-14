@@ -16,6 +16,8 @@ public class WebServerVerticle extends AbstractVerticle {
     public Uni<Void> asyncStart() {
 
         final HttpServerOptions options = new HttpServerOptions()
+            .setReuseAddress(true)
+            .setTcpQuickAck(true)
             .setTcpNoDelay(true);
 
         log.info("Starting server at " + HttpHandlerImpl.getHostname() + " port " + HttpHandlerImpl.getPort());

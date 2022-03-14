@@ -15,11 +15,7 @@ public class SaveRequestExecutor extends Executor {
     @Override
     public Uni<?> execute(Session session, Object[] params) {
         if(entityClass.isInstance(params[0])) {
-            long start = System.currentTimeMillis();
-            return session.merge(params[0]).chain(savedEntity -> session.flush().replaceWith(savedEntity)).attachContext().map(itemWithContext -> {
-                itemWithContext.context().put("SQL", method.getName() + ":" + (System.currentTimeMillis() - start));
-                return itemWithContext.get();
-            });
+            return session.merge(params[0]);
         } else {
             throw new IllegalArgumentException("Entity type doesn't match");
         }

@@ -16,11 +16,7 @@ public class FindByIdRequestExecutor extends Executor {
     @Override
     public Uni<?> execute(Session session, Object[] params) {
         if(idClass.isInstance(params[0])) {
-            long start = System.currentTimeMillis();
-            return session.find(entityClass, params[0]).attachContext().map(itemWithContext -> {
-                itemWithContext.context().put("SQL", method.getName() + ":" + (System.currentTimeMillis() - start));
-                return itemWithContext.get();
-            });
+            return session.find(entityClass, params[0]);
         } else {
             throw new IllegalArgumentException("id type doesn't match");
         }

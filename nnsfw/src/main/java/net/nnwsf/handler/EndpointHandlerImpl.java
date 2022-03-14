@@ -77,9 +77,7 @@ public class EndpointHandlerImpl {
 				}
 			}
 			try {
-				return endpointProxy.invoke(parameters)
-					.withContext((resultUni, context) -> 
-						resultUni.chain(result -> {
+				return endpointProxy.invoke(parameters).chain(result -> {
 							routingContext.response().putHeader("Content-Type", endpointProxy.getContentType());
 							if( result == null) {
 								return routingContext.response().end();
@@ -92,7 +90,7 @@ public class EndpointHandlerImpl {
 							}
 							routingContext.response().setChunked(true);
 							return routingContext.response().end(outputBuffer);
-						}));
+						});
 			} catch(InvocationTargetException ite) {
 				if(ite.getCause() != null) {
 					throw (Exception)ite.getCause();

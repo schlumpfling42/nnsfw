@@ -69,17 +69,12 @@ public class FindWithPageRequestExecutor extends Executor {
                 query = session.createQuery(baseQuery + orderClause);
 
             }
-            query.setReadOnly(true);
             query.setFirstResult(start);
             query.setMaxResults(pageRequest.getSize());
-            return countQuery.getSingleResult().attachContext().map(itemWithContext -> {
-                return itemWithContext.get();
-            }).chain(count -> {
+            return countQuery.getSingleResult().chain(count -> {
                 return query.getResultList()
-                .map(list -> new Page<>(count, pageRequest, list)).attachContext().map(itemWithContext -> {
-                    return itemWithContext.get();
+                    .map(list -> new Page<>(count, pageRequest, list));
                 });
-            });
         } else {
             throw new IllegalArgumentException("Unable to execute db query because of invalid parameters: " + Arrays.stream(params).map(Object::toString).collect(Collectors.joining(",")));
         }

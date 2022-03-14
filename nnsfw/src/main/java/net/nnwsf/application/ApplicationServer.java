@@ -6,9 +6,12 @@ import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import io.jaegertracing.Configuration;
+import io.jaegertracing.internal.samplers.ConstSampler;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.VertxOptions;
 import io.vertx.mutiny.core.Vertx;
+import io.vertx.tracing.opentracing.OpenTracingOptions;
 import net.nnwsf.application.annotation.AnnotationConfiguration;
 import net.nnwsf.application.annotation.ApiDocConfiguration;
 import net.nnwsf.application.annotation.AuthenticatedResourcePathConfiguration;
@@ -83,11 +86,26 @@ public class ApplicationServer {
         NocodeManager.init(applicationClass.getClassLoader(), nocodeConfiguration);
 
         DeploymentOptions options = new DeploymentOptions()
-            .setInstances(Runtime.getRuntime().availableProcessors());
+            .setInstances(Runtime.getRuntime().availableProcessors()/2);
 
+
+        Configuration.SamplerConfiguration samplerConfig = Configuration.SamplerConfiguration.fromEnv()
+            .withType(ConstSampler.TYPE)
+            .withParam(1);
+      
+          Configuration.ReporterConfiguration reporterConfig = new Configuration.ReporterConfiguration()
+            .withLogSpans(true);
+      
+          Configuration config = new Configuration("NNSFW")
+            .withSampler(samplerConfig)
+            .withReporter(reporterConfig);
         
-        VertxOptions vertxOptions = new VertxOptions()
-            .setPreferNativeTransport(true);
+        VertxOptions vertxOptions = new VertxOptions();
+
+        vertxOptions.setTracingOptions(
+            new OpenTracingOptions(config.getTracer())
+        )
+        .setPreferNativeTransport(true);
 
         Vertx vertx = Vertx.vertx(vertxOptions);
 
