@@ -68,9 +68,25 @@ public class ConfigurationManager {
         try {
             Map<String, Object> customConfig = loadApplicationConfiguration(applicationClassLoader);
             MapUtil.mergeInto(configuration, customConfig);
+            mergeEnvVariables(null, configuration);
         }catch(Exception e) {
             log.log(Level.INFO, "No custom configuration found, using defaults", e);
         }
+    }
+
+    private void mergeEnvVariables(String key, Map<String, Object> config) {
+        String startKey = key == null ? "" : (key + "_");
+        config.entrySet().forEach(anEntry -> {
+            String aKey = (startKey + anEntry.getKey()).toUpperCase();
+            if(anEntry.getValue() instanceof Map) {
+                mergeEnvVariables(aKey, (Map<String, Object>)anEntry.getValue());
+            } else {
+                String envValue = System.getenv(aKey);
+                if(envValue != null && envValue.length() > 0) {
+                    anEntry.setValue(envValue);
+                }
+            }
+        });
     }
 
     Map<String, Object> loadDefaultConfiguration() {

@@ -66,7 +66,9 @@ public class RespositoryInterceptor {
                         return PersistenceManager.createSession(datasourceName).map(aSession -> {
                             context.put("session", aSession);
                             return aSession;
-                        }).chain(session -> executor.execute(session, args)
+                        }).chain(session -> session.withTransaction(trx -> 
+                                executor.execute(session, args)
+                            )
                             .chain(result -> {
                                 context.delete("session");
                                 return session.close().replaceWith(result);

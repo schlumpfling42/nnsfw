@@ -1,0 +1,22 @@
+version: "3.7"
+services:
+  api_service:
+    build: .
+    restart: always
+    ports:
+      - 8080:8080
+    depends_on:
+      - postgres_db
+    links:
+      - postgres_db:database
+    environment:
+      - DATASOURCE_DEFAULT_JDBCURL=jdbc:postgresql://database:5432/nnsfw
+      - SERVER_HOSTNAME=0.0.0.0
+  postgres_db:
+    image: "postgres:11.4"
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_DB: nnsfw
+      POSTGRES_PASSWORD: postgres

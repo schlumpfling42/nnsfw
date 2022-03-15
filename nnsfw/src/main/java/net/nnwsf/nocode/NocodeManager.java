@@ -144,7 +144,7 @@ public class NocodeManager {
             Arrays.stream(nocodeConfiguration.schemas())
             .forEach(aSchemaLocation -> {
                 try {
-                    SchemaObject schemaElement = objectMapper.readValue(ResourceUtil.getResourceAsString(classLoader, aSchemaLocation), SchemaObject.class);
+                    SchemaObject schemaElement = objectMapper.readValue(ResourceUtil.getResourceAsString(this.getClass(), aSchemaLocation), SchemaObject.class);
                     schemas.add(schemaElement);
                 } catch(Exception e) {
                     throw new RuntimeException("Unable to load nocode schema: " + aSchemaLocation, e);
