@@ -74,6 +74,7 @@ public class ConfigurationManager {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void mergeEnvVariables(String key, Map<String, Object> config) {
         String startKey = key == null ? "" : (key + "_");
         config.entrySet().forEach(anEntry -> {

@@ -38,7 +38,6 @@ import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.BootstrapServiceRegistry;
 import org.hibernate.boot.registry.BootstrapServiceRegistryBuilder;
 import org.hibernate.boot.registry.StandardServiceRegistry;
-import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.reactive.provider.ReactiveServiceRegistryBuilder;
 import org.hibernate.tool.hbm2ddl.SchemaUpdate;
 import org.hibernate.tool.schema.TargetType;
@@ -343,6 +342,7 @@ public class NocodeManager {
             .applySetting("hibernate.connection.password", datasourceConfiguration.password() == null ? "" : datasourceConfiguration.password())
             .applySetting("hibernate.hbm2ddl.auto", "update")
             .applySetting("show_sql", "true")
+            .applySettings(properties)
             .build();
 
         MetadataSources sources = new MetadataSources(standardRegistry);

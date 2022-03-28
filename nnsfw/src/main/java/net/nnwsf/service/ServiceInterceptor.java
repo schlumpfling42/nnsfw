@@ -25,6 +25,7 @@ public class ServiceInterceptor {
     }
 
     @RuntimeType
+    @SuppressWarnings("unchecked")
     public Uni<?> intercept(@Origin Method method,
             @SuperCall Callable<Uni<?>> callable) throws Exception {
         Transactional transactional = getTransactional(method);
