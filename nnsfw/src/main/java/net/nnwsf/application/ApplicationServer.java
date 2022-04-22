@@ -86,7 +86,7 @@ public class ApplicationServer {
         NocodeManager.init(applicationClass.getClassLoader(), nocodeConfiguration);
 
         DeploymentOptions options = new DeploymentOptions()
-            .setInstances(Math.min(4, Runtime.getRuntime().availableProcessors()));
+            .setInstances(Math.max(4, Runtime.getRuntime().availableProcessors()));
 
 
         Configuration.SamplerConfiguration samplerConfig = Configuration.SamplerConfiguration.fromEnv()

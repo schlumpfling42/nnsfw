@@ -98,7 +98,7 @@ public class EndpointHandlerImpl {
 				throw ite;
 			}
 		} else {
-			//log.log(Level.SEVERE, "Unable to find endpoint for " + exchange.getRequestPath() + exchange.getQueryString());
+			log.log(Level.SEVERE, "Unable to find endpoint for " + routingContext.request().path() + routingContext.request().query());
 			routingContext.fail(404);
 			return routingContext.end();
 		}

@@ -342,7 +342,6 @@ public class NocodeManager {
             .applySetting("hibernate.connection.password", datasourceConfiguration.password() == null ? "" : datasourceConfiguration.password())
             .applySetting("hibernate.hbm2ddl.auto", "update")
             .applySetting("show_sql", "true")
-            .applySettings(properties)
             .build();
 
         MetadataSources sources = new MetadataSources(standardRegistry);
